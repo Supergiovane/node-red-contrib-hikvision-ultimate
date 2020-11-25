@@ -1,7 +1,7 @@
 {
     "name": "node-red-contrib-hikvision-ultimate",
     "version": "1.0.23",
-    "description": "A set of Node-RED enhanced boolean logic node, flow interruption node, blinker node, invert node, filter node, with persisten values after reboot and more.",
+    "description": "A native set of node for Hikvision Cameras, Alarms, Radars etc.",
     "author": "Supergiovane (https://github.com/Supergiovane)",
     "dependencies": {
         "fs": "0.0.1-security",
