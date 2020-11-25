@@ -3,56 +3,71 @@
 module.exports = (RED) => {
 
 
-   
+
     function confignode(config) {
         RED.nodes.createNode(this, config)
         var node = this
         node.host = config.host
         node.port = config.port
-        
+        node.nodeClients = [] // Stores the registered clients
+
         var options = {
             "digestAuth": node.credentials.user + ":" + node.credentials.password,
-			"streaming": true,
-			"timeout": 5000
-		};
-		urllib.request('http://192.168.1.32/ISAPI/Event/notification/alertStream', options, function (err, data, res) {
-			if (err) {
-				console.log("ERROR: " + err);
-			}
-			try {
-				console.log("STATUS: " + res.statusCode);
-			} catch (error) {
-			}
-			try {
-				console.log("HEADERS: " + res.headers);
-			} catch (error) {
-			}
-			try {
-				console.log("DATA: " + data.toString());
+            "streaming": true,
+            "timeout": 5000
+        };
+        urllib.request("http://" + node.host + "/ISAPI/Event/notification/alertStream", options, function (err, data, res) {
+            if (err) {
+                console.log("ERROR: " + err);
+            }
+            try {
+                console.log("STATUS: " + res.statusCode);
+            } catch (error) {
+            }
+            try {
+                console.log("HEADERS: " + res.headers);
+            } catch (error) {
+            }
+            try {
+                console.log("DATA: " + data.toString());
+                node.nodeClients
+                    .forEach(oClient => {
+                        oClient.send({ topic:oClient.topic || "", payload: chunk.toString() });
+                    })
+                
+            } catch (error) {
 
-			} catch (error) {
+            }
+            res.on('data', function (chunk) {
+                console.log("chunk: " + chunk.toString());
+                setNodeStatus({ fill: "green", shape: "ring", text: "Rx chunk" });
+                
+            });
+            res.on('end', function () {
+                console.log("END");
+                done();
+            });
 
-			}
-			res.on('data', function (chunk) {
-				console.log("chunk: " + chunk.toString());
-			});
-			res.on('end', function () {
-				console.log("END");
-				done();
-			});
-
-		});
+        });
 
 
-		this.on('input', function (msg) {
+        this.on('input', function (msg) {
 
-			setNodeStatus({ fill: "green", shape: "ring", text: "banana" });
-		});
+            setNodeStatus({ fill: "green", shape: "ring", text: "banana" });
+        });
 
-		this.on('close', function (removed, done) {
-			
-			done();
-		});
+        this.on('close', function (removed, done) {
+
+            done();
+        });
+
+
+
+        node.on("close", function () {
+            if (node.timerSendTelegramFromQueue !== undefined) clearInterval(node.timerSendTelegramFromQueue); // 02/01/2020 Stop queue timer
+            node.Disconnect();
+        })
+
 
 
         node.addClient = (_Node) => {
@@ -98,14 +113,6 @@ module.exports = (RED) => {
                 node.Disconnect();
             }
         }
-
-
-        node.on("close", function () {
-            if (node.timerSendTelegramFromQueue !== undefined) clearInterval(node.timerSendTelegramFromQueue); // 02/01/2020 Stop queue timer
-            node.Disconnect();
-        })
-
-     
 
     }
 
