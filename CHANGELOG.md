@@ -2,7 +2,10 @@
 [![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square)](https://www.paypal.me/techtoday) 
 
 <p>
-<b>Version 0.0.1</b> November 2020<br/>
-- First BETA
+<b>Version 0.0.2 BETA</b> November 2020<br/>
+- Added connection checks and reconnection.
 </p>
 <p>
+<b>Version 0.0.1 BETA</b> November 2020<br/>
+- First BETA
+</p>
