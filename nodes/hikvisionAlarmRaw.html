@@ -1,7 +1,7 @@
 <script type="text/javascript">
-    RED.nodes.registerType('hikvisionUltimate',{
+    RED.nodes.registerType('hikvisionAlarmRaw',{
         category: 'network',
-        color: '#ff8080',
+        color: 'grey',
         defaults: {
 			name: { 
 				value: ""
@@ -34,39 +34,35 @@
 				}
         },
         inputs:1,
-		outputs:3,
+		outputs:1,
 		outputLabels: function(i) { 
 			var ret="";
 			switch (i) {
 				case 0:
-					return "AND";
+					return "Raw";
 				break;
 				case 1:
-					return "OR";
+					return "";
 				break;
 				case 2
 				:
-					return "XOR";
+					return "";
 				break;
 				default:
 					break;
 			}
 		},
-        icon: "serial.png",
+        icon: "bridge.png",
         label: 
 			function() {
-				let label = "";
-				let filtered=this.filtertrue=="both" ?  "" : "f" ;
-				let trigger="";
-				if(typeof this.outputtriggeredby !== "undefined") trigger=this.outputtriggeredby=="all" ?  "" :  "t (" + this.triggertopic+")";
-				label= this.inputCount + ((filtered+trigger)==""?" Boolean Logic":(filtered+trigger));
+				var label="Hikvision"
 				if( this.name !== undefined && this.name.length > 0 ) {
-					label += " (" + this.name + ")";
+					label = this.name;
 				}
 				return label;
 			},
 		paletteLabel: function() {
-			return "hikvisionUltimate";
+			return "hikvisionAlarmRaw";
 		},
 		oneditprepare: function () {
             // Add write and response as default for existing nodes like was default before
@@ -109,7 +105,7 @@
 	
 </script>
 
-<script type="text/x-red" data-template-name="hikvisionUltimate">
+<script type="text/x-red" data-template-name="hikvisionAlarmRaw">
 	<div class="form-row">
         <label for="node-input-inputCount"><i class="fa fa-indent"></i> Number of different topics to evaluate</label>
 		<input type="text" id="node-input-inputCount" placeholder="Number of different topics to consider">
@@ -157,7 +153,7 @@
 
 </script>
 
-<script type="text/x-red" data-help-name="hikvisionUltimate">
+<script type="text/x-red" data-help-name="hikvisionAlarmRaw">
 	<p>
         <a href="https://www.paypal.me/techtoday" target="_blank"><img src='https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square' width='30%'></a>
         
