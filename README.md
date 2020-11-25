@@ -20,7 +20,11 @@ Works with cameras, NVR and also with specialized devices, like Radar (for examp
 There is currently **only one node**, that traps the alarms, in RAW mode, and outputs a JSON.<br/>
 
 ## RAW Alarm Node
-<img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/RawAlarmConfig.png' width="80%">
+
+Sample of the config node. 
+<img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/RawAlarmConfig.png' width="50%">
+
+Sample JSON Output.
 <img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/Debug.png' width="80%">
 
 [![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square)](https://www.paypal.me/techtoday).
