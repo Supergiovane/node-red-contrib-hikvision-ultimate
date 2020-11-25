@@ -21,10 +21,11 @@ There is currently **only one node**, that traps the alarms, in RAW mode, and ou
 
 ## RAW Alarm Node
 
-Sample of the config node. 
+Sample of the config node. <br/>
 <img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/RawAlarmConfig.png' width="50%">
+<br/>
 
-Sample JSON Output.
+Sample JSON Output.<br/>
 <img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/Debug.png' width="80%">
 
 [![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square)](https://www.paypal.me/techtoday).
