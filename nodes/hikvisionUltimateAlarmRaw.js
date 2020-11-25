@@ -1,7 +1,7 @@
-var urllib = require('urllib');
+
 
 module.exports = function (RED) {
-	function hikvisionAlarmRaw(config) {
+	function hikvisionUltimateAlarmRaw(config) {
 		RED.nodes.createNode(this, config);
 		var node = this;
 		node.server = RED.nodes.getNode(config.server)
@@ -31,5 +31,5 @@ module.exports = function (RED) {
 
 	}
 
-	RED.nodes.registerType("hikvisionAlarmRaw", hikvisionAlarmRaw);
+	RED.nodes.registerType("hikvisionUltimateAlarmRaw", hikvisionUltimateAlarmRaw);
 }

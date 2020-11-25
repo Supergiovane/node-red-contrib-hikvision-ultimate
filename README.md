@@ -9,9 +9,19 @@
 [![JavaScript Style Guide](https://img.shields.io/badge/code_style-standard-brightgreen.svg)](https://standardjs.com)
 [![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square)](https://www.paypal.me/techtoday) 
 
-A native set of node for Hikvision Cameras, Alarms, Radars etc.
+A native set of node for Hikvision Cameras, Alarms, Radars, NVR etc.
 
-FIRST RELEASE TO BE PUBLISHED AT END NOVEMBER 2020.
+## THIS NODESET IS STILL IN BETA.
+
+## DESCRIPTION
+This is a set of nodes to handle ISAPI Hikvision messages. It works with digest authorization as well.<br/>
+Works with cameras, NVR and also with specialized devices, like Radar (for example DS-PR1-60 and 120).
+
+
+[![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square)](https://www.paypal.me/techtoday).
+
+## CHANGELOG
+* See <a href="https://github.com/Supergiovane/node-red-contrib-hikvision-ultimate/blob/master/CHANGELOG.md">here the changelog</a>
 
 [license-image]: https://img.shields.io/badge/license-MIT-blue.svg
 [license-url]: https://github.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/LICENSE

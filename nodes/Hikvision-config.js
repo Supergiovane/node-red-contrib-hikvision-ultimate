@@ -2,9 +2,10 @@
 
 module.exports = (RED) => {
 
+    var urllib = require('urllib');
+    var xml2js = require('xml2js').parseString;
 
-
-    function confignode(config) {
+    function Hikvisionconfig(config) {
         RED.nodes.createNode(this, config)
         var node = this
         node.host = config.host
@@ -30,18 +31,23 @@ module.exports = (RED) => {
             }
             try {
                 console.log("DATA: " + data.toString());
-                node.nodeClients
-                    .forEach(oClient => {
-                        oClient.send({ topic:oClient.topic || "", payload: chunk.toString() });
-                    })
-                
+
+
             } catch (error) {
 
             }
             res.on('data', function (chunk) {
                 console.log("chunk: " + chunk.toString());
-                setNodeStatus({ fill: "green", shape: "ring", text: "Rx chunk" });
+                var sRet = chunk.toString();
+                sRet = sRet.substring(sRet.indexOf("<?xml")); // Remove all before <?xml
+                // By xml2js
+                xml2js(sRet, function (err, result) {
+                    node.nodeClients.forEach(oClient => {
+                        oClient.send({ topic: oClient.topic || "", payload: result });
+                    })
+                });
                 
+
             });
             res.on('end', function () {
                 console.log("END");
@@ -53,7 +59,7 @@ module.exports = (RED) => {
 
         this.on('input', function (msg) {
 
-            setNodeStatus({ fill: "green", shape: "ring", text: "banana" });
+            node.setNodeStatus({ fill: "green", shape: "ring", text: "banana" });
         });
 
         this.on('close', function (removed, done) {
@@ -64,8 +70,7 @@ module.exports = (RED) => {
 
 
         node.on("close", function () {
-            if (node.timerSendTelegramFromQueue !== undefined) clearInterval(node.timerSendTelegramFromQueue); // 02/01/2020 Stop queue timer
-            node.Disconnect();
+
         })
 
 
@@ -73,31 +78,10 @@ module.exports = (RED) => {
         node.addClient = (_Node) => {
             // Check if node already exists
             if (node.nodeClients.filter(x => x.id === _Node.id).length === 0) {
-                // Check if the node has a valid topic and dpt
-                if (_Node.listenallga == false) {
-                    if (typeof _Node.topic == "undefined" || typeof _Node.dpt == "undefined") {
-                        _Node.setNodeStatus({ fill: "red", shape: "dot", text: "Empty Group Addr. or datapoint.", payload: "", GA: "", dpt: "", devicename: "" })
-                        return;
-                    } else {
-                        // topic must be in formar x/x/x
-                        if (_Node.topic.split("\/").length < 3) {
-                            _Node.setNodeStatus({ fill: "red", shape: "dot", text: "Wrong group address (topic: " + _Node.topic + ") format.", payload: "", GA: "", dpt: "", devicename: "" })
-                            return;
-                        }
-                    }
-                }
                 // Add _Node to the clients array
                 node.nodeClients.push(_Node)
             }
-            // At first node client connection, this node connects to the bus
-            if (node.nodeClients.length === 1) {
-                // 14/08/2018 Initialize the connection
-                try {
-                    node.initKNXConnection();
-                } catch (error) {
 
-                }
-            }
         }
 
         node.removeClient = (_Node) => {
@@ -110,15 +94,24 @@ module.exports = (RED) => {
 
             // If no clien nodes, disconnect from bus.
             if (node.nodeClients.length === 0) {
-                node.Disconnect();
+
             }
         }
+
+        // Used to call the status update from the config node.
+        node.setNodeStatus = ({ fill, shape, text }) => {
+            if (node.server == null) { node.status({ fill: "red", shape: "dot", text: "[NO SERVER SELECTED]" }); return; }
+            var dDate = new Date();
+            node.status({ fill: fill, shape: shape, text: text + "(" + dDate.getDate() + ", " + dDate.toLocaleTimeString() + ")" });
+        }
+
+
 
     }
 
 
 
-    RED.nodes.registerType("config-node", confignode, {
+    RED.nodes.registerType("Hikvision-config", Hikvisionconfig, {
         credentials: {
             user: { type: "text" },
             password: { type: "password" }

@@ -4,14 +4,14 @@
     "description": "A native set of node for Hikvision Cameras, Alarms, Radars etc.",
     "author": "Supergiovane (https://github.com/Supergiovane)",
     "dependencies": {
-        "urllib": "2.36.1"
+        "urllib": "2.36.1",
+        "xml2js": "0.4.23"
     },
     "keywords": [
         "node-red",
-        "boolean",
-        "gate",
-        "filter",
-        "logic"
+        "hikvision",
+        "alarm",
+        "camera"
     ],
     "license": "MIT",
     "repository": {
@@ -20,7 +20,8 @@
     },
     "node-red": {
         "nodes": {
-            "hikvisionAlarmRaw": "nodes/hikvisionAlarmRaw.js"
+            "Hikvision-config": "nodes/Hikvision-config.js",
+            "hikvisionUltimateAlarmRaw": "nodes/hikvisionUltimateAlarmRaw.js"
         }
     }
 }

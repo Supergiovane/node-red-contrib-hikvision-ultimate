@@ -1,5 +1,5 @@
 <script type="text/javascript">
-    RED.nodes.registerType('config-node', {
+    RED.nodes.registerType('Hikvision-config', {
         category: 'config',
         defaults: {
             host: { value: "", required: true },
@@ -7,9 +7,13 @@
             name: { value: "HikServer" },
             authentication: { value: "digest" }
         },
+        credentials: {
+            user: { type: "text" },
+            password: { type: "password" }
+        },
         oneditprepare: function () {
         },
-        oneditsave: function () {            
+        oneditsave: function () {
         },
         label: function () {
             return typeof this.name === undefined ? (this.host + ":" + this.port) : this.name + " " + (this.host + ":" + this.port);
@@ -17,7 +21,7 @@
     });
 </script>
 
-<script type="text/x-red" data-template-name="config-node">
+<script type="text/x-red" data-template-name="Hikvision-config">
     <div class="form-row">
         <h4>Server config</h4>
     
@@ -38,14 +42,21 @@
         <label for="node-config-input-port">Port</label>
         <input type="text" id="node-config-input-port" placeholder="">
     </div>
-
+    <div class="form-row">
+        <label for="node-config-input-user">Username</label>
+        <input type="text" id="node-config-input-user" placeholder="">
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-password">Password</label>
+        <input type="password" id="node-config-input-password" placeholder="">
+    </div>
     <div class="form-row">
         <label for="node-config-authentication"><i class="fa fa-sign-in"></i> Authentication</label>
         <select type="text" id="node-config-authentication">
 			<option value="digest">Digest</option>
 			
 		</select>
-	</div>
+    </div>
+
+</div>
 </script>
-
-
