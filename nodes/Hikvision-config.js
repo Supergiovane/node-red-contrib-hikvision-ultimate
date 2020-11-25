@@ -12,11 +12,11 @@ module.exports = (RED) => {
         node.host = config.host
         node.port = config.port
         node.nodeClients = [] // Stores the registered clients
-        node.connectionCheck;
-        node.connectionCheck = setTimeout(function () { node.CheckConnection(); }, 2000);
+        node.timertimerConnectionCheck = setTimeout(function () { node.CheckConnection(); }, 2000);
         node.alarmStreamConnected = false;
 
         // 25/11/2020
+        //#region "Check Connection"
         node.CheckConnection = () => {
             // Try to find out, if the server responds.
             var optionsCheck = {
@@ -35,7 +35,7 @@ module.exports = (RED) => {
                     // node.alarmStreamConnected = false;
                 }
                 try {
-                    console.log("CHECK STATUS: " + res.statusCode);
+                    //console.log("CHECK STATUS: " + res.statusCode);
                     if (res.statusCode !== 200) {
                         node.nodeClients.forEach(oClient => {
                             try {
@@ -60,11 +60,12 @@ module.exports = (RED) => {
                     }
                 } catch (error) {
                 }
-                node.connectionCheck = setTimeout(function () { node.CheckConnection(); }, 5000);
+                node.timerConnectionCheck = setTimeout(function () { node.CheckConnection(); }, 5000);
 
             });
 
         };
+        //#endregion
 
         // Starts alarm stream
         node.startAlarmStream = () => {
@@ -111,17 +112,12 @@ module.exports = (RED) => {
             });
         };
 
-
-        this.on('close', function (removed, done) {
+        node.on('close', function (removed, done) {
+            clearTimeout(node.timerConnectionCheck);
             done();
         });
 
-
-
-        node.on("close", function () {
-
-        })
-
+        
 
 
         node.addClient = (_Node) => {
