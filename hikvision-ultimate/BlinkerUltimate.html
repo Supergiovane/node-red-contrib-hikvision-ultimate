@@ -1,0 +1,49 @@
+<script type="text/javascript">
+    RED.nodes.registerType('BlinkerUltimate',{
+        category: 'boolean logic ultimate',
+        color: '#ff8080',
+        defaults: {
+			name: { 
+				value: "Blinker"
+			},
+			blinkfrequency: { 
+				value: 500
+			}		
+        },
+        inputs:1,
+        outputs:1,
+        icon: "light.png",
+        label: 
+			function() {
+				return (this.name||"Blinker") + " (" + this.blinkfrequency + "ms)";
+			},
+		paletteLabel: function() {
+			return "BlinkerUltimate";
+		}
+    });
+</script>
+
+<script type="text/x-red" data-template-name="BlinkerUltimate">
+	<div class="form-row">
+        <label for="node-input-name"><i class="icon-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+	</div>
+	
+	<div class="form-row">
+        <label for="node-input-blinkfrequency"><i class="fa fa-clock-o"></i> Blink every (in milliseconds)</label>
+		<input type="text" id="node-input-blinkfrequency" placeholder="Example: 500">
+    </div>
+</script>
+
+<script type="text/x-red" data-help-name="BlinkerUltimate">
+	<p>
+        <a href="https://www.paypal.me/techtoday" target="_blank"><img src='https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square' width='30%'></a>
+    </p>
+	<p>The meaning of this node is to blink a light or something else.<br/>
+	<p>Pass msg.payload = true to start blinking</br>
+	Pass msg.payload = false to stop blinking</br>
+	Pass msg.interval = 2000 to change the blinking interval</br>
+	</p>
+	<a href="https://www.paypal.me/techtoday" target="_blank"><img src='https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square' width='30%'></a>
+
+</script>

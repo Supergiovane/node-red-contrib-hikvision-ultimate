@@ -1,0 +1,54 @@
+<script type="text/javascript">
+    RED.nodes.registerType('SimpleOutputUltimate', {
+        category: 'boolean logic ultimate',
+        color: '#ff8080',
+        defaults: {
+            name: {
+                value: "T/F"
+            }
+        },
+        inputs: 1,
+        outputs: 2,
+        outputLabels: function (i) {
+            var ret = "";
+            switch (i) {
+                case 0:
+                    return "True";
+                    break;
+                case 1:
+                    return "False";
+                    break;
+                default:
+                    break;
+            }
+        },
+        icon: "font-awesome/fa-arrow-circle-o-right",
+        label:
+            function () {
+                return this.name || "SimpleOutput";
+            },
+        paletteLabel: function () {
+            return "SimpleOutputUltimate";
+        }
+    });
+</script>
+
+<script type="text/x-red" data-template-name="SimpleOutputUltimate">
+	<div class="form-row">
+        <label for="node-input-name"><i class="icon-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+</script>
+
+<script type="text/x-red" data-help-name="SimpleOutputUltimate">
+    <p>
+        <a href="https://www.paypal.me/techtoday" target="_blank"><img src='https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square' width='30%'></a>
+        
+    </p>
+    
+    <p>This node replaces the input payload by sendind a message with payload TRUE on output 1 and FALSE on output 2.<br/>
+	
+    </p>
+    <a href="https://www.paypal.me/techtoday" target="_blank"><img src='https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square' width='30%'></a>
+
+</script>

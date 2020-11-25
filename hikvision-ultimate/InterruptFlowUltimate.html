@@ -1,0 +1,72 @@
+<script type="text/javascript">
+    RED.nodes.registerType('InterruptFlowUltimate',{
+        category: 'boolean logic ultimate',
+        color: '#ff8080',
+        defaults: {
+			name: { 
+				value: "Interrupt Flow"
+			},
+			triggertopic: { 
+				value: "trigger"
+			}		
+        },
+        inputs:1,
+        outputs:1,
+        outputLabels: function(i) { 
+			var ret="";
+			switch (i) {
+				case 0:
+					return "True";
+				break;
+				case 1:
+					return "False";
+				break;
+				default:
+					break;
+			}
+		},
+        icon: "file-in.png",
+        label: 
+			function() {
+				return (this.name||"Interrupt") + " (" + this.triggertopic + ")";
+			},
+		paletteLabel: function() {
+			return "InterruptFlowUltimate";
+		}
+    });
+</script>
+
+<script type="text/x-red" data-template-name="InterruptFlowUltimate">
+	<div class="form-row">
+        <label for="node-input-name"><i class="icon-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+	</div>
+	
+	<div class="form-row">
+        <label for="node-input-triggertopic"><i class="icon-tag"></i> Trigger by topic</label>
+		<input type="text" id="node-input-triggertopic" placeholder="Name">
+		<div><i>Whenever the node receives a payload = false from this topic,<br/> it stops output messages to the flow.<br/>As soon it receives payload = true from this topic,<br/>the output messages start to flow out again.
+		<br/>The node will output the current stored message<br/>plus an added property "isReplay = true",<br/>as soon as it receives a "play" = true from this topic.
+	</i></div>
+    </div>
+</script>
+
+<script type="text/x-red" data-help-name="InterruptFlowUltimate">
+	<p>
+        <a href="https://www.paypal.me/techtoday" target="_blank"><img src='https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square' width='30%'></a>
+       
+    </p>
+	<p>The meaning of this node is to interrupt/reactivate flow messages.<br/>
+	Normally, passes the input messages to the output. If you send a payload with a specific topic (you can set it on the node properties), the node stops sending output messages.<br/>
+	It can also save the last message received and play later. This is useful if you wish to restore previous state to, for example, a light actuator.<br/>
+	Please see the <a href="https://github.com/Supergiovane/node-red-contrib-hikvision-ultimate" target="_blank">README</a> on github for examples.
+	</p>
+	<p>
+	The node will stop output messages, if it receives a payload = false <b>from the specified topic</b>.<br/>
+	The node will resume output messages, if it receives a payload = true <b>from the specified topic</b>.<br/>
+	Other that that, as soon as you send payload = false <b>from the specified topic</b>, the node stores the last received payload internally
+	The node will output the current stored message plus an added property <b>isReplay</b> = true, if it receives a <b>play</b> = true from the specified topic.<br/>
+	</p>
+	<a href="https://www.paypal.me/techtoday" target="_blank"><img src='https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square' width='30%'></a>
+
+</script>
