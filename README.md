@@ -12,15 +12,16 @@
 
 <img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/RawAlarm.png' width="80%">
 
-
-
-## THIS NODESET IS STILL IN BETA.
+## THIS NODESET IS IN BETA.
 
 ## DESCRIPTION
 This is a set of nodes to handle ISAPI Hikvision messages. It works with digest authorization as well.<br/>
 Works with cameras, NVR and also with specialized devices, like Radar (for example DS-PR1-60 and 120).<br/>
+There is currently **only one node**, that traps the alarms, in RAW mode, and outputs a JSON.<br/>
 
-
+## RAW Alarm Node
+<img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/RawAlarmConfig.png' width="80%">
+<img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/Debug.png' width="80%">
 
 [![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square)](https://www.paypal.me/techtoday).
 
