@@ -1,6 +1,6 @@
 <script type="text/javascript">
-    RED.nodes.registerType('BooleanLogicUltimate',{
-        category: 'boolean logic ultimate',
+    RED.nodes.registerType('hikvisionUltimate',{
+        category: 'network',
         color: '#ff8080',
         defaults: {
 			name: { 
@@ -66,7 +66,7 @@
 				return label;
 			},
 		paletteLabel: function() {
-			return "BooleanLogicUltimate";
+			return "hikvisionUltimate";
 		},
 		oneditprepare: function () {
             // Add write and response as default for existing nodes like was default before
@@ -109,7 +109,7 @@
 	
 </script>
 
-<script type="text/x-red" data-template-name="BooleanLogicUltimate">
+<script type="text/x-red" data-template-name="hikvisionUltimate">
 	<div class="form-row">
         <label for="node-input-inputCount"><i class="fa fa-indent"></i> Number of different topics to evaluate</label>
 		<input type="text" id="node-input-inputCount" placeholder="Number of different topics to consider">
@@ -157,7 +157,7 @@
 
 </script>
 
-<script type="text/x-red" data-help-name="BooleanLogicUltimate">
+<script type="text/x-red" data-help-name="hikvisionUltimate">
 	<p>
         <a href="https://www.paypal.me/techtoday" target="_blank"><img src='https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square' width='30%'></a>
         

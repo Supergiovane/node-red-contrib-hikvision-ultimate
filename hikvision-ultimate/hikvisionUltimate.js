@@ -1,5 +1,5 @@
 module.exports = function (RED) {
-	function BooleanLogicUltimate(config) {
+	function hikvisionUltimate(config) {
 		RED.nodes.createNode(this, config);
 		var node = this;
 		var fs = require("fs");
@@ -9,10 +9,10 @@ module.exports = function (RED) {
 		node.config = config;
 		node.jSonStates = {}; // JSON object containing the states. 
 		node.sInitializeWith = typeof node.config.sInitializeWith === "undefined" ? "WaitForPayload" : node.config.sInitializeWith;
-		node.persistPath = path.join(RED.settings.userDir, "booleanlogicultimatepersist"); // 26/10/2020 Contains the path for the states dir.
+		node.persistPath = path.join(RED.settings.userDir, "hikvisionUltimatepersist"); // 26/10/2020 Contains the path for the states dir.
 
 		// Helper for the config html, to be able to delete the peristent states file
-		RED.httpAdmin.get("/stateoperation_delete", RED.auth.needsPermission('BooleanLogicUltimate.read'), function (req, res) {
+		RED.httpAdmin.get("/stateoperation_delete", RED.auth.needsPermission('hikvisionUltimate.read'), function (req, res) {
 			//node.send({ req: req });
 			// Detele the persist file
 			//var _node = RED.nodes.getNode(req.query.nodeid); // Gets node object from nodeit, because when called from the config html, the node object is not defined
@@ -33,7 +33,7 @@ module.exports = function (RED) {
 				if (fs.existsSync("states")) {
 					var filenames = fs.readdirSync("states");
 					filenames.forEach(file => {
-						RED.log.info("BooleanLogicUltimate: migrating from old states path to the new persist " + file);
+						RED.log.info("hikvisionUltimate: migrating from old states path to the new persist " + file);
 						fs.copyFileSync("states/" + file, path.join(node.persistPath, path.basename(file)));
 					});
 				}
@@ -171,7 +171,7 @@ module.exports = function (RED) {
 			if (node.sInitializeWith !== "WaitForPayload") {
 				var nTotalDummyToCreate = Number(node.config.inputCount) - Object.keys(node.jSonStates).length;
 				if (nTotalDummyToCreate > 0) {
-					RED.log.info("BooleanLogicUltimate: Will create " + nTotalDummyToCreate + " dummy (" + node.sInitializeWith + ") values")
+					RED.log.info("hikvisionUltimate: Will create " + nTotalDummyToCreate + " dummy (" + node.sInitializeWith + ") values")
 					for (let index = 0; index < nTotalDummyToCreate; index++) {
 						node.jSonStates["dummy" + index] = node.sInitializeWith === "false" ? false : true;
 					}
@@ -284,5 +284,5 @@ module.exports = function (RED) {
 		};
 	}
 
-	RED.nodes.registerType("BooleanLogicUltimate", BooleanLogicUltimate);
+	RED.nodes.registerType("hikvisionUltimate", hikvisionUltimate);
 }

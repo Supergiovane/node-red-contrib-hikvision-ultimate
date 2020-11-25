@@ -21,7 +21,7 @@
     },
     "node-red": {
         "nodes": {
-            "BooleanLogicUltimate": "hikvision-ultimate/BooleanLogicUltimate.js",
+            "hikvisionUltimate": "hikvision-ultimate/hikvisionUltimate.js",
             "InvertUltimate": "hikvision-ultimate/InvertUltimate.js",
             "FilterUltimate": "hikvision-ultimate/FilterUltimate.js",
             "InterruptFlowUltimate": "hikvision-ultimate/InterruptFlowUltimate.js",
