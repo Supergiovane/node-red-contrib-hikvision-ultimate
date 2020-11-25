@@ -1,115 +1,54 @@
 <script type="text/javascript">
-    RED.nodes.registerType('hikvisionAlarmRaw',{
-        category: 'network',
-        color: 'grey',
-        defaults: {
-			name: { 
-				value: ""
-			},
-			filtertrue: {value:"both"},
-			persist: {value:true},
-			sInitializeWith: {value:"WaitForPayload"},
-			triggertopic: {
-				value: "trigger",
-				required: false
-			},
-			outputtriggeredby:{
-				value:"all",
-				required: false},
-			inputCount: {
-					value: 2,
-					required: true,
-					validate: 
-						function(v) { 
-							return !isNaN( parseInt( v ) ) && parseInt( v ) >= 2;
-						}
-				},
-				topic: {
-					value: "result",
-					required: true,
-					validate:
-						function(v) { 
-							return v !== undefined && v.length > 0;
-						}
-				}
-        },
-        inputs:1,
-		outputs:1,
-		outputLabels: function(i) { 
-			var ret="";
+	RED.nodes.registerType('hikvisionAlarmRaw', {
+		category: 'network',
+		color: 'grey',
+		defaults: {
+			name: { value: "" }
+		},
+		inputs: 1,
+		outputs: 1,
+		outputLabels: function (i) {
+			var ret = "";
 			switch (i) {
 				case 0:
 					return "Raw";
-				break;
+					break;
 				case 1:
 					return "";
-				break;
+					break;
 				case 2
-				:
+					:
 					return "";
-				break;
+					break;
 				default:
 					break;
 			}
 		},
-        icon: "bridge.png",
-        label: 
-			function() {
-				var label="Hikvision"
-				if( this.name !== undefined && this.name.length > 0 ) {
+		icon: "bridge.png",
+		label:
+			function () {
+				var label = "hikvisionAlarmRaw"
+				if (this.name !== undefined && this.name.length > 0) {
 					label = this.name;
 				}
 				return label;
 			},
-		paletteLabel: function() {
+		paletteLabel: function () {
 			return "hikvisionAlarmRaw";
 		},
 		oneditprepare: function () {
-            // Add write and response as default for existing nodes like was default before
-			if (this.outputtriggeredby === 'all') {
-				$("#triggertopic").hide()
- 			}else
-			{
-				$("#triggertopic").show()
-			}
-           
-            $("#node-input-outputtriggeredby").on('change',function() {
-                if ($("#node-input-outputtriggeredby").val()==="all") {
-					$("#triggertopic").hide()
-                }else{
-                    $("#triggertopic").show()
-                }
-			})
-			
-			// default
-			if(typeof this.outputtriggeredby === "undefined")
-			{
-				$("#node-input-outputtriggeredby").val("all");
-				this.outputtriggeredby="all";
-			}
 
-			// default
-			if(typeof this.sInitializeWith === "undefined")
-			{
-				$("#node-input-sInitializeWith").val("WaitForPayload");
-				this.sInitializeWith="WaitForPayload";
-			}
 
-        },
-        oneditsave: function () {
-			// Delete persistent state file
-			$.get( "stateoperation_delete?nodeid=" +this.id, function( data ) {});
+		},
+		oneditsave: function () {
+
 		}
 	});
-	
-	
+
+
 </script>
 
 <script type="text/x-red" data-template-name="hikvisionAlarmRaw">
-	<div class="form-row">
-        <label for="node-input-inputCount"><i class="fa fa-indent"></i> Number of different topics to evaluate</label>
-		<input type="text" id="node-input-inputCount" placeholder="Number of different topics to consider">
-    </div>
 	<div class="form-row">
         <label for="node-input-name"><i class="icon-tag"></i> Name</label>
         <input type="text" id="node-input-name" placeholder="Name">
@@ -118,37 +57,8 @@
         <label for="node-input-topic"><i class="fa fa-tasks"></i> Node topic</label>
         <input type="text" id="node-input-topic" placeholder="Node's own topic">
 	</div>
-    <div class="form-row">
-        <label for="node-input-filtertrue"><i class="fa fa-filter"></i> Filter output result</label>
-        <select type="text" id="node-input-filtertrue" placeholder="Filter">
-			<option value="both">Output both 'true' and 'false' results</option>
-			<option value="onlytrue">Output only 'true' results</option>
-		</select>
-	</div>
-	<div class="form-row">
-        <label for="node-input-outputtriggeredby"><i class="fa fa-filter"></i> Trigger mode</label>
-        <select type="text" id="node-input-outputtriggeredby" placeholder="Event">
-			<option value="all">All topics</option>
-			<option value="onlyonetopic">Single topic</option>
-		</select>
-	</div>
-	<div class="form-row" id="triggertopic">
-        <label for="node-input-triggertopic"><i class="fa fa-tasks"></i> Topic that start boolean logic evaluation</label>
-        <input type="text" id="node-input-triggertopic" placeholder="Input topic">
-	</div>
-	<div class="form-row">
-        <label for="node-input-sInitializeWith"><i class="fa fa-home"></i> If input states are undefined at boot</label>
-        <select type="text" id="node-input-sInitializeWith" placeholder="">
-			<option value="WaitForPayload">Leave undefined</option>
-			<option value="false">Initialize all with False</option>
-			<option value="true">Initialize all with True</option>
-		</select>
-	</div>
-	<div class="form-row">
-		<i class="fa fa-floppy-o"></i> 
-		<label style="width:auto" for="node-input-persist"> Remember latest input values after reboot</label> <input type="checkbox" id="node-input-persist" style="display:inline-block; width:auto; vertical-align:top;">
-		<div class="form-tips" style="margin-top: 8px;background-color:lightgrey;text-align:center">If <b>Remember latest input values after reboot</b><br/> is checked, the input values are retained <br/> after a node-red restart, deploy or reboot.</div>
-	</div>
+    
+	
 	
 
 </script>
