@@ -2,16 +2,12 @@
 
 A native set of node for Hikvision Cameras, Alarms, Radars, NVR etc.
 
-### THIS NODESET IS IN BETA. E' ancora brutto, ma funziona.
-
 [![NPM version][npm-version-image]][npm-url]
 [![NPM downloads per month][npm-downloads-month-image]][npm-url]
 [![NPM downloads total][npm-downloads-total-image]][npm-url]
 [![MIT License][license-image]][license-url]
 [![JavaScript Style Guide](https://img.shields.io/badge/code_style-standard-brightgreen.svg)](https://standardjs.com)
 [![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square)](https://www.paypal.me/techtoday) 
-
-
 
 <img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/RawAlarm.png' width="80%">
 
@@ -20,6 +16,7 @@ A native set of node for Hikvision Cameras, Alarms, Radars, NVR etc.
 This is a set of nodes to handle ISAPI Hikvision messages. It works with digest authorization as well.<br/>
 Works with cameras, NVR and also with specialized devices, like Radar (for example DS-PR1-60 and 120).<br/>
 There is currently **only one node**, that traps the alarms, in RAW mode, and outputs a JSON.<br/>
+***THIS NODESET IS IN BETA. E' ancora brutto, ma funziona.***
 
 ## RAW Alarm Node
 
