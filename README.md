@@ -1,5 +1,6 @@
 # node-red-contrib-hikvision-ultimate
 
+### THIS NODESET IS IN BETA. E' ancora brutto, ma funziona.
 
 [![NPM version][npm-version-image]][npm-url]
 [![NPM downloads per month][npm-downloads-month-image]][npm-url]
@@ -12,7 +13,6 @@
 
 <img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/RawAlarm.png' width="80%">
 
-### THIS NODESET IS IN BETA. E' ancora brutto, ma funziona.
 
 ## DESCRIPTION
 This is a set of nodes to handle ISAPI Hikvision messages. It works with digest authorization as well.<br/>
