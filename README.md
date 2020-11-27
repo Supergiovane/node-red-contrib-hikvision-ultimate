@@ -15,7 +15,7 @@ A native set of node for Hikvision Cameras, Alarms, Radars, NVR etc.
 ## DESCRIPTION
 This is a set of nodes to handle ISAPI Hikvision messages. It works with digest authorization as well.<br/>
 Works with cameras, NVR and also with specialized devices, like Radar (for example DS-PR1-60 and 120).<br/>
-There is currently **only one node**, that traps the alarms, in RAW mode, and outputs a JSON.<br/>
+There are currently **only two node**, one that traps the alarms, in RAW mode, and outputs a JSON and the other that outputs the ANPR License Plate numbers.<br/>
 ***THIS NODESET IS IN BETA. E' ancora brutto, ma funziona.***
 
 ## RAW Alarm Node
