@@ -5,7 +5,8 @@
     "author": "Supergiovane (https://github.com/Supergiovane)",
     "dependencies": {
         "urllib": "2.36.1",
-        "xml2js": "0.4.23"
+        "xml2js": "0.4.23",
+        "child_process": "1.0.2"
     },
     "keywords": [
         "node-red",
@@ -21,7 +22,8 @@
     "node-red": {
         "nodes": {
             "Hikvision-config": "nodes/Hikvision-config.js",
-            "hikvisionUltimateAlarmRaw": "nodes/hikvisionUltimateAlarmRaw.js"
+            "hikvisionUltimateAlarmRaw": "nodes/hikvisionUltimateAlarmRaw.js",
+            "hikvisionUltimateANPR": "nodes/hikvisionUltimateANPR.js"
         }
     }
 }

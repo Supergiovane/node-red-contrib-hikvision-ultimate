@@ -1,7 +1,7 @@
 
 
 module.exports = function (RED) {
-	function hikvisionUltimateAlarmRaw(config) {
+	function hikvisionUltimateANPR(config) {
 		RED.nodes.createNode(this, config);
 		var node = this;
 		node.server = RED.nodes.getNode(config.server)
@@ -14,8 +14,16 @@ module.exports = function (RED) {
 		// Called from config node, to send output to the flow
 		node.sendPayload = (_msg) => {
 			if (_msg.payload === null) { node.send(_msg); return; }; // If null, then it's disconnected. Avoid processing the event
-			node.setNodeStatus({ fill: "green", shape: "dot", text: "Alert received" });
-			node.send(_msg);
+
+			var retMsg = { topic: _msg.topic, connected: _msg.connected };
+			if (_msg.payload.EventNotificationAlert.hasOwnProperty("ANPR")) {
+				if (_msg.payload.EventNotificationAlert.hasOwnProperty("licensePlate")){
+					retMsg.payload = { licensePlate: _msg.payload.EventNotificationAlert.ANPR.licensePlate };
+					if (_msg.payload.EventNotificationAlert.hasOwnProperty("confidenceLevel")) retMsg.payload.confidenceLevel = _msg.payload.EventNotificationAlert.confidenceLevel;
+				}				
+			}
+			node.setNodeStatus({ fill: "green", shape: "dot", text: "Plate: " + retMsg.payload.licensePlate });
+			node.send(retMsg);
 		}
 
 		// On each deploy, unsubscribe+resubscribe
@@ -37,5 +45,5 @@ module.exports = function (RED) {
 
 	}
 
-	RED.nodes.registerType("hikvisionUltimateAlarmRaw", hikvisionUltimateAlarmRaw);
+	RED.nodes.registerType("hikvisionUltimateANPR", hikvisionUltimateANPR);
 }

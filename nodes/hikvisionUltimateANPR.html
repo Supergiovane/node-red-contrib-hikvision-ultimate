@@ -1,5 +1,5 @@
 <script type="text/javascript">
-	RED.nodes.registerType('hikvisionUltimateAlarmRaw', {
+	RED.nodes.registerType('hikvisionUltimateANPR', {
 		category: 'Hikvision Ultimate',
 		color: 'grey',
 		defaults: {
@@ -12,7 +12,7 @@
 			var ret = "";
 			switch (i) {
 				case 0:
-					return "Raw";
+					return "License plates";
 					break;
 				case 1:
 					return "";
@@ -28,14 +28,14 @@
 		icon: "bridge.png",
 		label:
 			function () {
-				var label = "hikvisionUltimateAlarmRaw"
+				var label = "hikvisionUltimateANPR"
 				if (this.name !== undefined && this.name.length > 0) {
 					label = this.name;
 				}
 				return label;
 			},
 		paletteLabel: function () {
-			return "RAW Alarms";
+			return "License Plate ANPR";
 		},
 		oneditprepare: function () {
 
@@ -49,7 +49,7 @@
 
 </script>
 
-<script type="text/x-red" data-template-name="hikvisionUltimateAlarmRaw">
+<script type="text/x-red" data-template-name="hikvisionUltimateANPR">
 	<div class="form-row">
 		<label for="node-input-server">Server</label>
 		<input type="text" id="node-input-server" />
@@ -68,7 +68,7 @@
 
 </script>
 
-<script type="text/x-red" data-help-name="hikvisionUltimateAlarmRaw">
+<script type="text/x-red" data-help-name="hikvisionUltimateANPR">
 	<p>
         <a href="https://www.paypal.me/techtoday" target="_blank"><img src='https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square' width='30%'></a>
         
