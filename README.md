@@ -27,8 +27,6 @@ Sample of the config node. <br/>
 Sample JSON Output.<br/>
 <img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/Debug.png' width="80%">
 
-[![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square)](https://www.paypal.me/techtoday).
-
 ## CHANGELOG
 * See <a href="https://github.com/Supergiovane/node-red-contrib-hikvision-ultimate/blob/master/CHANGELOG.md">here the changelog</a>
 
