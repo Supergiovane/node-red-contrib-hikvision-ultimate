@@ -17,13 +17,17 @@ module.exports = function (RED) {
 
 			var retMsg = { topic: _msg.topic, connected: _msg.connected };
 			if (_msg.payload.EventNotificationAlert.hasOwnProperty("ANPR")) {
-				if (_msg.payload.EventNotificationAlert.hasOwnProperty("licensePlate")){
+				if (_msg.payload.EventNotificationAlert.ANPR.hasOwnProperty("licensePlate")){
 					retMsg.payload = { licensePlate: _msg.payload.EventNotificationAlert.ANPR.licensePlate };
-					if (_msg.payload.EventNotificationAlert.hasOwnProperty("confidenceLevel")) retMsg.payload.confidenceLevel = _msg.payload.EventNotificationAlert.confidenceLevel;
+					if (_msg.payload.EventNotificationAlert.ANPR.hasOwnProperty("confidenceLevel")) retMsg.payload.confidenceLevel = _msg.payload.EventNotificationAlert.ANPR.confidenceLevel;
+					node.setNodeStatus({ fill: "green", shape: "dot", text: "Plate: " + retMsg.payload.licensePlate });
+					node.send(retMsg);
 				}				
+			} else {
+				// The connection is alive, but we've no plates
+				node.setNodeStatus({ fill: "green", shape: "ring", text: "Connected. Waiting for plate..." });
 			}
-			node.setNodeStatus({ fill: "green", shape: "dot", text: "Plate: " + retMsg.payload.licensePlate });
-			node.send(retMsg);
+			
 		}
 
 		// On each deploy, unsubscribe+resubscribe

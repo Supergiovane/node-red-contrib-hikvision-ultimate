@@ -17,6 +17,8 @@ module.exports = (RED) => {
 
         node.startAlarmStream = () => {
 
+            node.setAllClientsStatus({ fill: "grey", shape: "ring", text: "Connecting..." });
+
             var keepaliveAgent = new Agent({
                 keepAlive: true
             });
@@ -38,7 +40,7 @@ module.exports = (RED) => {
                     setTimeout(node.startAlarmStream, 10000); // Reconnect
                     return;
                 }
-
+                
                 res.on('data', function (chunk) {
                     node.isConnected = true;
                     try {
@@ -76,7 +78,7 @@ module.exports = (RED) => {
         };
 
         setTimeout(node.startAlarmStream, 5000); // First connection.
-     
+
 
         //#region "FUNCTIONS"
         node.on('close', function (removed, done) {
