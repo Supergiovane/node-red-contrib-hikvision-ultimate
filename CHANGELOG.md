@@ -2,6 +2,11 @@
 [![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square)](https://www.paypal.me/techtoday) 
 
 <p>
+<b>Version 0.0.8 BETA</b> November 2020<br/>
+- ANPR node now emits connect and disconnect messages. 
+- Fixes and improvements.
+</p>
+<p>
 <b>Version 0.0.7 BETA</b> November 2020<br/>
 - ANPR node now works and correclty handles the plates queue by disregarding old plates.
 - Fixes and improvements.

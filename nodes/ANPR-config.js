@@ -57,7 +57,7 @@ module.exports = (RED) => {
                 }
 
                 if (data) {
-                    node.isConnected = true;
+                    
                     node.lastPicName = "";
                     var oPlates = null;
                     try {
