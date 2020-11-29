@@ -4,7 +4,7 @@
 		color: 'grey',
 		defaults: {
 			name: { value: "" },
-			server: { type: "Hikvision-config", required: true }
+			server: { type: "ANPR-config", required: true }
 		},
 		inputs: 0,
 		outputs: 1,
@@ -12,7 +12,7 @@
 			var ret = "";
 			switch (i) {
 				case 0:
-					return "License plates";
+					return "Plates";
 					break;
 				case 1:
 					return "";

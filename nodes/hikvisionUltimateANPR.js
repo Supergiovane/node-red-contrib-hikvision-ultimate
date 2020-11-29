@@ -14,20 +14,12 @@ module.exports = function (RED) {
 		// Called from config node, to send output to the flow
 		node.sendPayload = (_msg) => {
 			if (_msg.payload === null) { node.send(_msg); return; }; // If null, then it's disconnected. Avoid processing the event
+			node.send(_msg);
+			try {
+				node.setNodeStatus({ fill: "green", shape: "dot", text: "Plate " + _msg.payload.Plates.Plate[0].plateNumber });
+			} catch (error) {
 
-			var retMsg = { topic: _msg.topic, connected: _msg.connected };
-			if (_msg.payload.EventNotificationAlert.hasOwnProperty("ANPR")) {
-				if (_msg.payload.EventNotificationAlert.ANPR.hasOwnProperty("licensePlate")){
-					retMsg.payload = { licensePlate: _msg.payload.EventNotificationAlert.ANPR.licensePlate };
-					if (_msg.payload.EventNotificationAlert.ANPR.hasOwnProperty("confidenceLevel")) retMsg.payload.confidenceLevel = _msg.payload.EventNotificationAlert.ANPR.confidenceLevel;
-					node.setNodeStatus({ fill: "green", shape: "dot", text: "Plate: " + retMsg.payload.licensePlate });
-					node.send(retMsg);
-				}				
-			} else {
-				// The connection is alive, but we've no plates
-				node.setNodeStatus({ fill: "green", shape: "ring", text: "Connected. Waiting for plate..." });
 			}
-			
 		}
 
 		// On each deploy, unsubscribe+resubscribe
@@ -37,7 +29,7 @@ module.exports = function (RED) {
 		}
 
 		this.on('input', function (msg) {
-			
+
 		});
 
 		node.on("close", function (done) {

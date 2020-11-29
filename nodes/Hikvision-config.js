@@ -29,7 +29,7 @@ module.exports = (RED) => {
             };
             node.urllibRequest = urllib.request("http://" + node.host + "/ISAPI/Event/notification/alertStream", options, function (err, data, res) {
                 if (err) {
-                    console.log("MAIN ERROR: " + err);
+                    //console.log("MAIN ERROR: " + err);
                     node.setAllClientsStatus({ fill: "grey", shape: "ring", text: "Server unreachable. Retry..." });
                     if (node.isConnected) {
                         node.nodeClients.forEach(oClient => {
@@ -40,26 +40,44 @@ module.exports = (RED) => {
                     setTimeout(node.startAlarmStream, 10000); // Reconnect
                     return;
                 }
-                
+
                 res.on('data', function (chunk) {
                     node.isConnected = true;
+
                     try {
                         var sRet = chunk.toString();
-                        sRet = sRet.substring(sRet.indexOf("<")); // Get only the XML, starting with "<"
-                        // By xml2js
-                        xml2js(sRet, function (err, result) {
-                            node.nodeClients.forEach(oClient => {
-                                if (result !== undefined) oClient.sendPayload({ topic: oClient.topic || "", payload: result, connected: true });
-                            })
-                        });
+                        sRet = sRet.replace(/--boundary/g, '');
+                        var i = sRet.indexOf("<"); // Get only the XML, starting with "<"
+                        if (i > -1) {
+                            sRet = sRet.substring(i);
+                            // By xml2js
+                            xml2js(sRet, function (err, result) {
+                                node.nodeClients.forEach(oClient => {
+                                    if (result !== undefined) oClient.sendPayload({ topic: oClient.topic || "", payload: result, connected: true });
+                                })
+                            });
+                        } else {
+                            i = sRet.indexOf("{") // It's a Json
+                            if (i > -1) {
+                                sRet = sRet.substring(i);
+                                //sRet = sRet.replace(/(['"])?([a-z0-9A-Z_]+)(['"])?:/g, '"$2": '); // Fix numbers and chars invalid in JSON
+                                //console.log("BANANA : " + sRet);
+                                node.nodeClients.forEach(oClient => {
+                                    oClient.sendPayload({ topic: oClient.topic || "", payload: JSON.parse(sRet), connected: true });
+                                })
+                            }
+                        }
+
                     } catch (error) { console.log("ERRORE CATCHATO " + error); }
 
                 });
                 res.on('end', function () {
-                    console.log("END");
+                    //console.log("Hikvision-Config: END " + res.statusMessage);
+                    if (res.statusMessage === "Unauthorized") {
+                        node.setAllClientsStatus({ fill: "red", shape: "ring", text: res.statusMessage });
+                    }
                 });
                 res.on('close', function () {
-                    console.log("CLOSE");
                     node.setAllClientsStatus({ fill: "grey", shape: "ring", text: "Disconnected. Retry..." });
                     if (node.isConnected) {
                         node.nodeClients.forEach(oClient => {
@@ -70,7 +88,7 @@ module.exports = (RED) => {
                     setTimeout(node.startAlarmStream, 10000); // Reconnect
                 });
                 res.on('error', function (err) {
-                    console.log("ERROR: " + err);
+                    //("ERROR: " + err);
                 });
 
 
@@ -79,7 +97,7 @@ module.exports = (RED) => {
 
         setTimeout(node.startAlarmStream, 5000); // First connection.
 
-
+       
         //#region "FUNCTIONS"
         node.on('close', function (removed, done) {
             done();

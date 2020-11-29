@@ -1,10 +1,10 @@
 <script type="text/javascript">
-    RED.nodes.registerType('Hikvision-config', {
+    RED.nodes.registerType('ANPR-config', {
         category: 'config',
         defaults: {
             host: { value: "", required: true },
             port: { value: 80, required: true, validate: RED.validators.number() },
-            name: { value: "Server" }
+            name: { value: "License Plate Camera" }
         },
         credentials: {
             user: { type: "text" },
@@ -20,7 +20,7 @@
     });
 </script>
 
-<script type="text/x-red" data-template-name="Hikvision-config">
+<script type="text/x-red" data-template-name="ANPR-config">
     <div class="form-row">
         <h4>Server config</h4>
     
