@@ -30,6 +30,33 @@ Sample JSON Output.<br/>
 ## CHANGELOG
 * See <a href="https://github.com/Supergiovane/node-red-contrib-hikvision-ultimate/blob/master/CHANGELOG.md">here the changelog</a>
 
+
+## ANPR (License Plate) Node
+
+<img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/ANPR.png' width="50%">
+<br/>
+
+**Output message**
+The node outputs this msg.</br>
+The payload is the license plate number, plus there is another property "plate" where you can find other useful informations.</br>
+
+```javascript
+msg = {
+    "topic":"",
+    "payload":"AB123CD", // This is the license plate
+    "connected":true, // true if the connection is OK, otherwise false if the connection is lost.
+    "plate":{
+        "captureTime":"20201130T114200+0100",
+        "plateNumber":"AB123CD",
+        "picName":"202011301142008600", // This is the picture's name of the license plate.
+        "country":"ITA",
+        "laneNo":"1",
+        "direction":"forward",
+        "matchingResult":"otherlist"
+        }
+    }
+```
+
 [license-image]: https://img.shields.io/badge/license-MIT-blue.svg
 [license-url]: https://github.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/LICENSE
 [npm-url]: https://npmjs.org/package/node-red-contrib-hikvision-ultimate
