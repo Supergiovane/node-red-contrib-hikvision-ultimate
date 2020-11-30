@@ -2,7 +2,7 @@
 [![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square)](https://www.paypal.me/techtoday) 
 
 <p>
-<b>Version 0.0.10 BETA</b> November 2020<br/>
+<b>Version 0.0.11 BETA</b> November 2020<br/>
 - Added an option to the ANPR node, to filter repeating plates in a timeframe.<br/>
 </p>
 <p>
