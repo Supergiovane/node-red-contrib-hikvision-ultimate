@@ -12,7 +12,7 @@ A native set of node for Hikvision Cameras, Alarms, Radars, NVR etc.
 
 
 ## DESCRIPTION
-This is a set of nodes to handle ISAPI Hikvision messages. It works with digest authorization as well.<br/>
+This is a set of nodes to handle ISAPI Hikvision messages.<br/>
 Works with cameras, NVR and also with specialized devices, like Radar (for example DS-PR1-60 and 120).<br/>
 Digest authehtication is the default, so it should work with all gears!<br/>
 All nodes are capable of auto reconnect if the connection is lost and are able to actively monitor the connection.<br/>
@@ -24,7 +24,6 @@ I'll add helps, docs and samples in this README page. Please have some patience.
 ## CHANGELOG
 * See <a href="https://github.com/Supergiovane/node-red-contrib-hikvision-ultimate/blob/master/CHANGELOG.md">here the changelog</a>
 
-<br/>
 <br/>
 <br/>
 <br/>
@@ -42,8 +41,9 @@ The RAW alarm node connects to NVR, Camera, Alarm system, Radars etc. and output
 <br/>
 
 **Output message**
+
 The node outputs this msg.</br>
-The payload is the license plate number, plus there is another property "plate" where you can find other useful informations.</br>
+The payload contains the license plate number and the property "plate" contains other useful informations.</br>
 
 ```javascript
 msg = {
