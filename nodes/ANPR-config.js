@@ -4,7 +4,7 @@ module.exports = (RED) => {
 
     const DigestFetch = require('digest-fetch')
     const AbortController = require('abort-controller');
-    const xml2js = require('xml2js').Parser({explicitArray: false}).parseString;
+    const xml2js = require('xml2js').Parser({ explicitArray: false }).parseString;
 
     function ANPRconfig(config) {
         RED.nodes.createNode(this, config)
@@ -14,6 +14,7 @@ module.exports = (RED) => {
         node.nodeClients = []; // Stores the registered clients
         node.isConnected = false;
         node.lastPicName = "";
+        var controller = null; // Abortcontroller
 
         node.setAllClientsStatus = ({ fill, shape, text }) => {
             function nextStatus(oClient) {
@@ -28,7 +29,7 @@ module.exports = (RED) => {
 
             node.setAllClientsStatus({ fill: "grey", shape: "ring", text: "Connecting..." });
             var client = new DigestFetch(node.credentials.user, node.credentials.password); // Instantiate the fetch client.
-            var controller = new AbortController(); // For aborting the stream request
+            controller = new AbortController(); // For aborting the stream request
             var options = {
                 // These properties are part of the Fetch Standard
                 method: 'POST',
@@ -79,7 +80,7 @@ module.exports = (RED) => {
                                     oPlates = JSON.parse(result);
                                 } else {
                                     // Invalid body
-                                    RED.log.error("ANPR-config: DecodingBody:" + error);
+                                    RED.log.info("ANPR-config: DecodingBody: Invalid Json " + sRet);
                                     node.lastPicName = ""; // This raises an error, below.
                                     oPlates = null; // Set null
                                 }
@@ -164,7 +165,7 @@ module.exports = (RED) => {
                 setTimeout(node.initPlateReader, 10000); // Restart whole process.
                 return;
             }
-            var controller = new AbortController(); // For aborting the stream request
+            controller = new AbortController(); // For aborting the stream request
             var client = new DigestFetch(node.credentials.user, node.credentials.password); // Instantiate the fetch client.
             var options = {
                 // These properties are part of the Fetch Standard
@@ -206,13 +207,16 @@ module.exports = (RED) => {
                             // By xml2js
                             xml2js(sRet, function (err, result) {
                                 oRet = result;
-
                             });
                         } else {
                             i = sRet.indexOf("{") // It's a Json
                             if (i > -1) {
                                 sRet = sRet.substring(i);
                                 oRet = JSON.parse(sRet);
+                            }else {
+                                // Invalid body
+                                RED.log.info("ANPR-config: DecodingBodyPlateReader: Invalid Json " + sRet);
+                                oRet = null;
                             }
                         }
 
@@ -250,6 +254,10 @@ module.exports = (RED) => {
 
         //#region "FUNCTIONS"
         node.on('close', function (removed, done) {
+            try {
+                controller.abort();
+            } catch (error) { }
+            if (node.initPlateReader !== null) clearTimeout(node.initPlateReader);
             done();
         });
 

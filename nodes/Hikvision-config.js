@@ -4,7 +4,7 @@ module.exports = (RED) => {
 
     const DigestFetch = require('digest-fetch')
     const AbortController = require('abort-controller');
-    const xml2js = require('xml2js').Parser({explicitArray: false}).parseString;
+    const xml2js = require('xml2js').Parser({ explicitArray: false }).parseString;
 
     function Hikvisionconfig(config) {
         RED.nodes.createNode(this, config)
@@ -44,7 +44,7 @@ module.exports = (RED) => {
         }
 
         node.startAlarmStream = () => {
-            var controller = new AbortController(); // For aborting the stream request
+            controller = new AbortController(); // For aborting the stream request
             var client = new DigestFetch(node.credentials.user, node.credentials.password); // Instantiate the fetch client.
             var options = {
                 // These properties are part of the Fetch Standard
@@ -77,6 +77,7 @@ module.exports = (RED) => {
                 })
                 .then(body => {
                     body.on('readable', () => {
+
                         node.isConnected = true;
                         try {
                             let chunk;
@@ -84,14 +85,16 @@ module.exports = (RED) => {
                             while (null !== (chunk = body.read())) {
                                 sRet = chunk.toString();
                             }
+                            //console.log("BANANA " + sRet)
                             sRet = sRet.replace(/--boundary/g, '');
                             var i = sRet.indexOf("<"); // Get only the XML, starting with "<"
                             if (i > -1) {
                                 sRet = sRet.substring(i);
+                                // console.log("BANANA SBANANATO " + sRet);
                                 // By xml2js
                                 xml2js(sRet, function (err, result) {
                                     node.nodeClients.forEach(oClient => {
-                                        if (result !== undefined) oClient.sendPayload({ topic: oClient.topic || "", payload: result, connected: true });
+                                        if (result !== undefined) oClient.sendPayload({ topic: oClient.topic || "", payload: result.EventNotificationAlert, connected: true });
                                     })
                                 });
                             } else {
@@ -103,6 +106,9 @@ module.exports = (RED) => {
                                     node.nodeClients.forEach(oClient => {
                                         oClient.sendPayload({ topic: oClient.topic || "", payload: JSON.parse(sRet), connected: true });
                                     })
+                                } else {
+                                    // Invalid body
+                                    RED.log.info("Hikvision-config: DecodingBody: Invalid Json " + sRet);
                                 }
                             }
 
@@ -138,6 +144,7 @@ module.exports = (RED) => {
                 controller.abort();
             } catch (error) { }
             if (node.timerCheckHeartBeat !== null) clearTimeout(node.timerCheckHeartBeat);
+            if (node.startAlarmStream !== null) clearTimeout(node.startAlarmStream)
             done();
         });
 

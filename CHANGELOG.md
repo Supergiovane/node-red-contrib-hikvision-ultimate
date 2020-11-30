@@ -2,6 +2,10 @@
 [![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square)](https://www.paypal.me/techtoday) 
 
 <p>
+<b>Version 0.0.12 BETA</b> November 2020<br/>
+- Added support for devices sending XML as well as for devices sending JSON.<br/>
+</p>
+<p>
 <b>Version 0.0.11 BETA</b> November 2020<br/>
 - Added an option to the ANPR node, to filter repeating plates in a timeframe.<br/>
 </p>
