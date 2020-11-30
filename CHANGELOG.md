@@ -2,6 +2,11 @@
 [![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square)](https://www.paypal.me/techtoday) 
 
 <p>
+<b>Version 0.0.9 BETA</b> November 2020<br/>
+- Replaced the node urllib with node-fetch.
+- Alert node now filters heartbeath without sending unuseful payloads.
+</p>
+<p>
 <b>Version 0.0.8 BETA</b> November 2020<br/>
 - ANPR node now emits connect and disconnect messages. 
 - Fixes and improvements.

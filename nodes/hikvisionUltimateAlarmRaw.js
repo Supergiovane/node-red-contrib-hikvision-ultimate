@@ -14,6 +14,14 @@ module.exports = function (RED) {
 		// Called from config node, to send output to the flow
 		node.sendPayload = (_msg) => {
 			if (_msg.payload === null) { node.send(_msg); return; }; // If null, then it's disconnected. Avoid processing the event
+			if (_msg.payload.hasOwnProperty("EventNotificationAlert")
+				&& _msg.payload.EventNotificationAlert.eventType.toString().toLowerCase() === "videoloss"
+				&& _msg.payload.EventNotificationAlert.eventState.toString().toLowerCase() === "inactive") {
+				// It's a HertBeat, exit.
+				node.setNodeStatus({ fill: "green", shape: "ring", text: "Waiting for alert..." });
+				return ;
+			}; 
+			
 			node.setNodeStatus({ fill: "green", shape: "dot", text: "Alert received" });
 			node.send(_msg);
 		}
