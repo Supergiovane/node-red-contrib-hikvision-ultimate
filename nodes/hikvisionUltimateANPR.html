@@ -4,7 +4,8 @@
 		color: 'grey',
 		defaults: {
 			name: { value: "" },
-			server: { type: "ANPR-config", required: true }
+			server: { type: "ANPR-config", required: true },
+			avoidsameplatetime: { value:20, validate:RED.validators.number()}
 		},
 		inputs: 0,
 		outputs: 1,
@@ -62,7 +63,13 @@
         <label for="node-input-topic"><i class="fa fa-tasks"></i> Node topic</label>
         <input type="text" id="node-input-topic" placeholder="Node's own topic">
 	</div>
-    
+    <div class="form-row">
+        <label for="node-input-avoidsameplatetime"><i class="fa fa-tasks"></i> Block same plate for</label>
+		<input type="text" id="node-input-avoidsameplatetime" placeholder="">
+		<div class="form-tips" style="margin-top:11px">
+           The above is to avoid sending the same plate multiple time consecutively, in seconds.
+        </div>
+	</div>
 	
 	
 

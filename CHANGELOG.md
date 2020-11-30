@@ -2,8 +2,12 @@
 [![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square)](https://www.paypal.me/techtoday) 
 
 <p>
+<b>Version 0.0.10 BETA</b> November 2020<br/>
+- Added an option to the ANPR node, to filter repeating plates in a timeframe.<br/>
+</p>
+<p>
 <b>Version 0.0.9 BETA</b> November 2020<br/>
-- Replaced the node urllib with node-fetch.
+- Replaced the node urllib with node-fetch.<br/>
 - Alert node now filters heartbeath without sending unuseful payloads.
 </p>
 <p>

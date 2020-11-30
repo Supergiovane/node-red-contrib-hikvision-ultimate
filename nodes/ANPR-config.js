@@ -223,7 +223,7 @@ module.exports = (RED) => {
                         if (oRet.Plates.Plate.length > 0) {
                             oRet.Plates.Plate.forEach(oPlate => {
                                 node.nodeClients.forEach(oClient => {
-                                    oClient.sendPayload({ topic: oClient.topic || "", payload: oPlate, connected: true });
+                                    oClient.sendPayload({ topic: oClient.topic || "", plate: oPlate, payload: oPlate.plateNumber, connected: true });
                                 })
                             })
                         }
