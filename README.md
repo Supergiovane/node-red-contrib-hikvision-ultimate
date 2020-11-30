@@ -16,7 +16,7 @@ This is a set of nodes to handle ISAPI Hikvision messages.<br/>
 Works with cameras, NVR and also with specialized devices, like Radar (for example DS-PR1-60 and 120).<br/>
 Digest authentication is the default, so it should work with all gears!<br/>
 All nodes are capable of auto reconnect if the connection is lost and are able to actively monitor the connection.<br/>
-There are currently **only two node**, one that traps the alarms, in RAW mode, and outputs a JSON and the other that outputs the ANPR License Plate numbers.<br/>
+There are currently **only two nodes**, one that traps the alarms, in RAW mode, and outputs a JSON and the other that outputs the ANPR License Plate numbers.<br/>
 
 ***THIS NODESET IS IN BETA. E' ancora brutto, ma funziona.***<br/>
 I'll add helps, docs and samples in this README page. Please have some patience...<br/>
