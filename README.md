@@ -35,8 +35,6 @@ The RAW alarm node connects to NVR, Camera, Alarm system, Radars etc. and output
 <img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/RawAlarm.png' width="50%">
 <br/>
 <br/>
-<br/>
-<br/>
 
 ## - ANPR (License Plate) Node
 
