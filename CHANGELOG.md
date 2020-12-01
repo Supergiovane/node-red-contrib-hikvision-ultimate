@@ -2,6 +2,16 @@
 [![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square)](https://www.paypal.me/techtoday) 
 
 <p>
+<b>Version 0.0.15 BETA</b> December 2020<br/>
+- Moved RAW node code into async functions.<br/>
+- Fixed BUG in ANPR module, where the last plate was sent every second..<br/>
+- Added icons.<br/>
+</p>
+<p>
+<b>Version 0.0.14 BETA</b> December 2020<br/>
+- Moved ANPR code into async functions, do help very slow PC's to correctly handle the data.<br/>
+</p>
+<p>
 <b>Version 0.0.13 BETA</b> December 2020<br/>
 - Moved ANPR code into async functions, do help very slow PC's to correctly handle the data.<br/>
 </p>

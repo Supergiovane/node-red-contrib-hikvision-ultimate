@@ -50,14 +50,14 @@ module.exports = (RED) => {
                     node.setAllClientsStatus({ fill: "green", shape: "ring", text: "Connected." });
                 } else {
                     node.setAllClientsStatus({ fill: "red", shape: "ring", text: response.statusText });
-                    // console.log("BANANA Error response " + response.statusText);
+                    console.log("BANANA Error response " + response.statusText);
                     throw ("Error response: " + response.statusText);
                 }
                 //#region "BODY"
                 const body = await response.text();
                 var sRet = "";
                 sRet = body.toString();
-                //// console.log("BANANA " + sRet);
+                //console.log("BANANA " + sRet);
                 var oPlates = null;
                 try {
                     var i = sRet.indexOf("<"); // Get only the XML, starting with "<"
@@ -75,11 +75,11 @@ module.exports = (RED) => {
                         } else {
                             // Invalid body
                             RED.log.info("ANPR-config: DecodingBody: Invalid Json " + sRet);
-                            // console.log("BANANA ANPR-config: DecodingBody: Invalid Json " + sRet);
+                            console.log("BANANA ANPR-config: DecodingBody: Invalid Json " + sRet);
                             throw ("Error Invalid Json: " + sRet);
                         }
                     }
-                    // console.log("BANANA GIASONE " + JSON.stringify(oPlates));
+                    console.log("BANANA GIASONE " + JSON.stringify(oPlates));
                     // Working the plates. Must be sure, that no error occurs, before acknolwedging the plate last picName
                     if (oPlates.Plates !== null) {
                         node.setAllClientsStatus({ fill: "green", shape: "ring", text: "Waiting for vehicle..." });
@@ -97,13 +97,13 @@ module.exports = (RED) => {
 
                 } catch (error) {
                     RED.log.error("ANPR-config: ERRORE CATCHATO initPlateReader:" + error);
-                    // console.log("BANANA ANPR-config: ERRORE CATCHATO initPlateReader: " + error);
+                    console.log("BANANA ANPR-config: ERRORE CATCHATO initPlateReader: " + error);
                     throw ("Error initPlateReader: " + error);
                 }
                 //#endregion 
             } catch (err) {
                 // Main Error
-                // console.log("BANANA MAIN ERROR: " + err);
+                console.log("BANANA MAIN ERROR: " + err);
                 // Abort request
                 try {
                     if (controller !== null) controller.abort();
@@ -124,20 +124,20 @@ module.exports = (RED) => {
         // At start, reads the last recognized plate and starts listening from the time last plate was recognized.
         // This avoid output all the previoulsy plate list, stored by the camera.
         node.initPlateReader = () => {
-            // console.log("BANANA INITPLATEREADER");
+            console.log("BANANA INITPLATEREADER");
             node.setAllClientsStatus({ fill: "grey", shape: "ring", text: "Getting prev list to be ignored..." });
             (async () => { 
                 var oPlates = await getPlates("202001010101010000");
                 if (oPlates === null) {
                     setTimeout(node.initPlateReader, 10000); // Restart initPlateReader
                 } else {
-                    // console.log("BANANA STRIGONE " + JSON.stringify(oPlates))
+                    console.log("BANANA STRIGONE " + JSON.stringify(oPlates))
                     if (oPlates.Plates.hasOwnProperty("Plate") && oPlates.Plates.Plate.length > 0) {
                         try {
                             node.lastPicName = oPlates.Plates.Plate[oPlates.Plates.Plate.length - 1].picName;
                             node.setAllClientsStatus({ fill: "grey", shape: "ring", text: "Found " + oPlates.Plates.Plate.length + " ignored plates. Last was " + node.lastPicName });
                         } catch (error) {
-                            // console.log("BANANA Error oPlates.Plates.Plate[oPlates.Plates.Plate.length - 1]: " + error);
+                            console.log("BANANA Error oPlates.Plates.Plate[oPlates.Plates.Plate.length - 1]: " + error);
                             setTimeout(node.initPlateReader, 10000); // Restart initPlateReader
                             return;
                         }
@@ -154,7 +154,7 @@ module.exports = (RED) => {
 
 
         node.queryForPlates = () => {
-            // console.log("BANANA queryForPlates");
+            console.log("BANANA queryForPlates");
             if (node.lastPicName === "") {
                 // Should not be here!
                 node.setAllClientsStatus({ fill: "red", shape: "ring", text: "Cacchio, non dovrei essere qui." });
@@ -179,6 +179,8 @@ module.exports = (RED) => {
                                     oClient.sendPayload({ topic: oClient.topic || "", plate: oPlate, payload: oPlate.plateNumber, connected: true });
                                 })
                             })
+                            // Set the last plate found, to avoid repeating.
+                            node.lastPicName = oPlates.Plates.Plate[oPlates.Plates.Plate.length - 1].picName;
                         } else {
                             // No new plates found
                         }

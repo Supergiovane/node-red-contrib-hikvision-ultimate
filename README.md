@@ -18,13 +18,12 @@ Digest authentication is the default, so it should work with all gears!<br/>
 All nodes are capable of auto reconnect if the connection is lost and are able to actively monitor the connection.<br/>
 There are currently **only two nodes**, one that traps the alarms, in RAW mode, and outputs a JSON and the other that outputs the ANPR License Plate numbers.<br/>
 
-***THIS NODESET IS IN BETA. E' ancora brutto, ma funziona.***<br/>
+***THIS NODE IS IN BETA***<br/>
 I'll add helps, docs and samples in this README page. Please have some patience...<br/>
 
 ## CHANGELOG
 * See <a href="https://github.com/Supergiovane/node-red-contrib-hikvision-ultimate/blob/master/CHANGELOG.md">here the changelog</a>
 
-<br/>
 <br/>
 <br/>
 

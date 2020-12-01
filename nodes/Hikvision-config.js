@@ -5,6 +5,7 @@ module.exports = (RED) => {
     const DigestFetch = require('digest-fetch')
     const AbortController = require('abort-controller');
     const xml2js = require('xml2js').Parser({ explicitArray: false }).parseString;
+    const util = require('util');
 
     function Hikvisionconfig(config) {
         RED.nodes.createNode(this, config)
@@ -24,7 +25,7 @@ module.exports = (RED) => {
         }
 
         // This function starts the heartbeat timer, to detect the disconnection from the server
-        node.startHeartBeatTimer = () => {
+        node.resetHeartBeatTimer = () => {
             // Reset node.timerCheckHeartBeat
             if (node.timerCheckHeartBeat !== null) clearTimeout(node.timerCheckHeartBeat);
             node.timerCheckHeartBeat = setTimeout(() => {
@@ -39,13 +40,18 @@ module.exports = (RED) => {
                     node.setAllClientsStatus({ fill: "red", shape: "ring", text: "Lost connection...Retry..." });
                 }
                 node.isConnected = false;
-                setTimeout(node.startAlarmStream, 5000); // Reconnect
+                setTimeout(startAlarmStream, 5000); // Reconnect
             }, 25000);
         }
 
-        node.startAlarmStream = () => {
+        async function startAlarmStream() {
+
+            node.resetHeartBeatTimer(); // First thing, start the heartbeat timer.
+            node.setAllClientsStatus({ fill: "grey", shape: "ring", text: "Connecting..." });
+
+
+            const client = new DigestFetch(node.credentials.user, node.credentials.password); // Instantiate the fetch client.
             controller = new AbortController(); // For aborting the stream request
-            var client = new DigestFetch(node.credentials.user, node.credentials.password); // Instantiate the fetch client.
             var options = {
                 // These properties are part of the Fetch Standard
                 method: 'GET',
@@ -57,85 +63,95 @@ module.exports = (RED) => {
                 // The following properties are node-fetch extensions
                 follow: 20,         // maximum redirect count. 0 to not follow redirect
                 timeout: 0,         // req/res timeout in ms, it resets on redirect. 0 to disable (OS limit applies). Signal is recommended instead.
-                compress: true,     // support gzip/deflate content encoding. false to disable
+                compress: false,     // support gzip/deflate content encoding. false to disable
                 size: 0,            // maximum response body size in bytes. 0 to disable
                 agent: null         // http(s).Agent instance or function that returns an instance (see below)
-            }
-            node.startHeartBeatTimer(); // First thing, start the heartbeat timer.
-            node.setAllClientsStatus({ fill: "grey", shape: "ring", text: "Connecting..." });
+            };
+            try {
 
-            client.fetch("http://" + node.host + "/ISAPI/Event/notification/alertStream", options)
-                .then(response => {
-                    //console.log(response.status + " " + response.statusText);
-                    if (response.statusText === "Unauthorized") {
-                        node.setAllClientsStatus({ fill: "red", shape: "ring", text: response.statusText });
-                    }
-                    if (response.statusText === "Ok") {
-                        node.setAllClientsStatus({ fill: "green", shape: "ring", text: "Connected. Waiting for Alarm." });
-                    }
-                    return response.body;
-                })
-                .then(body => {
-                    body.on('readable', () => {
-
-                        node.isConnected = true;
-                        try {
-                            let chunk;
-                            var sRet = ""
-                            while (null !== (chunk = body.read())) {
-                                sRet = chunk.toString();
-                            }
-                            //console.log("BANANA " + sRet)
-                            sRet = sRet.replace(/--boundary/g, '');
-                            var i = sRet.indexOf("<"); // Get only the XML, starting with "<"
-                            if (i > -1) {
-                                sRet = sRet.substring(i);
-                                // console.log("BANANA SBANANATO " + sRet);
-                                // By xml2js
-                                xml2js(sRet, function (err, result) {
-                                    node.nodeClients.forEach(oClient => {
-                                        if (result !== undefined) oClient.sendPayload({ topic: oClient.topic || "", payload: result.EventNotificationAlert, connected: true });
-                                    })
-                                });
-                            } else {
-                                i = sRet.indexOf("{") // It's a Json
+                // Async get the body, called by streamPipeline(response.body, readStream);
+                // ###################################
+                const streamPipeline = util.promisify(require('stream').pipeline);
+                async function readStream(stream) {
+                    try {
+                        for await (const chunk of stream) {
+                            var sRet = "";
+                            sRet = chunk.toString();
+                            // // console.log("BANANA " + sRet);
+                            try {
+                                sRet = sRet.replace(/--boundary/g, '');
+                                var i = sRet.indexOf("<"); // Get only the XML, starting with "<"
                                 if (i > -1) {
                                     sRet = sRet.substring(i);
-                                    //sRet = sRet.replace(/(['"])?([a-z0-9A-Z_]+)(['"])?:/g, '"$2": '); // Fix numbers and chars invalid in JSON
-                                    //console.log("BANANA : " + sRet);
-                                    node.nodeClients.forEach(oClient => {
-                                        oClient.sendPayload({ topic: oClient.topic || "", payload: JSON.parse(sRet), connected: true });
-                                    })
+                                    // // // console.log("BANANA SBANANATO " + sRet);
+                                    // By xml2js
+                                    xml2js(sRet, function (err, result) {
+                                        node.nodeClients.forEach(oClient => {
+                                            if (result !== undefined) oClient.sendPayload({ topic: oClient.topic || "", payload: result.EventNotificationAlert, connected: true });
+                                        })
+                                    });
                                 } else {
-                                    // Invalid body
-                                    RED.log.info("Hikvision-config: DecodingBody: Invalid Json " + sRet);
+                                    i = sRet.indexOf("{") // It's a Json
+                                    if (i > -1) {
+                                        sRet = sRet.substring(i);
+                                        //sRet = sRet.replace(/(['"])?([a-z0-9A-Z_]+)(['"])?:/g, '"$2": '); // Fix numbers and chars invalid in JSON
+                                        // // console.log("BANANA JSONATO: " + sRet);
+                                        node.nodeClients.forEach(oClient => {
+                                            oClient.sendPayload({ topic: oClient.topic || "", payload: JSON.parse(sRet), connected: true });
+                                        })
+                                    } else {
+                                        // Invalid body
+                                        RED.log.info("Hikvision-config: DecodingBody: Invalid Json " + sRet);
+                                    }
                                 }
+                                // All is fine. Reset and restart the hearbeat timer
+                                // Hikvision sends an heartbeat alarm (videoloss), depending on firmware, every 300ms or more.
+                                // If this HeartBeat isn't received, abort the stream request and restart.
+                                node.resetHeartBeatTimer();
+                            } catch (error) {
+                                // // console.log("BANANA startAlarmStream decodifica body: " + error);
+                                RED.log.info("Hikvision-config: DecodingBody error: " + error);
                             }
+                        }
+                    } catch (error) {
+                        // // console.log("BANANA NEL BODY errore " + error);
+                        return;
+                    }
+                }
+                // ###################################
 
-                        } catch (error) { RED.log.error("Hikvision-config: ERRORE CATCHATO " + error); }
-                        // All is fine. Reset and restart the hearbeat timer
-                        // Hikvision sends an heartbeat alarm (videoloss), depending on firmware, every 300ms or more.
-                        // If this HeartBeat isn't received, abort the stream request and restart.
-                        node.startHeartBeatTimer();
-                    });
-
-
-                })
-                .catch(err => {
-                    node.setAllClientsStatus({ fill: "grey", shape: "ring", text: "Server unreachable: " + err + " Retry..." });
-                    if (node.isConnected) {
+                const response = await client.fetch("http://" + node.host + "/ISAPI/Event/notification/alertStream", options);
+                if (response.status >= 200 && response.status <= 300) {
+                    node.setAllClientsStatus({ fill: "green", shape: "ring", text: "Connected. Waiting for Alarm." });
+                } else {
+                    node.setAllClientsStatus({ fill: "red", shape: "ring", text: response.statusText });
+                    // // console.log("BANANA Error response " + response.statusText);
+                    throw ("Error response: " + response.statusText);
+                }
+                node.isConnected = true;
+                streamPipeline(response.body, readStream);
+            } catch (err) {
+                // Main Error
+                // // console.log("BANANA MAIN ERROR: " + err);
+                // Abort request
+                try {
+                    if (controller !== null) controller.abort();
+                } catch (error) { }
+                node.setAllClientsStatus({ fill: "grey", shape: "ring", text: "Server unreachable: " + err + " Retry..." });
+                if (node.isConnected) {
+                    try {
                         node.nodeClients.forEach(oClient => {
                             oClient.sendPayload({ topic: oClient.topic || "", payload: null, connected: false });
                         })
-                    }
-                    node.isConnected = false;
-                    return;
-                });
+                    } catch (error) { }
 
+                }
+                node.isConnected = false;
+            };
 
         };
 
-        setTimeout(node.startAlarmStream, 5000); // First connection.
+        setTimeout(startAlarmStream, 5000); // First connection.
 
 
         //#region "FUNCTIONS"
@@ -144,7 +160,6 @@ module.exports = (RED) => {
                 controller.abort();
             } catch (error) { }
             if (node.timerCheckHeartBeat !== null) clearTimeout(node.timerCheckHeartBeat);
-            if (node.startAlarmStream !== null) clearTimeout(node.startAlarmStream)
             done();
         });
 

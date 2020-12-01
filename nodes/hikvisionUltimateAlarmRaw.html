@@ -1,7 +1,7 @@
 <script type="text/javascript">
 	RED.nodes.registerType('hikvisionUltimateAlarmRaw', {
 		category: 'Hikvision Ultimate',
-		color: 'grey',
+		color: '#e6e6e6',
 		defaults: {
 			name: { value: "" },
 			server: { type: "Hikvision-config", required: true }
@@ -25,7 +25,7 @@
 					break;
 			}
 		},
-		icon: "bridge.png",
+		icon: "node-raw-icon.png",
 		label:
 			function () {
 				var label = "hikvisionUltimateAlarmRaw"
