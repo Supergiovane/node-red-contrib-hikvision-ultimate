@@ -5,6 +5,7 @@ module.exports = function (RED) {
 		RED.nodes.createNode(this, config);
 		var node = this;
 		node.server = RED.nodes.getNode(config.server)
+		node.filterzone = config.filterzone || "0";// Rect to alarm coming from...
 
 		node.setNodeStatus = ({ fill, shape, text }) => {
 			var dDate = new Date();
@@ -51,27 +52,28 @@ module.exports = function (RED) {
 				oRetMsg.connected = _msg.connected;
 				oRetMsg.alarm = _msg.payload; // Put the full alarm description here.
 				oRetMsg.zone = _msg.payload.CIDEvent.zone || "unknown";
-				// Get the Hikvision alarm codes, that differs from standard SIA codes.
-				switch (_msg.payload.CIDEvent.code.toString().toLowerCase()) {
-					case "1103":
-						// Start alarm. Standard SIA Code is _msg.payload.CIDEvent.standardCIDcode: 1130
-						oRetMsg.payload = true;
-						node.setNodeStatus({ fill: "red", shape: "dot", text: "Zone " + oRetMsg.zone + " alert" });
-						break;
-					case "3103":
-						// End alarm. Standard SIA Code is _msg.payload.CIDEvent.standardCIDcode: 3130
-						oRetMsg.payload = false;
-						node.setNodeStatus({ fill: "green", shape: "dot", text: "Zone " + oRetMsg.zone + " normal" });
-						break;
-					default:
-						// Unknown CID code.
-						oRetMsg.payload = null;
-						node.setNodeStatus({ fill: "grey", shape: "ring", text: "Zone " + oRetMsg.zone + " unknowk CID code " + _msg.payload.CIDEvent.code });
-						return; // Unknown state
+				if (Number(node.filterzone) === 0 || Number(node.filterzone) === Number(oRetMsg.zone)) { // Filter only selcted zones
+					// Get the Hikvision alarm codes, that differs from standard SIA codes.
+					switch (_msg.payload.CIDEvent.code.toString().toLowerCase()) {
+						case "1103":
+							// Start alarm. Standard SIA Code is _msg.payload.CIDEvent.standardCIDcode: 1130
+							oRetMsg.payload = true;
+							node.setNodeStatus({ fill: "red", shape: "dot", text: "Zone " + oRetMsg.zone + " alert" });
+							break;
+						case "3103":
+							// End alarm. Standard SIA Code is _msg.payload.CIDEvent.standardCIDcode: 3130
+							oRetMsg.payload = false;
+							node.setNodeStatus({ fill: "green", shape: "dot", text: "Zone " + oRetMsg.zone + " normal" });
+							break;
+						default:
+							// Unknown CID code.
+							oRetMsg.payload = null;
+							node.setNodeStatus({ fill: "grey", shape: "ring", text: "Zone " + oRetMsg.zone + " unknowk CID code " + _msg.payload.CIDEvent.code });
+							return; // Unknown state
+					}
+					node.send(oRetMsg);
 				}
 			}
-			node.send(oRetMsg);
-
 		}
 
 		// On each deploy, unsubscribe+resubscribe

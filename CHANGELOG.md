@@ -2,6 +2,11 @@
 [![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square)](https://www.paypal.me/techtoday) 
 
 <p>
+<b>Version 0.0.16 BETA</b> December 2020<br/>
+- NEW: added Radar Node for trapping radar zone's alarms.<br/>
+- Radar Node allow for alarm filter (all zone or specific zone)<br/>
+</p>
+<p>
 <b>Version 0.0.15 BETA</b> December 2020<br/>
 - Moved RAW node code into async functions.<br/>
 - Fixed BUG in ANPR module, where the last plate was sent every second..<br/>

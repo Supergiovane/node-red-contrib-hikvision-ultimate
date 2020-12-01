@@ -4,7 +4,8 @@
 		color: '#e6e6e6',
 		defaults: {
 			name: { value: "" },
-			server: { type: "Hikvision-config", required: true }
+			server: { type: "Hikvision-config", required: true },
+			filterzone: { value: "0" }			
 		},
 		inputs: 0,
 		outputs: 1,
@@ -61,6 +62,23 @@
 	<div class="form-row">
         <label for="node-input-topic"><i class="fa fa-tasks"></i> Node topic</label>
         <input type="text" id="node-input-topic" placeholder="Node's own topic">
+	</div>
+	<div class="form-row">
+        <label for="node-input-filterzone"><i class="fa fa-tasks"></i> React to</label>
+		<select id="node-input-filterzone">
+			<option value="0">All zones</option>
+			<option value="1">Zone 1</option>
+			<option value="2">Zone 2</option>
+			<option value="3">Zone 3</option>
+			<option value="4">Zone 4</option>
+			<option value="5">Zone 5</option>
+			<option value="6">Zone 6</option>
+			<option value="7">Zone 7</option>
+			<option value="8">Zone 8</option>
+		</select>
+		<div class="form-tips" style="margin-top:11px">
+           The above option allow the node to react to alarms coming from all zones or from a specified one.
+        </div>
 	</div>
   
 </script>
