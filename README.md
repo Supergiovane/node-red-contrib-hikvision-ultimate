@@ -32,13 +32,54 @@ I'll add helps, docs and samples in this README page. Please have some patience.
 The RAW alarm node connects to NVR, Camera, Alarm system, Radars etc. and outputs the alarm received. <br/>
 
 <img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/RawAlarm.png' width="50%">
+
+**Output message**
+
+The node outputs a payload that can vary, depending from the alarm type sent by the connected device.</br>
+This below, is only an example (in this case, a movement detected from a radar)</br>
+
+```javascript
+msg.payload = {
+    "topic": "",
+    "payload": {
+        "ipAddress": "192.168.1.25",
+        "ipv6Address": "",
+        "portNo": 80,
+        "protocol": "HTTP",
+        "macAddress": "banana",
+        "channelID": 1,
+        "dateTime": "2012-01-13T04:32:47+01:00",
+        "activePostCount": 1,
+        "eventType": "MultiRadarTargetEvent",
+        "eventState": "active",
+        "eventDescription": "MultiRadar Target Event",
+        "MultiRadarTargetEventList": [
+            {
+                "targetID": 25,
+                "isTargetDisappear": false,
+                "targetType": "people",
+                "Coordinate": {
+                    "angle": 101.49,
+                    "distance": 24.59
+                },
+                "speed": -0.2,
+                "signalStrength": "strong",
+                "TrackedInfoList": [],
+                "trackedByIPC": false
+            }
+        ]
+    },
+    "connected": true,
+    "_msgid": "dba1850a.2dc5e8"
+}
+```
+
 <br/>
 <br/>
 
 ## - ANPR (License Plate) Node
 
 <img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/ANPR.png' width="50%">
-<br/>
 
 **Output message**
 
@@ -68,7 +109,6 @@ msg.payload = {
 ## - Radar Alarm Node
 
 <img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/Radar.png' width="50%">
-<br/>
 
 **Output message**
 
@@ -116,6 +156,14 @@ msg.payload = {
     "_msgid": "b07e50f6.86a72"
 }
 ```
+
+
+
+
+
+
+
+
 
 [license-image]: https://img.shields.io/badge/license-MIT-blue.svg
 [license-url]: https://github.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/LICENSE
