@@ -23,136 +23,138 @@ module.exports = (RED) => {
             node.nodeClients.map(nextStatus);
         }
 
-        // At start, reads the last recognized plate and starts listening from the time last plate was recognized.
-        // This avoid output all the previoulsy plate list, stored by the camera.
-        node.initPlateReader = () => {
+        // Function to get the plate list from the camera
+        async function getPlates(_lastPicName) {
+            if (_lastPicName == undefined || _lastPicName == null || _lastPicName == "") return null;
 
-            node.setAllClientsStatus({ fill: "grey", shape: "ring", text: "Connecting..." });
-            var client = new DigestFetch(node.credentials.user, node.credentials.password); // Instantiate the fetch client.
+            const client = new DigestFetch(node.credentials.user, node.credentials.password); // Instantiate the fetch client.
             controller = new AbortController(); // For aborting the stream request
             var options = {
                 // These properties are part of the Fetch Standard
                 method: 'POST',
                 headers: { 'content-type': 'application/xml' },        // request headers. format is the identical to that accepted by the Headers constructor (see below)
-                body: "<AfterTime><picTime>202001010101010000</picTime></AfterTime>",         // request body. can be null, a string, a Buffer, a Blob, or a Node.js Readable stream
+                body: "<AfterTime><picTime>" + _lastPicName + "</picTime></AfterTime>",         // request body. can be null, a string, a Buffer, a Blob, or a Node.js Readable stream
                 redirect: 'follow', // set to `manual` to extract redirect headers, `error` to reject redirect
                 signal: controller.signal,       // pass an instance of AbortSignal to optionally abort requests
 
                 // The following properties are node-fetch extensions
                 follow: 20,         // maximum redirect count. 0 to not follow redirect
                 timeout: 5000,         // req/res timeout in ms, it resets on redirect. 0 to disable (OS limit applies). Signal is recommended instead.
-                compress: true,     // support gzip/deflate content encoding. false to disable
+                compress: false,     // support gzip/deflate content encoding. false to disable
                 size: 0,            // maximum response body size in bytes. 0 to disable
                 agent: null         // http(s).Agent instance or function that returns an instance (see below)
-            }
-            client.fetch("http://" + node.host + "/ISAPI/Traffic/channels/1/vehicleDetect/plates", options)
-                .then(response => {
-                    //RED.log.error(response.status + " " + response.statusText);
-                    if (response.statusText === "Unauthorized") {
-                        node.setAllClientsStatus({ fill: "red", shape: "ring", text: response.statusText });
-                    }
-                    if (response.statusText === "Ok") {
-                        node.setAllClientsStatus({ fill: "green", shape: "ring", text: "Connected." });
-                    }
-                    return response.body;
-                }).then(body => {
-                    body.on('readable', () => {
-                        let chunk;
-                        var sRet = "";
-                        node.lastPicName = "";
-                        while (null !== (chunk = body.read())) {
-                            sRet = chunk.toString();
-                        }
-                        //console.log ("BANANA " + sRet)
-                        var oPlates = null;
-                        try {
-                            var i = sRet.indexOf("<"); // Get only the XML, starting with "<"
-                            if (i > -1) {
-                                sRet = sRet.substring(i);
-                                // By xml2js
-                                xml2js(sRet, function (err, result) {
-                                    oPlates = result;
-                                });
-                            } else {
-                                i = sRet.indexOf("{") // It's a Json
-                                if (i > -1) {
-                                    sRet = sRet.substring(i);
-                                    oPlates = JSON.parse(result);
-                                } else {
-                                    // Invalid body
-                                    RED.log.info("ANPR-config: DecodingBody: Invalid Json " + sRet);
-                                    node.lastPicName = ""; // This raises an error, below.
-                                    oPlates = null; // Set null
-                                }
-                            }
-
-                        } catch (error) {
-                            RED.log.error("ANPR-config: ERRORE CATCHATO initPlateReader:" + error);
-                            node.lastPicName = ""; // This raises an error, below.
-                        }
-
-                        // Working the plates. Must be sure, that no error occurs, before acknolwedging the plate last picName
-                        try {
-                            if (oPlates !== null) {
-                                if (oPlates.Plates !== null) {
-                                    if (oPlates.Plates.hasOwnProperty("Plate") && oPlates.Plates.Plate.length > 0) {
-                                        node.lastPicName = oPlates.Plates.Plate[oPlates.Plates.Plate.length - 1].picName;
-                                        //node.lastPicName = "202001010101010000"; // BANANA SIMULAZIONE CON LETTURA DI TUTTE LE TARGHE
-                                        node.setAllClientsStatus({ fill: "grey", shape: "ring", text: "Found " + oPlates.Plates.Plate.length + " ignored plates. Last was " + node.lastPicName });
-                                    } else {
-                                        // No previously plates found, set a default datetime
-                                        node.setAllClientsStatus({ fill: "grey", shape: "ring", text: "No previously plates found." });
-                                        node.lastPicName = "202001010101010000";
-                                    }
-                                }
-                            }
-                        } catch (error) {
-                            node.setAllClientsStatus({ fill: "red", shape: "ring", text: "Ahi lasso Error: " + error });
-                            node.lastPicName = ""; // This raises an error, below.
-                        }
-
-                        if (node.lastPicName === "") {
-                            // Some errors occurred
-                            // Abort request
-                            try {
-                                if (controller !== null) controller.abort();
-                            } catch (error) { }
-                            node.setAllClientsStatus({ fill: "red", shape: "ring", text: "Error occurred in init plates list." });
-                            node.isConnected = false;
-                            setTimeout(node.initPlateReader, 5000); // Reconnect
+            };
+            try {
+                const response = await client.fetch("http://" + node.host + "/ISAPI/Traffic/channels/1/vehicleDetect/plates", options);
+                if (response.status >= 200 && response.status <= 300) {
+                    node.setAllClientsStatus({ fill: "green", shape: "ring", text: "Connected." });
+                } else {
+                    node.setAllClientsStatus({ fill: "red", shape: "ring", text: response.statusText });
+                    // console.log("BANANA Error response " + response.statusText);
+                    throw ("Error response: " + response.statusText);
+                }
+                //#region "BODY"
+                const body = await response.text();
+                var sRet = "";
+                sRet = body.toString();
+                //// console.log("BANANA " + sRet);
+                var oPlates = null;
+                try {
+                    var i = sRet.indexOf("<"); // Get only the XML, starting with "<"
+                    if (i > -1) {
+                        sRet = sRet.substring(i);
+                        // By xml2js
+                        xml2js(sRet, function (err, result) {
+                            oPlates = result;
+                        });
+                    } else {
+                        i = sRet.indexOf("{") // It's a Json
+                        if (i > -1) {
+                            sRet = sRet.substring(i);
+                            oPlates = JSON.parse(result);
                         } else {
-                            node.setAllClientsStatus({ fill: "green", shape: "ring", text: "Waiting for vehicle..." });
-                            if (!node.isConnected) {
-                                node.nodeClients.forEach(oClient => {
-                                    oClient.sendPayload({ topic: oClient.topic || "", payload: null, connected: true });
-                                })
-                            }
-                            node.isConnected = true;
-                            setTimeout(node.queryForPlates, 2000); // Start main polling thread
+                            // Invalid body
+                            RED.log.info("ANPR-config: DecodingBody: Invalid Json " + sRet);
+                            // console.log("BANANA ANPR-config: DecodingBody: Invalid Json " + sRet);
+                            throw ("Error Invalid Json: " + sRet);
                         }
-                    });
-                })
-                .catch(err => {
-                    // Abort request
-                    try {
-                        if (controller !== null) controller.abort();
-                    } catch (error) { }
-                    node.setAllClientsStatus({ fill: "grey", shape: "ring", text: "Server unreachable: " + err + " Retry..." });
-                    if (node.isConnected) {
-                        node.nodeClients.forEach(oClient => {
-                            oClient.sendPayload({ topic: oClient.topic || "", payload: null, connected: false });
-                        })
                     }
-                    node.isConnected = false;
-                    setTimeout(node.initPlateReader, 5000); // Reconnect
-                    return;
-                });
+                    // console.log("BANANA GIASONE " + JSON.stringify(oPlates));
+                    // Working the plates. Must be sure, that no error occurs, before acknolwedging the plate last picName
+                    if (oPlates.Plates !== null) {
+                        node.setAllClientsStatus({ fill: "green", shape: "ring", text: "Waiting for vehicle..." });
+                        if (!node.isConnected) {
+                            node.nodeClients.forEach(oClient => {
+                                oClient.sendPayload({ topic: oClient.topic || "", payload: null, connected: true });
+                            })
+                        }
+                        node.isConnected = true;
+                        return oPlates;
+                    } else {
+                        // Error in parsing XML
+                        throw ("Error: oPlates.Plates is null");
+                    }
 
+                } catch (error) {
+                    RED.log.error("ANPR-config: ERRORE CATCHATO initPlateReader:" + error);
+                    // console.log("BANANA ANPR-config: ERRORE CATCHATO initPlateReader: " + error);
+                    throw ("Error initPlateReader: " + error);
+                }
+                //#endregion 
+            } catch (err) {
+                // Main Error
+                // console.log("BANANA MAIN ERROR: " + err);
+                // Abort request
+                try {
+                    if (controller !== null) controller.abort();
+                } catch (error) { }
+                node.setAllClientsStatus({ fill: "grey", shape: "ring", text: "Server unreachable: " + err + " Retry..." });
+                if (node.isConnected) {
+                    node.nodeClients.forEach(oClient => {
+                        oClient.sendPayload({ topic: oClient.topic || "", payload: null, connected: false });
+                    })
+                }
+                node.isConnected = false;
+                return null;
+            };
+
+        };
+
+
+        // At start, reads the last recognized plate and starts listening from the time last plate was recognized.
+        // This avoid output all the previoulsy plate list, stored by the camera.
+        node.initPlateReader = () => {
+            // console.log("BANANA INITPLATEREADER");
+            node.setAllClientsStatus({ fill: "grey", shape: "ring", text: "Getting prev list to be ignored..." });
+            (async () => { 
+                var oPlates = await getPlates("202001010101010000");
+                if (oPlates === null) {
+                    setTimeout(node.initPlateReader, 10000); // Restart initPlateReader
+                } else {
+                    // console.log("BANANA STRIGONE " + JSON.stringify(oPlates))
+                    if (oPlates.Plates.hasOwnProperty("Plate") && oPlates.Plates.Plate.length > 0) {
+                        try {
+                            node.lastPicName = oPlates.Plates.Plate[oPlates.Plates.Plate.length - 1].picName;
+                            node.setAllClientsStatus({ fill: "grey", shape: "ring", text: "Found " + oPlates.Plates.Plate.length + " ignored plates. Last was " + node.lastPicName });
+                        } catch (error) {
+                            // console.log("BANANA Error oPlates.Plates.Plate[oPlates.Plates.Plate.length - 1]: " + error);
+                            setTimeout(node.initPlateReader, 10000); // Restart initPlateReader
+                            return;
+                        }
+                    } else {
+                        // No previously plates found, set a default datetime
+                        node.setAllClientsStatus({ fill: "grey", shape: "ring", text: "No previously plates found." });
+                        node.lastPicName = "202001010101010000";
+                    }
+                    setTimeout(node.queryForPlates, 2000); // Start main polling thread
+                }
+            })();
         };
 
 
 
         node.queryForPlates = () => {
+            // console.log("BANANA queryForPlates");
             if (node.lastPicName === "") {
                 // Should not be here!
                 node.setAllClientsStatus({ fill: "red", shape: "ring", text: "Cacchio, non dovrei essere qui." });
@@ -163,93 +165,31 @@ module.exports = (RED) => {
                 }
                 node.isConnected = false;
                 setTimeout(node.initPlateReader, 10000); // Restart whole process.
-                return;
-            }
-            controller = new AbortController(); // For aborting the stream request
-            var client = new DigestFetch(node.credentials.user, node.credentials.password); // Instantiate the fetch client.
-            var options = {
-                // These properties are part of the Fetch Standard
-                method: 'POST',
-                headers: { 'content-type': 'application/xml' },        // request headers. format is the identical to that accepted by the Headers constructor (see below)
-                body: "<AfterTime><picTime>" + node.lastPicName + "</picTime></AfterTime>",        // request body. can be null, a string, a Buffer, a Blob, or a Node.js Readable stream
-                redirect: 'follow', // set to `manual` to extract redirect headers, `error` to reject redirect
-                signal: controller.signal,       // pass an instance of AbortSignal to optionally abort requests
-
-                // The following properties are node-fetch extensions
-                follow: 20,         // maximum redirect count. 0 to not follow redirect
-                timeout: 5000,         // req/res timeout in ms, it resets on redirect. 0 to disable (OS limit applies). Signal is recommended instead.
-                compress: true,     // support gzip/deflate content encoding. false to disable
-                size: 0,            // maximum response body size in bytes. 0 to disable
-                agent: null         // http(s).Agent instance or function that returns an instance (see below)
-            }
-
-            client.fetch("http://" + node.host + "/ISAPI/Traffic/channels/1/vehicleDetect/plates", options)
-                .then(response => {
-                    //RED.log.error(response.status + " " + response.statusText);
-                    if (response.statusText === "Unauthorized") {
-                        node.setAllClientsStatus({ fill: "red", shape: "ring", text: response.statusText });
-                    }
-                    if (response.statusText === "Ok") {
-                        node.setAllClientsStatus({ fill: "green", shape: "ring", text: "Connected." });
-                    }
-                    return response.body;
-                }).then(body => {
-                    let chunk;
-                    var oRet = "";
-                    while (null !== (chunk = body.read())) {
-                        sRet = chunk.toString();
-                    }
-                    node.isConnected = true;
-                    try {
-                        var i = sRet.indexOf("<"); // Get only the XML, starting with "<"
-                        if (i > -1) {
-                            sRet = sRet.substring(i);
-                            // By xml2js
-                            xml2js(sRet, function (err, result) {
-                                oRet = result;
-                            });
-                        } else {
-                            i = sRet.indexOf("{") // It's a Json
-                            if (i > -1) {
-                                sRet = sRet.substring(i);
-                                oRet = JSON.parse(sRet);
-                            }else {
-                                // Invalid body
-                                RED.log.info("ANPR-config: DecodingBodyPlateReader: Invalid Json " + sRet);
-                                oRet = null;
-                            }
-                        }
-
-                    } catch (error) { RED.log.error("ANPR-config: ERRORE CATCHATO vehicleDetect/plates:" + error); }
-
-                    // Send the message to the child nodes
-                    if (oRet !== null && oRet.Plates !== null && oRet.Plates.hasOwnProperty("Plate")) {
-                        if (oRet.Plates.Plate.length > 0) {
-                            oRet.Plates.Plate.forEach(oPlate => {
+            } else {
+                (async () => {
+                    var oPlates = await getPlates(node.lastPicName);
+                    if (oPlates === null) {
+                        // An error was occurred.
+                        setTimeout(node.initPlateReader, 10000); // Restart initPlateReader from scratch
+                    } else {
+                        if (oPlates.Plates.hasOwnProperty("Plate") && oPlates.Plates.Plate.length > 0) {
+                            // Send the message to the child nodes
+                            oPlates.Plates.Plate.forEach(oPlate => {
                                 node.nodeClients.forEach(oClient => {
                                     oClient.sendPayload({ topic: oClient.topic || "", plate: oPlate, payload: oPlate.plateNumber, connected: true });
                                 })
                             })
+                        } else {
+                            // No new plates found
                         }
+                        setTimeout(node.queryForPlates, 1000); // Call the cunction again.
                     }
-
-                    setTimeout(node.queryForPlates, 1000); // Call the cunction again.
-                })
-                .catch(err => {
-                    node.setAllClientsStatus({ fill: "grey", shape: "ring", text: "Server unreachable. Retry..." });
-                    if (node.isConnected) {
-                        node.nodeClients.forEach(oClient => {
-                            oClient.sendPayload({ topic: oClient.topic || "", payload: null, connected: false });
-                        })
-                    }
-                    node.isConnected = false;
-                    setTimeout(node.initPlateReader, 10000); // Restart whole process.
-                    return;
-                });
+                })();
+            }
         };
 
         // Start!
-        setTimeout(node.initPlateReader, 5000); // First connection.
+        setTimeout(node.initPlateReader, 10000); // First connection.
 
 
         //#region "FUNCTIONS"
@@ -257,7 +197,6 @@ module.exports = (RED) => {
             try {
                 controller.abort();
             } catch (error) { }
-            if (node.initPlateReader !== null) clearTimeout(node.initPlateReader);
             done();
         });
 

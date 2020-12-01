@@ -2,6 +2,10 @@
 [![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square)](https://www.paypal.me/techtoday) 
 
 <p>
+<b>Version 0.0.13 BETA</b> December 2020<br/>
+- Moved ANPR code into async functions, do help very slow PC's to correctly handle the data.<br/>
+</p>
+<p>
 <b>Version 0.0.12 BETA</b> November 2020<br/>
 - Added support for devices sending XML as well as for devices sending JSON.<br/>
 </p>
