@@ -16,6 +16,7 @@ This is a set of nodes to handle ISAPI Hikvision messages.<br/>
 Works with cameras, NVR and also with specialized devices, like Radar (for example DS-PR1-60 and 120).<br/>
 Digest authentication is the default, so it should work with all gears!<br/>
 All nodes are capable of auto reconnect if the connection is lost and are able to actively monitor the connection.<br/>
+In case of disconnection or network issues, the nodes will output a message with **msg.connected = false** and *null* payload.<br/>
 There are currently **only two nodes**, one that traps the alarms, in RAW mode, and outputs a JSON and the other that outputs the ANPR License Plate numbers.<br/>
 
 ***THIS NODE IS IN BETA***<br/>
@@ -45,7 +46,7 @@ The node outputs this msg.</br>
 The payload contains the license plate number and the property "plate" contains other useful informations.</br>
 
 ```javascript
-msg = {
+msg.payload = {
     "topic":"",
     "payload":"AB123CD", // This is the license plate
     "connected":true, // true if the connection is OK, otherwise false if the connection is lost.
@@ -59,6 +60,61 @@ msg = {
         "matchingResult":"otherlist"
         }
     }
+```
+
+<br/>
+<br/>
+
+## - Radar Alarm Node
+
+<img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/Radar.png' width="50%">
+<br/>
+
+**Output message**
+
+The node outputs a message whenever an alarm starts or ends. It uses CID codes to identify the alarm type.</br>
+The payload is TRUE whenever alarm occurs, otherwise FALSE whenever alarm ends.</br>
+The complete alarm event is stored in the "alarm" property of the payload.</br>
+In an **unknown CID event** arrives from the Radar, the node will output a message containing the CID code, the full alarm and a null payload.</br>
+
+```javascript
+msg.payload = {
+{
+    "connected": true, // true if the connection is OK, otherwise false if the connection is lost.
+    "zone": 1, // This is the zone number that fired the alarm
+    "payload": true, // true if alarm, otherwise false if alarm ended.
+    "alarm": {
+        "ipAddress": "192.168.1.25",
+        "ipv6Address": "",
+        "portNo": 80,
+        "protocol": "HTTP",
+        "macAddress": "9banana",
+        "channelID": 1,
+        "dateTime": "2012-01-13T03:58:19+01:00",
+        "activePostCount": 1,
+        "eventType": "cidEvent",
+        "eventState": "active",
+        "eventDescription": "CID event",
+        "CIDEvent": {
+            "code": 3103,
+            "standardCIDcode": 3130,
+            "type": "zoneAlarm",
+            "trigger": "2012-01-13T03:58:19+01:00",
+            "upload": "2012-01-13T03:58:19+01:00",
+            "CameraList": [],
+            "NVRList": [
+                {
+                    "id": 1,
+                    "ip": "192.168.1.32",
+                    "port": 8000,
+                    "channel": 1
+                }
+            ],
+            "zone": 1
+        }
+    }
+    "_msgid": "b07e50f6.86a72"
+}
 ```
 
 [license-image]: https://img.shields.io/badge/license-MIT-blue.svg

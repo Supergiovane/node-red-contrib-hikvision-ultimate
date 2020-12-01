@@ -1,0 +1,77 @@
+<script type="text/javascript">
+	RED.nodes.registerType('hikvisionUltimateRadar', {
+		category: 'Hikvision Ultimate',
+		color: '#e6e6e6',
+		defaults: {
+			name: { value: "" },
+			server: { type: "Hikvision-config", required: true }
+		},
+		inputs: 0,
+		outputs: 1,
+		outputLabels: function (i) {
+			var ret = "";
+			switch (i) {
+				case 0:
+					return "Alarm";
+					break;
+				case 1:
+					return "";
+					break;
+				case 2
+					:
+					return "";
+					break;
+				default:
+					break;
+			}
+		},
+		icon: "node-radar-icon.png",
+		label:
+			function () {
+				var label = "hikvisionUltimateRadar"
+				if (this.name !== undefined && this.name.length > 0) {
+					label = this.name;
+				}
+				return label;
+			},
+		paletteLabel: function () {
+			return "Radar alarm";
+		},
+		oneditprepare: function () {
+
+
+		},
+		oneditsave: function () {
+
+		}
+	});
+
+
+</script>
+
+<script type="text/x-red" data-template-name="hikvisionUltimateRadar">
+	<div class="form-row">
+		<label for="node-input-server">Server</label>
+		<input type="text" id="node-input-server" />
+	</div>
+	<div class="form-row">
+        <label for="node-input-name"><i class="icon-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+	<div class="form-row">
+        <label for="node-input-topic"><i class="fa fa-tasks"></i> Node topic</label>
+        <input type="text" id="node-input-topic" placeholder="Node's own topic">
+	</div>
+  
+</script>
+
+<script type="text/x-red" data-help-name="hikvisionUltimateRadar">
+	<p>
+        <a href="https://www.paypal.me/techtoday" target="_blank"><img src='https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square' width='30%'></a>
+        
+	</p>
+	<p>
+		The node outputs a JSON with payload containing the data, and a property "connection" (true if the node is connecte to the server, otherwise false).
+	</p>
+	
+</script>
