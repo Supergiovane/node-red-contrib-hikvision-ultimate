@@ -75,7 +75,7 @@ module.exports = (RED) => {
                     var body = "";
                     body = await response.text();
                     var sRet = body.toString();
-                    console.log("BANANA ANPR: " + sRet);
+                    // console.log("BANANA ANPR: " + sRet);
                     var oPlates = null;
                     try {
                         var i = sRet.indexOf("<"); // Get only the XML, starting with "<"
@@ -167,7 +167,7 @@ module.exports = (RED) => {
                         if (Array.isArray(oPlates.Plates.Plate) && oPlates.Plates.Plate.length > 0) {
                             try {
                                 node.lastPicName = oPlates.Plates.Plate[oPlates.Plates.Plate.length - 1].picName;
-                                console.log("BANANA PLATES IGNORATE MULTIPLE: " + oPlates.Plates.Plate.length + " ignored plates. Last was " + node.lastPicName);
+                                // console.log("BANANA PLATES IGNORATE MULTIPLE: " + oPlates.Plates.Plate.length + " ignored plates. Last was " + node.lastPicName);
                                 node.setAllClientsStatus({ fill: "grey", shape: "ring", text: "Found " + oPlates.Plates.Plate.length + " ignored plates. Last was " + node.lastPicName });
                             } catch (error) {
                                 // console.log("BANANA Error oPlates.Plates.Plate[oPlates.Plates.Plate.length - 1]: " + error);

@@ -92,7 +92,7 @@ module.exports = (RED) => {
                                     var i = sRet.indexOf("<"); // Get only the XML, starting with "<"
                                     if (i > -1) {
                                         sRet = sRet.substring(i);
-                                        // // // // console.log("BANANA SBANANATO " + sRet);
+                                        // console.log("BANANA SBANANATO " + sRet);
                                         // By xml2js
                                         xml2js(sRet, function (err, result) {
                                             node.nodeClients.forEach(oClient => {
@@ -104,7 +104,7 @@ module.exports = (RED) => {
                                         if (i > -1) {
                                             sRet = sRet.substring(i);
                                             //sRet = sRet.replace(/(['"])?([a-z0-9A-Z_]+)(['"])?:/g, '"$2": '); // Fix numbers and chars invalid in JSON
-                                            // // // console.log("BANANA JSONATO: " + sRet);
+                                            // console.log("BANANA JSONATO: " + sRet);
                                             node.nodeClients.forEach(oClient => {
                                                 oClient.sendPayload({ topic: oClient.topic || "", payload: JSON.parse(sRet), connected: true });
                                             })
@@ -136,7 +136,7 @@ module.exports = (RED) => {
                     node.setAllClientsStatus({ fill: "green", shape: "ring", text: "Waiting for Alarm." });
                 } else {
                     node.setAllClientsStatus({ fill: "red", shape: "ring", text: response.statusText });
-                    // // // console.log("BANANA Error response " + response.statusText);
+                    // console.log("BANANA Error response " + response.statusText);
                     throw ("Error response: " + response.statusText);
                 }
                 if (response.ok) {
@@ -146,7 +146,7 @@ module.exports = (RED) => {
 
             } catch (err) {
                 // Main Error
-                // // // console.log("BANANA MAIN ERROR: " + err);
+                // console.log("BANANA MAIN ERROR: " + err);
                 // Abort request
                 try {
                     if (controller !== null) controller.abort();

@@ -2,6 +2,10 @@
 [![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square)](https://www.paypal.me/techtoday) 
 
 <p>
+<b>Version 0.0.19 LAST BETA BEFORE STABLE RELEASE</b> December 2020<br/>
+- Better handling of status messages.<br/>
+</p>
+<p>
 <b>Version 0.0.18 BETA</b> December 2020<br/>
 - BUGFIX: fixed a vaccata in handling boundary of stream pipeline.<br/>
 - BUGFIX: fixed a minchiata in ANPR node, where if the alarmed zone was 0, the node outputs "unknown zone".<br/>
