@@ -18,7 +18,7 @@ module.exports = (RED) => {
 
         node.setAllClientsStatus = ({ fill, shape, text }) => {
             function nextStatus(oClient) {
-               oClient.setNodeStatus({ fill: fill, shape: shape, text: text });
+                oClient.setNodeStatus({ fill: fill, shape: shape, text: text });
             }
             node.nodeClients.map(nextStatus);
         }
@@ -108,9 +108,11 @@ module.exports = (RED) => {
                             node.isConnected = true;
                             //console.log("BANANA JSON PLATES: " + JSON.stringify(oPlates));
                             if (oPlates.Plates.hasOwnProperty("Plate")) {
-                                // Returns a sorted list, always.
-                                oPlates.Plates.Plate = oPlates.Plates.Plate.sort(sortPlates);
-                                console.log("BANANA PLATES ORDINATE:" + JSON.stringify(oPlates));
+                                // If the plate is an array, returns a sorted list, otherwise a single plate.
+                                if (Array.isArray(oPlates.Plates.Plate)) {
+                                    oPlates.Plates.Plate = oPlates.Plates.Plate.sort(sortPlates);
+                                    //console.log("BANANA LISTA MULTIPLA PLATES ORDINATE:" + JSON.stringify(oPlates));
+                                }
                                 return oPlates;
                             } else {
                                 // Returns the object, empty.
@@ -160,22 +162,30 @@ module.exports = (RED) => {
                     setTimeout(node.initPlateReader, 10000); // Restart initPlateReader
                 } else {
                     // console.log("BANANA STRIGONE " + JSON.stringify(oPlates))
-                    if (oPlates.Plates.hasOwnProperty("Plate") && oPlates.Plates.Plate.length > 0) {
-                        try {
-                            node.lastPicName = oPlates.Plates.Plate[oPlates.Plates.Plate.length - 1].picName;
-                            console.log("BANANA PLATES IGNORATE: " + oPlates.Plates.Plate.length + " ignored plates. Last was " + node.lastPicName);
-                            node.setAllClientsStatus({ fill: "grey", shape: "ring", text: "Found " + oPlates.Plates.Plate.length + " ignored plates. Last was " + node.lastPicName });
-                        } catch (error) {
-                            // console.log("BANANA Error oPlates.Plates.Plate[oPlates.Plates.Plate.length - 1]: " + error);
-                            setTimeout(node.initPlateReader, 10000); // Restart initPlateReader
-                            return;
+                    if (oPlates.Plates.hasOwnProperty("Plate")) {
+                        // Check wether is an array of plates or a single plate
+                        if (Array.isArray(oPlates.Plates.Plate) && oPlates.Plates.Plate.length > 0) {
+                            try {
+                                node.lastPicName = oPlates.Plates.Plate[oPlates.Plates.Plate.length - 1].picName;
+                                console.log("BANANA PLATES IGNORATE MULTIPLE: " + oPlates.Plates.Plate.length + " ignored plates. Last was " + node.lastPicName);
+                                node.setAllClientsStatus({ fill: "grey", shape: "ring", text: "Found " + oPlates.Plates.Plate.length + " ignored plates. Last was " + node.lastPicName });
+                            } catch (error) {
+                                // console.log("BANANA Error oPlates.Plates.Plate[oPlates.Plates.Plate.length - 1]: " + error);
+                                setTimeout(node.initPlateReader, 10000); // Restart initPlateReader
+                                return;
+                            }
+                        } else {
+                            // It's a single plate
+                            node.lastPicName = oPlates.Plates.Plate.picName;
+                            console.log("BANANA SINGOLA PLATE IGNORATA: it's " + node.lastPicName);
+                            node.setAllClientsStatus({ fill: "grey", shape: "ring", text: "Found 1 ignored plates. It's " + node.lastPicName });
                         }
                     } else {
                         // No previously plates found, set a default datetime
                         node.setAllClientsStatus({ fill: "grey", shape: "ring", text: "No previously plates found." });
                         node.lastPicName = "202001010101010000";
                     }
-                    setTimeout(() => node.setAllClientsStatus({ fill: "green", shape: "ring", text: "Waiting for vehicle..." }),2000);
+                    setTimeout(() => node.setAllClientsStatus({ fill: "green", shape: "ring", text: "Waiting for vehicle..." }), 2000);
                     setTimeout(node.queryForPlates, 2000); // Start main polling thread
                 }
             })();
@@ -202,15 +212,26 @@ module.exports = (RED) => {
                         // An error was occurred.
                         setTimeout(node.initPlateReader, 10000); // Restart initPlateReader from scratch
                     } else {
-                        if (oPlates.Plates.hasOwnProperty("Plate") && oPlates.Plates.Plate.length > 0) {
-                            // Send the message to the child nodes
-                            oPlates.Plates.Plate.forEach(oPlate => {
+                        if (oPlates.Plates.hasOwnProperty("Plate")) {
+                            // Check wether is an array of plates or a single plate
+                            if (Array.isArray(oPlates.Plates.Plate) && oPlates.Plates.Plate.length > 0) {
+                                // Send the message to the child nodes
+                                oPlates.Plates.Plate.forEach(oPlate => {
+                                    node.nodeClients.forEach(oClient => {
+                                        oClient.sendPayload({ topic: oClient.topic || "", plate: oPlate, payload: oPlate.plateNumber, connected: true });
+                                    })
+                                })
+                                // Set the last plate found, to avoid repeating.
+                                node.lastPicName = oPlates.Plates.Plate[oPlates.Plates.Plate.length - 1].picName;
+                            } else {
+                                // It's a single plate
+                                node.lastPicName = oPlates.Plates.Plate.picName;
+                                var oPlate = oPlates.Plates.Plate;
                                 node.nodeClients.forEach(oClient => {
                                     oClient.sendPayload({ topic: oClient.topic || "", plate: oPlate, payload: oPlate.plateNumber, connected: true });
                                 })
-                            })
-                            // Set the last plate found, to avoid repeating.
-                            node.lastPicName = oPlates.Plates.Plate[oPlates.Plates.Plate.length - 1].picName;
+                                console.log("BANANA SINGOLA PLATE: " + oPlate.plateNumber);
+                            }
                         } else {
                             // No new plates found
                         }
