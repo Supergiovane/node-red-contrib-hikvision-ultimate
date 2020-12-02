@@ -51,7 +51,7 @@ module.exports = function (RED) {
 				var oRetMsg = {}; // Return message
 				oRetMsg.connected = _msg.connected;
 				oRetMsg.alarm = _msg.payload; // Put the full alarm description here.
-				oRetMsg.zone = _msg.payload.CIDEvent.zone || "unknown";
+				oRetMsg.zone = _msg.payload.CIDEvent.zone + 1; // The zone on device's ISAPI is base 0, while the zone on UI is base 1.
 				if (Number(node.filterzone) === 0 || Number(node.filterzone) === Number(oRetMsg.zone)) { // Filter only selcted zones
 					// Get the Hikvision alarm codes, that differs from standard SIA codes.
 					switch (_msg.payload.CIDEvent.code.toString().toLowerCase()) {

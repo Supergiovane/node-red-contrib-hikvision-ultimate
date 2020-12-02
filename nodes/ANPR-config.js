@@ -18,10 +18,27 @@ module.exports = (RED) => {
 
         node.setAllClientsStatus = ({ fill, shape, text }) => {
             function nextStatus(oClient) {
-                oClient.setNodeStatus({ fill: fill, shape: shape, text: text })
+               oClient.setNodeStatus({ fill: fill, shape: shape, text: text });
             }
             node.nodeClients.map(nextStatus);
         }
+
+        // Sort the plates, in any case, even if the anpr camera returns a sorted list. It's not always true!
+        function sortPlates(a, b) {
+            try {
+                if (a.Plate.picName < b.Plate.picName) {
+                    return -1;
+                }
+                if (a.Plate.picName > b.Plate.picName) {
+                    return 1;
+                }
+                return 0;
+            } catch (error) {
+                return 0;
+            }
+
+        }
+
 
         // Function to get the plate list from the camera
         async function getPlates(_lastPicName) {
@@ -47,58 +64,68 @@ module.exports = (RED) => {
             try {
                 const response = await client.fetch("http://" + node.host + "/ISAPI/Traffic/channels/1/vehicleDetect/plates", options);
                 if (response.status >= 200 && response.status <= 300) {
-                    node.setAllClientsStatus({ fill: "green", shape: "ring", text: "Connected." });
+                    //node.setAllClientsStatus({ fill: "green", shape: "ring", text: "Connected." });
                 } else {
                     node.setAllClientsStatus({ fill: "red", shape: "ring", text: response.statusText });
-                    // console.log("BANANA Error response " + response.statusText);
+                    console.log("BANANA Error response " + response.statusText);
                     throw ("Error response: " + response.statusText);
                 }
                 //#region "BODY"
-                const body = await response.text();
-                var sRet = "";
-                sRet = body.toString();
-                //// console.log("BANANA " + sRet);
-                var oPlates = null;
-                try {
-                    var i = sRet.indexOf("<"); // Get only the XML, starting with "<"
-                    if (i > -1) {
-                        sRet = sRet.substring(i);
-                        // By xml2js
-                        xml2js(sRet, function (err, result) {
-                            oPlates = result;
-                        });
-                    } else {
-                        i = sRet.indexOf("{") // It's a Json
+                if (response.ok) {
+                    var body = "";
+                    body = await response.text();
+                    var sRet = body.toString();
+                    console.log("BANANA ANPR: " + sRet);
+                    var oPlates = null;
+                    try {
+                        var i = sRet.indexOf("<"); // Get only the XML, starting with "<"
                         if (i > -1) {
                             sRet = sRet.substring(i);
-                            oPlates = JSON.parse(result);
+                            // By xml2js
+                            xml2js(sRet, function (err, result) {
+                                oPlates = result;
+                            });
                         } else {
-                            // Invalid body
-                            RED.log.info("ANPR-config: DecodingBody: Invalid Json " + sRet);
-                            // console.log("BANANA ANPR-config: DecodingBody: Invalid Json " + sRet);
-                            throw ("Error Invalid Json: " + sRet);
+                            i = sRet.indexOf("{") // It's a Json
+                            if (i > -1) {
+                                sRet = sRet.substring(i);
+                                oPlates = JSON.parse(result);
+                            } else {
+                                // Invalid body
+                                RED.log.info("ANPR-config: DecodingBody: Invalid Json " + sRet);
+                                // console.log("BANANA ANPR-config: DecodingBody: Invalid Json " + sRet);
+                                throw ("Error Invalid Json: " + sRet);
+                            }
                         }
-                    }
-                    // console.log("BANANA GIASONE " + JSON.stringify(oPlates));
-                    // Working the plates. Must be sure, that no error occurs, before acknolwedging the plate last picName
-                    if (oPlates.Plates !== null) {
-                        node.setAllClientsStatus({ fill: "green", shape: "ring", text: "Waiting for vehicle..." });
-                        if (!node.isConnected) {
-                            node.nodeClients.forEach(oClient => {
-                                oClient.sendPayload({ topic: oClient.topic || "", payload: null, connected: true });
-                            })
+                        // console.log("BANANA GIASONE " + JSON.stringify(oPlates));
+                        // Working the plates. Must be sure, that no error occurs, before acknolwedging the plate last picName
+                        if (oPlates.Plates !== null && oPlates.Plates !== undefined) {
+                            if (!node.isConnected) {
+                                node.nodeClients.forEach(oClient => {
+                                    oClient.sendPayload({ topic: oClient.topic || "", payload: null, connected: true });
+                                })
+                            }
+                            node.isConnected = true;
+                            //console.log("BANANA JSON PLATES: " + JSON.stringify(oPlates));
+                            if (oPlates.Plates.hasOwnProperty("Plate")) {
+                                // Returns a sorted list, always.
+                                oPlates.Plates.Plate = oPlates.Plates.Plate.sort(sortPlates);
+                                console.log("BANANA PLATES ORDINATE:" + JSON.stringify(oPlates));
+                                return oPlates;
+                            } else {
+                                // Returns the object, empty.
+                                return oPlates;
+                            }
+                        } else {
+                            // Error in parsing XML
+                            throw ("Error: oPlates.Plates is null");
                         }
-                        node.isConnected = true;
-                        return oPlates;
-                    } else {
-                        // Error in parsing XML
-                        throw ("Error: oPlates.Plates is null");
-                    }
 
-                } catch (error) {
-                    RED.log.error("ANPR-config: ERRORE CATCHATO initPlateReader:" + error);
-                    // console.log("BANANA ANPR-config: ERRORE CATCHATO initPlateReader: " + error);
-                    throw ("Error initPlateReader: " + error);
+                    } catch (error) {
+                        RED.log.error("ANPR-config: ERRORE CATCHATO initPlateReader:" + error);
+                        // console.log("BANANA ANPR-config: ERRORE CATCHATO initPlateReader: " + error);
+                        throw ("Error initPlateReader: " + error);
+                    }
                 }
                 //#endregion 
             } catch (err) {
@@ -124,9 +151,10 @@ module.exports = (RED) => {
         // At start, reads the last recognized plate and starts listening from the time last plate was recognized.
         // This avoid output all the previoulsy plate list, stored by the camera.
         node.initPlateReader = () => {
+
             // console.log("BANANA INITPLATEREADER");
-            node.setAllClientsStatus({ fill: "grey", shape: "ring", text: "Getting prev list to be ignored..." });
-            (async () => { 
+            //node.setAllClientsStatus({ fill: "grey", shape: "ring", text: "Getting prev list to be ignored..." });
+            (async () => {
                 var oPlates = await getPlates("202001010101010000");
                 if (oPlates === null) {
                     setTimeout(node.initPlateReader, 10000); // Restart initPlateReader
@@ -135,6 +163,7 @@ module.exports = (RED) => {
                     if (oPlates.Plates.hasOwnProperty("Plate") && oPlates.Plates.Plate.length > 0) {
                         try {
                             node.lastPicName = oPlates.Plates.Plate[oPlates.Plates.Plate.length - 1].picName;
+                            console.log("BANANA PLATES IGNORATE: " + oPlates.Plates.Plate.length + " ignored plates. Last was " + node.lastPicName);
                             node.setAllClientsStatus({ fill: "grey", shape: "ring", text: "Found " + oPlates.Plates.Plate.length + " ignored plates. Last was " + node.lastPicName });
                         } catch (error) {
                             // console.log("BANANA Error oPlates.Plates.Plate[oPlates.Plates.Plate.length - 1]: " + error);
@@ -146,6 +175,7 @@ module.exports = (RED) => {
                         node.setAllClientsStatus({ fill: "grey", shape: "ring", text: "No previously plates found." });
                         node.lastPicName = "202001010101010000";
                     }
+                    setTimeout(() => node.setAllClientsStatus({ fill: "green", shape: "ring", text: "Waiting for vehicle..." }),2000);
                     setTimeout(node.queryForPlates, 2000); // Start main polling thread
                 }
             })();

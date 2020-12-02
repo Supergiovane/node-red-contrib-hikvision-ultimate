@@ -7,7 +7,7 @@ module.exports = function (RED) {
 		node.server = RED.nodes.getNode(config.server)
 		node.avoidsameplatetime = config.avoidsameplatetime || 20; // Doesn't send the same plate in this timeframe, in seconds.
 		node.currentPlate = ""; // Stores the current plate (for the avoidsameplatetime function)
-		node.timerAvoidSamePlate; // Timer for avoiding repeating plate
+		node.timerAvoidSamePlate = null; // Timer for avoiding repeating plate
 		node.bAvoidSamePlate = false;
 
 		node.setNodeStatus = ({ fill, shape, text }) => {
@@ -28,7 +28,7 @@ module.exports = function (RED) {
 
 			// Timer for avoiding same plate 
 			// ##########################
-			try { clearTimeout(node.timerAvoidSamePlate); } catch (error) { };
+			if (node.timerAvoidSamePlate !== null) clearTimeout(node.timerAvoidSamePlate);
 			node.bAvoidSamePlate = true;
 			node.timerAvoidSamePlate = setTimeout(() => {
 				node.bAvoidSamePlate = false;

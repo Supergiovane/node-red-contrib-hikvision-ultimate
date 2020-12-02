@@ -18,6 +18,7 @@ Digest authentication is the default, so it should work with all gears!<br/>
 All nodes are capable of auto reconnect if the connection is lost and are able to actively monitor the connection.<br/>
 In case of disconnection or network issues, the nodes will output a message with **msg.connected = false** and *null* payload.<br/>
 There are currently **only two nodes**, one that traps the alarms, in RAW mode, and outputs a JSON and the other that outputs the ANPR License Plate numbers.<br/>
+The node uses pipelines to handle streams, so you need at least **Node V.10.0.0**, or newer, installed. To check Node version, type **node -v** in a command prompt.<br/>
 
 ***THIS NODE IS IN BETA***<br/>
 I'll add helps, docs and samples in this README page. Please have some patience...<br/>
