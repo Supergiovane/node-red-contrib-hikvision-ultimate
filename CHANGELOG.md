@@ -2,10 +2,11 @@
 [![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square)](https://www.paypal.me/techtoday) 
 
 <p>
-<b>Version 0.0.17 BETA</b> December 2020<br/>
+<b>Version 0.0.18 BETA</b> December 2020<br/>
 - BUGFIX: fixed a vaccata in handling boundary of stream pipeline.<br/>
 - BUGFIX: fixed a minchiata in ANPR node, where if the alarmed zone was 0, the node outputs "unknown zone".<br/>
 - Fixed Radar alarm zone. Zone number in ISAPI is base 0, while in the UI is base 1.<br/>
+- BUGFIX: ANPR - fixed array handling when returning a single plate.<br/>
 </p>
 <p>
 <b>Version 0.0.16 BETA</b> December 2020<br/>
