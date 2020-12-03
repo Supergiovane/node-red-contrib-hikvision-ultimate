@@ -13,7 +13,7 @@ A native set of node for Hikvision Cameras, Alarms, Radars, NVR etc.
 
 ## DESCRIPTION
 This is a set of nodes to handle ISAPI Hikvision messages.<br/>
-Works with cameras, NVR and also with specialized devices, like Radar (for example DS-PR1-60 and 120).<br/>
+Works with cameras, NVR and also with specialized devices, like Radar (for example DS-PR1-60, DS-PR1-100 and DS-PR1-120).<br/>
 Digest authentication is the default, so it should work with all gears!<br/>
 All nodes are capable of auto reconnect if the connection is lost and are able to actively monitor the connection.<br/>
 The node uses pipelines to handle streams, so you need at least **Node V.10.0.0**, or newer, installed. To check Node version, type **node -v** in a command prompt.<br/>
