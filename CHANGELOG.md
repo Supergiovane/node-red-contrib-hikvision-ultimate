@@ -2,6 +2,10 @@
 [![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square)](https://www.paypal.me/techtoday) 
 
 <p>
+<b>Version 0.0.20 GA VERSION WITH STABLE BEHAVOUR</b> December 2020<br/>
+- NEW: added the PIN 2 for signalling errors.<br/>
+</p>
+<p>
 <b>Version 0.0.19 LAST BETA BEFORE STABLE RELEASE</b> December 2020<br/>
 - Better handling of status messages.<br/>
 </p>
