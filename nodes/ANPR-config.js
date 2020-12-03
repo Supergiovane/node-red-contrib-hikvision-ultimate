@@ -12,8 +12,9 @@ module.exports = (RED) => {
         node.host = config.host;
         node.port = config.port;
         node.nodeClients = []; // Stores the registered clients
-        node.isConnected = false;
+        node.isConnected = true; // Assume it's connected, to signal the disconnection on start
         node.lastPicName = "";
+        node.errorDescription = ""; // Contains the error description in case of connection error.
         var controller = null; // Abortcontroller
 
         node.setAllClientsStatus = ({ fill, shape, text }) => {
@@ -66,9 +67,9 @@ module.exports = (RED) => {
                 if (response.status >= 200 && response.status <= 300) {
                     //node.setAllClientsStatus({ fill: "green", shape: "ring", text: "Connected." });
                 } else {
-                    node.setAllClientsStatus({ fill: "red", shape: "ring", text: response.statusText });
-                    console.log("BANANA Error response " + response.statusText);
-                    throw ("Error response: " + response.statusText);
+                    node.setAllClientsStatus({ fill: "red", shape: "ring", text: response.statusText || " unknown response code" });
+                    //console.log("BANANA Error response " + response.statusText);
+                    throw new Error("Error response: " + response.statusText || " unknown response code");
                 }
                 //#region "BODY"
                 if (response.ok) {
@@ -94,18 +95,22 @@ module.exports = (RED) => {
                                 // Invalid body
                                 RED.log.info("ANPR-config: DecodingBody: Invalid Json " + sRet);
                                 // console.log("BANANA ANPR-config: DecodingBody: Invalid Json " + sRet);
-                                throw ("Error Invalid Json: " + sRet);
+                                throw new Error("Error Invalid Json: " + sRet);
                             }
                         }
                         // console.log("BANANA GIASONE " + JSON.stringify(oPlates));
                         // Working the plates. Must be sure, that no error occurs, before acknolwedging the plate last picName
                         if (oPlates.Plates !== null && oPlates.Plates !== undefined) {
+
+                            // Send connection OK
                             if (!node.isConnected) {
                                 node.nodeClients.forEach(oClient => {
-                                    oClient.sendPayload({ topic: oClient.topic || "", payload: null, connected: true });
+                                    oClient.sendPayload({ topic: oClient.topic || "", errorDescription: "", payload: false });
                                 })
                             }
+                            node.errorDescription = ""; // Reset the error message
                             node.isConnected = true;
+
                             //console.log("BANANA JSON PLATES: " + JSON.stringify(oPlates));
                             if (oPlates.Plates.hasOwnProperty("Plate")) {
                                 // If the plate is an array, returns a sorted list, otherwise a single plate.
@@ -118,31 +123,33 @@ module.exports = (RED) => {
                                 // Returns the object, empty.
                                 return oPlates;
                             }
+
                         } else {
                             // Error in parsing XML
-                            throw ("Error: oPlates.Plates is null");
+                            RED.log.info("ANPR-config: Error: oPlates.Plates is null");
+                            throw new Error("Error: oPlates.Plates is null");
                         }
 
                     } catch (error) {
-                        RED.log.error("ANPR-config: ERRORE CATCHATO initPlateReader:" + error);
+                        RED.log.warn("ANPR-config: ERRORE CATCHATO initPlateReader:" + (error.message || ""));
                         // console.log("BANANA ANPR-config: ERRORE CATCHATO initPlateReader: " + error);
-                        throw ("Error initPlateReader: " + error);
+                        throw new Error("Error initPlateReader: " + (error.message || ""));
                     }
                 }
                 //#endregion 
             } catch (err) {
                 // Main Error
-                // console.log("BANANA MAIN ERROR: " + err);
+                node.errorDescription = err.message || " unknown error";
+                node.setAllClientsStatus({ fill: "grey", shape: "ring", text: "Server unreachable: " + node.errorDescription + " Retry..." });
+                if (node.isConnected) {
+                    node.nodeClients.forEach(oClient => {
+                        oClient.sendPayload({ topic: oClient.topic || "", errorDescription: node.errorDescription, payload: true });
+                    })
+                }
                 // Abort request
                 try {
                     if (controller !== null) controller.abort();
                 } catch (error) { }
-                node.setAllClientsStatus({ fill: "grey", shape: "ring", text: "Server unreachable: " + err + " Retry..." });
-                if (node.isConnected) {
-                    node.nodeClients.forEach(oClient => {
-                        oClient.sendPayload({ topic: oClient.topic || "", payload: null, connected: false });
-                    })
-                }
                 node.isConnected = false;
                 return null;
             };

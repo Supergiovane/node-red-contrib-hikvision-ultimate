@@ -14,7 +14,7 @@ module.exports = function (RED) {
 
 		// Called from config node, to send output to the flow
 		node.sendPayload = (_msg) => {
-			if (_msg.payload === null) { node.send(_msg); return; }; // If null, then it's disconnected. Avoid processing the event
+			if (_msg.hasOwnProperty("errorDescription")) { node.send([null,_msg]); return; }; // It's a connection error/restore comunication.
 			// Radar alarm JSON
 			/* 	{
 					"ipAddress": "192.168.1.25",
@@ -71,7 +71,7 @@ module.exports = function (RED) {
 							node.setNodeStatus({ fill: "grey", shape: "ring", text: "Zone " + oRetMsg.zone + " unknowk CID code " + _msg.payload.CIDEvent.code });
 							return; // Unknown state
 					}
-					node.send(oRetMsg);
+					node.send([oRetMsg,null]);
 				}
 			}
 		}
@@ -83,7 +83,7 @@ module.exports = function (RED) {
 		}
 
 		this.on('input', function (msg) {
-			node.sendPayload(msg);
+		
 		});
 
 		node.on("close", function (done) {

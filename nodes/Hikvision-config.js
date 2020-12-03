@@ -13,8 +13,9 @@ module.exports = (RED) => {
         node.host = config.host;
         node.port = config.port;
         node.nodeClients = []; // Stores the registered clients
-        node.isConnected = false;
+        node.isConnected = true; // Assumes, that is already connected.
         node.timerCheckHeartBeat = null;
+        node.errorDescription = ""; // Contains the error description in case of connection error.
         var controller = null; // AbortController
 
         node.setAllClientsStatus = ({ fill, shape, text }) => {
@@ -24,24 +25,26 @@ module.exports = (RED) => {
             node.nodeClients.map(nextStatus);
         }
 
+
+
         // This function starts the heartbeat timer, to detect the disconnection from the server
         node.resetHeartBeatTimer = () => {
             // Reset node.timerCheckHeartBeat
             if (node.timerCheckHeartBeat !== null) clearTimeout(node.timerCheckHeartBeat);
             node.timerCheckHeartBeat = setTimeout(() => {
+                if (node.isConnected) {
+                    if (node.errorDescription === "") node.errorDescription = "Timeout waiting heartbeat"; // In case of timeout of a stream, there is no error throwed.
+                    node.nodeClients.forEach(oClient => {
+                        oClient.sendPayload({ topic: oClient.topic || "", errorDescription: node.errorDescription, payload: true });
+                    });
+                    node.setAllClientsStatus({ fill: "red", shape: "ring", text: "Lost connection...Retry... " + node.errorDescription });
+                }
                 try {
                     if (controller !== null) controller.abort();
                 } catch (error) { }
-
-                if (node.isConnected) {
-                    node.nodeClients.forEach(oClient => {
-                        oClient.sendPayload({ topic: oClient.topic || "", payload: null, connected: false });
-                    });
-                    node.setAllClientsStatus({ fill: "red", shape: "ring", text: "Lost connection...Retry..." });
-                }
                 node.isConnected = false;
-                setTimeout(startAlarmStream, 5000); // Reconnect
-            }, 40000);
+                setTimeout(startAlarmStream, 2000); // Reconnect
+            }, 26000);
         }
 
         async function startAlarmStream() {
@@ -96,7 +99,7 @@ module.exports = (RED) => {
                                         // By xml2js
                                         xml2js(sRet, function (err, result) {
                                             node.nodeClients.forEach(oClient => {
-                                                if (result !== undefined) oClient.sendPayload({ topic: oClient.topic || "", payload: result.EventNotificationAlert, connected: true });
+                                                if (result !== undefined) oClient.sendPayload({ topic: oClient.topic || "", payload: result.EventNotificationAlert });
                                             })
                                         });
                                     } else {
@@ -106,7 +109,7 @@ module.exports = (RED) => {
                                             //sRet = sRet.replace(/(['"])?([a-z0-9A-Z_]+)(['"])?:/g, '"$2": '); // Fix numbers and chars invalid in JSON
                                             // console.log("BANANA JSONATO: " + sRet);
                                             node.nodeClients.forEach(oClient => {
-                                                oClient.sendPayload({ topic: oClient.topic || "", payload: JSON.parse(sRet), connected: true });
+                                                oClient.sendPayload({ topic: oClient.topic || "", payload: JSON.parse(sRet) });
                                             })
                                         } else {
                                             // Invalid body
@@ -119,53 +122,54 @@ module.exports = (RED) => {
                                     node.resetHeartBeatTimer();
                                 } catch (error) {
                                     // console.log("BANANA startAlarmStream decodifica body: " + error);
-                                    RED.log.error("Hikvision-config: DecodingBody error: " + error);
+                                    RED.log.warn("Hikvision-config: DecodingBody error: " + (error.message || " unknown error"));
+                                    throw (error);
                                 }
                             }
                         }
                     } catch (error) {
-                        // console.log("BANANA NEL BODY errore " + error);
-                        return;
+                        RED.log.info("Hikvision-config: readStream error: " + (error.message || " unknown error"));
+                        node.errorDescription = "readStream error " +  (error.message || " unknown error");
+                        throw (error);
+
                     }
                 }
                 // ###################################
                 //#endregion
 
                 const response = await client.fetch("http://" + node.host + "/ISAPI/Event/notification/alertStream", options);
+                
                 if (response.status >= 200 && response.status <= 300) {
                     node.setAllClientsStatus({ fill: "green", shape: "ring", text: "Waiting for Alarm." });
                 } else {
-                    node.setAllClientsStatus({ fill: "red", shape: "ring", text: response.statusText });
+                    node.setAllClientsStatus({ fill: "red", shape: "ring", text: response.statusText || " unknown response code"});
                     // console.log("BANANA Error response " + response.statusText);
-                    throw ("Error response: " + response.statusText);
+                    node.errorDescription = "StatusResponse problem " + (response.statusText || " unknown status response code");
+                    throw new Error("StatusResponse " + (response.statusText || " unknown response code"));
                 }
                 if (response.ok) {
+                    if (!node.isConnected) {
+                        node.setAllClientsStatus({ fill: "green", shape: "ring", text: "Connected." });
+                        node.nodeClients.forEach(oClient => {
+                            oClient.sendPayload({ topic: oClient.topic || "", errorDescription: "", payload: false });
+                        })
+                        node.errorDescription = ""; // Reset the error
+                    }
                     node.isConnected = true;
                     streamPipeline(response.body, readStream);
                 }
 
-            } catch (err) {
+            } catch (error) {
                 // Main Error
-                // console.log("BANANA MAIN ERROR: " + err);
                 // Abort request
-                try {
-                    if (controller !== null) controller.abort();
-                } catch (error) { }
-                node.setAllClientsStatus({ fill: "grey", shape: "ring", text: "Server unreachable: " + err + " Retry..." });
-                if (node.isConnected) {
-                    try {
-                        node.nodeClients.forEach(oClient => {
-                            oClient.sendPayload({ topic: oClient.topic || "", payload: null, connected: false });
-                        })
-                    } catch (error) { }
-
-                }
-                node.isConnected = false;
+                //node.errorDescription = "Fetch error " + JSON.stringify(error, Object.getOwnPropertyNames(error));
+                node.errorDescription = "Fetch error " + (error.message || " unknown error");
+                RED.log.error("Hikvision-config: FETCH ERROR: " + (error.message || " unknown error"));
             };
 
         };
 
-        setTimeout(startAlarmStream, 5000); // First connection.
+        setTimeout(startAlarmStream, 10000); // First connection.
 
 
         //#region "FUNCTIONS"

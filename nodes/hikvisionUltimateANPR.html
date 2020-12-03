@@ -8,7 +8,7 @@
 			avoidsameplatetime: { value:20, validate:RED.validators.number()}
 		},
 		inputs: 0,
-		outputs: 1,
+		outputs: 2,
 		outputLabels: function (i) {
 			var ret = "";
 			switch (i) {
@@ -16,7 +16,7 @@
 					return "Plates";
 					break;
 				case 1:
-					return "";
+					return "Error";
 					break;
 				case 2
 					:

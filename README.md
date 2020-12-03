@@ -36,10 +36,12 @@ The RAW alarm node connects to NVR, Camera, Alarm system, Radars etc. and output
 
 **Output message**
 
-The node outputs a payload that can vary, depending from the alarm type sent by the connected device.</br>
+The node outputs a payload on **PIN 1** that can vary, depending from the alarm type sent by the connected device.</br>
+The node outputs a payload on **PIN 2**, representing a connection error. ***TRUE*** if error, otherwise ***FALSE***</br>
 This below, is only an example (in this case, a movement detected from a radar)</br>
-**Caution**: the node actively checks if the device is connected to the network. In case of disconnection/reconnection, the nodes will output a message with **msg.connected = false** with a ***null*** payload if disconnected, and **msg.connected = true** if connected.<br/>
 
+
+**Output PIN 1**
 ```javascript
 msg.payload = {
     "topic": "",
@@ -71,11 +73,19 @@ msg.payload = {
             }
         ]
     },
-    "connected": true,
     "_msgid": "dba1850a.2dc5e8"
 }
 ```
 
+**Output PIN 2 (connection error)**
+```javascript
+msg = {
+    "topic": "",
+    "errorDescription": "", // This will contain the error rescription, in case of errors.
+    "payload": false, // Or TRUE if error
+    "_msgid": "dd5b3622.884a78"
+}
+```
 <br/>
 <br/>
 
@@ -86,13 +96,12 @@ msg.payload = {
 **Output message**
 
 The payload contains the license plate number and the property "plate" contains other useful informations.</br>
-**Caution**: the node actively checks if the ANPR camera is connected to the network. In case of disconnection/reconnection, the nodes will output a message with **msg.connected = false** with a ***null*** payload if disconnected, and **msg.connected = true** if connected.<br/>
 
+**Output PIN 1**
 ```javascript
 msg.payload = {
     "topic":"",
     "payload":"AB123CD", // This is the license plate
-    "connected":true, // true if the connection is OK, otherwise false if the connection is lost.
     "plate":{
         "captureTime":"20201130T114200+0100",
         "plateNumber":"AB123CD",
@@ -105,6 +114,15 @@ msg.payload = {
     }
 ```
 
+**Output PIN 2 (connection error)**
+```javascript
+msg = {
+    "topic": "",
+    "errorDescription": "", // This will contain the error rescription, in case of errors.
+    "payload": false, // Or TRUE if error
+    "_msgid": "dd5b3622.884a78"
+}
+```
 <br/>
 <br/>
 
@@ -118,12 +136,11 @@ The node outputs a message whenever an alarm starts or ends. It uses CID codes t
 The payload is TRUE whenever alarm occurs, otherwise FALSE whenever alarm ends.</br>
 The complete alarm event is stored in the "alarm" property of the payload.</br>
 In an **unknown CID event** arrives from the Radar, the node will output a message containing the CID code, the full alarm and a null payload.</br>
-**Caution**: the node actively checks if the radar is connected to the network. In case of disconnection/reconnection, the nodes will output a message with **msg.connected = false** with a ***null*** payload if disconnected, and **msg.connected = true** if connected.<br/>
 
+**Output PIN 1**
 ```javascript
 msg.payload = {
 {
-    "connected": true, // true if the connection is OK, otherwise false if the connection is lost.
     "zone": 1, // This is the zone number that fired the alarm
     "payload": true, // true if alarm, otherwise false if alarm ended.
     "alarm": {
@@ -160,6 +177,15 @@ msg.payload = {
 }
 ```
 
+**Output PIN 2 (connection error)**
+```javascript
+msg = {
+    "topic": "",
+    "errorDescription": "", // This will contain the error rescription, in case of errors.
+    "payload": false, // Or TRUE if error
+    "_msgid": "dd5b3622.884a78"
+}
+```
 
 
 
