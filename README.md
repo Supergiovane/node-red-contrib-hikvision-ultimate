@@ -27,15 +27,15 @@ I'll add helps, docs and samples in this README page. Please have some patience.
 <br/>
 
 ## - RAW Alarm Node
-The RAW alarm node connects to NVR, Camera, Alarm system, Radars etc. and outputs the alarm received. <br/>
+The RAW alarm node connects to ***NVR, Camera, Alarm system, Radars etc...*** and outputs the alarm received. <br/>
 
 <img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/RawAlarm.png' width="80%">
 
 **Output message**
 
-The node outputs a payload on **PIN 1** that can vary, depending from the alarm type sent by the connected device.</br>
+The node outputs a payload on **PIN 1** that can vary, depending on the alarm type sent by the connected device.</br>
 The node outputs a payload on **PIN 2**, representing a connection error. ***TRUE*** if error, otherwise ***FALSE***</br>
-This below, is only an example (in this case, a movement detected from a radar)</br>
+This below is an example of msg output (in this case, a movement detected from a radar)</br>
 
 
 **Output PIN 1**
@@ -87,6 +87,7 @@ msg = {
 <br/>
 
 ## - ANPR (License Plate) Node
+This node works with Hikvision ANPR cameras.<br/>
 
 <img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/ANPR.png' width="80%">
 
@@ -124,6 +125,7 @@ msg = {
 <br/>
 
 ## - Radar Alarm Node
+This node works with Hikvision Radars.<br/>
 
 <img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/Radar.png' width="80%">
 
