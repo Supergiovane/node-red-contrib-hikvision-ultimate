@@ -44,7 +44,7 @@ module.exports = (RED) => {
                 } catch (error) { }
                 node.isConnected = false;
                 setTimeout(startAlarmStream, 2000); // Reconnect
-            }, 26000);
+            }, 50000);
         }
 
         async function startAlarmStream() {
@@ -83,10 +83,9 @@ module.exports = (RED) => {
                         let result = ""; // The complete message, as soon as --boudary is received.
                         for await (const chunk of stream) {
                             result += chunk.toString();
-                            // console.log("BANANA CHUNK " + chunk.toString());
                             // Gotta --boundary, process the message
                             if (result.toString().indexOf("--boundary") > -1) {
-                                // console.log("BANANA FOUND BOUNDARY");
+                                // console.log("BANANA FOUND BOUNDARY: PROCESSO: " + result);
                                 var sRet = result.toString();
                                 result = ""; // Reset the result
                                 // console.log("BANANA PROCESSING" + sRet);
@@ -129,7 +128,7 @@ module.exports = (RED) => {
                         }
                     } catch (error) {
                         RED.log.info("Hikvision-config: readStream error: " + (error.message || " unknown error"));
-                        node.errorDescription = "readStream error " +  (error.message || " unknown error");
+                        node.errorDescription = "readStream error " + (error.message || " unknown error");
                         throw (error);
 
                     }
@@ -138,11 +137,11 @@ module.exports = (RED) => {
                 //#endregion
 
                 const response = await client.fetch("http://" + node.host + "/ISAPI/Event/notification/alertStream", options);
-                
+
                 if (response.status >= 200 && response.status <= 300) {
                     node.setAllClientsStatus({ fill: "green", shape: "ring", text: "Waiting for Alarm." });
                 } else {
-                    node.setAllClientsStatus({ fill: "red", shape: "ring", text: response.statusText || " unknown response code"});
+                    node.setAllClientsStatus({ fill: "red", shape: "ring", text: response.statusText || " unknown response code" });
                     // console.log("BANANA Error response " + response.statusText);
                     node.errorDescription = "StatusResponse problem " + (response.statusText || " unknown status response code");
                     throw new Error("StatusResponse " + (response.statusText || " unknown response code"));
