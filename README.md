@@ -12,7 +12,7 @@ A native set of node for Hikvision Cameras, Alarms, Radars, NVR etc.
 
 
 ## DESCRIPTION
-This is a set of nodes to handle ISAPI Hikvision messages.<br/>
+This is a set of nodes to handle ISAPI Hikvision messages. It works exclusively with ***HIKVISION*** devices.<br/>
 Works with cameras, NVR and also with specialized devices, like Radar (for example DS-PR1-60, DS-PR1-100 and DS-PR1-120).<br/>
 Digest authentication is the default, so it should work with all gears!<br/>
 All nodes are capable of auto reconnect if the connection is lost and are able to actively monitor the connection.<br/>
