@@ -16,6 +16,7 @@ module.exports = (RED) => {
         node.isConnected = true; // Assumes, that is already connected.
         node.timerCheckHeartBeat = null;
         node.errorDescription = ""; // Contains the error description in case of connection error.
+        node.authentication = config.authentication || "digest";
         var controller = null; // AbortController
 
         node.setAllClientsStatus = ({ fill, shape, text }) => {
@@ -52,8 +53,10 @@ module.exports = (RED) => {
             node.resetHeartBeatTimer(); // First thing, start the heartbeat timer.
             node.setAllClientsStatus({ fill: "grey", shape: "ring", text: "Connecting..." });
 
+            var client;
+            if (node.authentication === "digest")  client= new DigestFetch(node.credentials.user, node.credentials.password); // Instantiate the fetch client.
+            if (node.authentication === "basic") client = new DigestFetch(node.credentials.user, node.credentials.password, { basic: true }); // Instantiate the fetch client.
 
-            const client = new DigestFetch(node.credentials.user, node.credentials.password); // Instantiate the fetch client.
             controller = new AbortController(); // For aborting the stream request
             var options = {
                 // These properties are part of the Fetch Standard
@@ -88,7 +91,7 @@ module.exports = (RED) => {
                                 // console.log("BANANA FOUND BOUNDARY: PROCESSO: " + result);
                                 var sRet = result.toString();
                                 result = ""; // Reset the result
-                                // console.log("BANANA PROCESSING" + sRet);
+                                //console.log("BANANA PROCESSING" + sRet);
                                 try {
                                     sRet = sRet.replace(/--boundary/g, '');
                                     var i = sRet.indexOf("<"); // Get only the XML, starting with "<"

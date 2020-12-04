@@ -4,7 +4,8 @@
         defaults: {
             host: { value: "", required: true },
             port: { value: 80, required: true, validate: RED.validators.number() },
-            name: { value: "Server" }
+            name: { value: "Server" },
+            authentication: { value: "digest" }
         },
         credentials: {
             user: { type: "text" },
@@ -48,6 +49,13 @@
     <div class="form-row">
         <label for="node-config-input-password"> Password</label>
         <input type="password" id="node-config-input-password" placeholder="">
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-authentication"><i class="fa fa-sign-in"></i> Authentication</label>
+        <select type="text" id="node-config-input-authentication">
+        <option value="digest">Digest</option>
+        <option value="basic">Basic</option>
+        </select>
     </div>
 
 

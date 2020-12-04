@@ -15,6 +15,7 @@ module.exports = (RED) => {
         node.isConnected = true; // Assume it's connected, to signal the disconnection on start
         node.lastPicName = "";
         node.errorDescription = ""; // Contains the error description in case of connection error.
+        node.authentication = config.authentication || "digest";
         var controller = null; // Abortcontroller
 
         node.setAllClientsStatus = ({ fill, shape, text }) => {
@@ -45,7 +46,10 @@ module.exports = (RED) => {
         async function getPlates(_lastPicName) {
             if (_lastPicName == undefined || _lastPicName == null || _lastPicName == "") return null;
 
-            const client = new DigestFetch(node.credentials.user, node.credentials.password); // Instantiate the fetch client.
+            var client;
+            if (node.authentication === "digest")  client= new DigestFetch(node.credentials.user, node.credentials.password); // Instantiate the fetch client.
+            if (node.authentication === "basic") client = new DigestFetch(node.credentials.user, node.credentials.password, { basic: true }); // Instantiate the fetch client.
+
             controller = new AbortController(); // For aborting the stream request
             var options = {
                 // These properties are part of the Fetch Standard
