@@ -2,6 +2,11 @@
 [![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square)](https://www.paypal.me/techtoday) 
 
 <p>
+<b>Version 0.0.25 GA VERSION WITH STABLE BEHAVOUR</b> December 2020<br/>
+- Fine tuning some msg handlers.<br/>
+- Debug mode avaiable. Just type banana after the server ip, for example 192.168.1.5banana<br/>
+</p>
+<p>
 <b>Version 0.0.24 GA VERSION WITH STABLE BEHAVOUR</b> December 2020<br/>
 - Better handling of malformed alert messages.<br/>
 </p>

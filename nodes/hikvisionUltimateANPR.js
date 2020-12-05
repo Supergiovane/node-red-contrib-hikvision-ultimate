@@ -17,9 +17,10 @@ module.exports = function (RED) {
 
 		// Called from config node, to send output to the flow
 		node.sendPayload = (_msg) => {
+			if (_msg === null || _msg === undefined) return;
 			if (_msg.hasOwnProperty("errorDescription")) { node.send([null,_msg]); return; }; // It's a connection error/restore comunication.
 			if (_msg.payload === null || _msg.payload === undefined) return;
-			
+
 			if (node.currentPlate === _msg.payload) {
 				if (node.bAvoidSamePlate) {
 					try { node.setNodeStatus({ fill: "grey", shape: "ring", text: "Temporary block same plate " + _msg.payload }); } catch (error) { };

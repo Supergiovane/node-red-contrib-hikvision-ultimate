@@ -48,8 +48,11 @@ module.exports = function (RED) {
 					}
 				} */
 			//var oRetMsg = RED.util.cloneMessage(_msg);
-			if (_msg.payload) return;
-			if (_msg.payload.hasOwnProperty("CIDEvent") && _msg.payload.CIDEvent.type.toString().toLowerCase() === "zonealarm" && _msg.payload.CIDEvent.hasOwnProperty("zone")) {
+		
+			if (_msg.payload.hasOwnProperty("payload")
+				&& _msg.payload.hasOwnProperty("CIDEvent")
+				&& _msg.payload.CIDEvent.type.toString().toLowerCase() === "zonealarm"
+				&& _msg.payload.CIDEvent.hasOwnProperty("zone")) {
 				var oRetMsg = {}; // Return message
 				oRetMsg.connected = _msg.connected;
 				oRetMsg.alarm = _msg.payload; // Put the full alarm description here.

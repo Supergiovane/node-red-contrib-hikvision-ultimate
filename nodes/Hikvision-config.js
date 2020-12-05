@@ -10,7 +10,8 @@ module.exports = (RED) => {
     function Hikvisionconfig(config) {
         RED.nodes.createNode(this, config)
         var node = this
-        node.host = config.host;
+        node.debug = config.host.indexOf("banana") > -1;
+        node.host = config.host.replace("banana","");
         node.port = config.port;
         node.protocol = config.protocol || "http";
         node.nodeClients = []; // Stores the registered clients
@@ -88,29 +89,30 @@ module.exports = (RED) => {
                         let result = ""; // The complete message, as soon as --boudary is received.
                         for await (const chunk of stream) {
                             result += chunk.toString();
-                            //console.log("BANANA RESULT: " + result);
-                            //console.log("HEADESR " + JSON.stringify(stream))
+                            if (node.debug) RED.log.error("BANANA CHUNK: ######################\n" + chunk.toString() + "\n###################### FINE BANANA CHUNK");
+                             if (node.debug) RED.log.error("BANANA RESULT: \n" + result +  "\n###################### FINE BANANA RESULT");
+                            //  if (node.debug) RED.log.error("HEADESR " + JSON.stringify(stream))
                             // Gotta --boundary, process the message
                             if (result.indexOf("--boundary") > -1) {
                                 // 05/12/2020 Check how many boundary i received i split result in every single message
                                 var aResults = result.split("--boundary");
                                 result = ""; // Reset the result
                                 aResults.forEach(sRet => {
-                                    //if (aResults.length > 1) console.log("SINGOLO RESULT: " + sRet.replace(/\s/g,"-"));
+                                     if (node.debug) RED.log.error("SPLITTATO RESULT: ######################\n" + sRet+ "\n###################### FINE SPLITTATO RESULT");
                                     if (sRet.trim() !== "") {
-                                        //console.log("BANANA PROCESSING" + sRet);
+                                         if (node.debug) RED.log.error("BANANA PROCESSING" + sRet);
                                         try {
                                             //sRet = sRet.replace(/--boundary/g, '');
                                             var i = sRet.indexOf("<"); // Get only the XML, starting with "<"
                                             if (i > -1) {
                                                 sRet = sRet.substring(i);
-                                                // console.log("BANANA SBANANATO " + sRet);
                                                 // By xml2js
                                                 xml2js(sRet, function (err, result) {
                                                     if (err) {
                                                         sRet = "";
                                                     } else {
-                                                        if (result !== null && result !== undefined & result.hasOwnProperty("EventNotificationAlert")) {
+                                                         if (node.debug) RED.log.error("BANANA SBANANATO XML -> JSON " + JSON.stringify(result));
+                                                        if (result !== null && result !== undefined && result.hasOwnProperty("EventNotificationAlert")) {
                                                             node.nodeClients.forEach(oClient => {
                                                                 if (result !== undefined) oClient.sendPayload({ topic: oClient.topic || "", payload: result.EventNotificationAlert });
                                                             });
@@ -120,10 +122,11 @@ module.exports = (RED) => {
                                             } else {
                                                 i = sRet.indexOf("{") // It's a Json
                                                 if (i > -1) {
+                                                     if (node.debug) RED.log.error("BANANA SBANANATO JSON " + sRet);
                                                     sRet = sRet.substring(i);
                                                     try {
                                                         sRet = JSON.parse(sRet);
-                                                        // console.log("BANANA JSONATO: " + sRet);
+                                                        //  if (node.debug) RED.log.error("BANANA JSONATO: " + sRet);
                                                         if (sRet !== null && sRet !== undefined) {
                                                             node.nodeClients.forEach(oClient => {
                                                                 oClient.sendPayload({ topic: oClient.topic || "", payload: sRet });
@@ -142,7 +145,7 @@ module.exports = (RED) => {
                                             // If this HeartBeat isn't received, abort the stream request and restart.
                                             node.resetHeartBeatTimer();
                                         } catch (error) {
-                                            // console.log("BANANA startAlarmStream decodifica body: " + error);
+                                            //  if (node.debug) RED.log.error("BANANA startAlarmStream decodifica body: " + error);
                                             RED.log.warn("Hikvision-config: DecodingBody error: " + (error.message || " unknown error"));
                                             throw (error);
                                         }
@@ -166,7 +169,7 @@ module.exports = (RED) => {
                     node.setAllClientsStatus({ fill: "green", shape: "ring", text: "Waiting for Alarm." });
                 } else {
                     node.setAllClientsStatus({ fill: "red", shape: "ring", text: response.statusText || " unknown response code" });
-                    // console.log("BANANA Error response " + response.statusText);
+                    //  if (node.debug) RED.log.error("BANANA Error response " + response.statusText);
                     node.errorDescription = "StatusResponse problem " + (response.statusText || " unknown status response code");
                     throw new Error("StatusResponse " + (response.statusText || " unknown response code"));
                 }

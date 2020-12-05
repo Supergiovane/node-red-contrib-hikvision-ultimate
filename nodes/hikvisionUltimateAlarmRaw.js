@@ -16,8 +16,8 @@ module.exports = function (RED) {
 			if (_msg === null || _msg === undefined) return;
 			if (_msg.hasOwnProperty("errorDescription")) { node.send([null,_msg]); return; }; // It's a connection error/restore comunication.
 
-			if (_msg.payload) return;
-			if (_msg.payload.hasOwnProperty("eventType")
+			if (_msg.hasOwnProperty("payload")
+				&& _msg.payload.hasOwnProperty("eventType")
 				&& _msg.payload.eventType.toString().toLowerCase() === "videoloss"
 				&& _msg.payload.eventState.toString().toLowerCase() === "inactive") {
 				// It's a HertBeat, exit.
