@@ -110,9 +110,11 @@ module.exports = (RED) => {
                                                     if (err) {
                                                         sRet = "";
                                                     } else {
-                                                        node.nodeClients.forEach(oClient => {
-                                                            if (result !== undefined) oClient.sendPayload({ topic: oClient.topic || "", payload: result.EventNotificationAlert });
-                                                        });
+                                                        if (result !== null && result !== undefined & result.hasOwnProperty("EventNotificationAlert")) {
+                                                            node.nodeClients.forEach(oClient => {
+                                                                if (result !== undefined) oClient.sendPayload({ topic: oClient.topic || "", payload: result.EventNotificationAlert });
+                                                            });
+                                                        }
                                                     }
                                                 });
                                             } else {
@@ -122,9 +124,11 @@ module.exports = (RED) => {
                                                     try {
                                                         sRet = JSON.parse(sRet);
                                                         // console.log("BANANA JSONATO: " + sRet);
-                                                        node.nodeClients.forEach(oClient => {
-                                                            oClient.sendPayload({ topic: oClient.topic || "", payload: sRet });
-                                                        })
+                                                        if (sRet !== null && sRet !== undefined) {
+                                                            node.nodeClients.forEach(oClient => {
+                                                                oClient.sendPayload({ topic: oClient.topic || "", payload: sRet });
+                                                            })
+                                                        }
                                                     } catch (error) {
                                                         sRet = "";
                                                     }

@@ -14,6 +14,7 @@ module.exports = function (RED) {
 
 		// Called from config node, to send output to the flow
 		node.sendPayload = (_msg) => {
+			if (_msg === null || _msg === undefined) return;
 			if (_msg.hasOwnProperty("errorDescription")) { node.send([null,_msg]); return; }; // It's a connection error/restore comunication.
 			// Radar alarm JSON
 			/* 	{
@@ -47,6 +48,7 @@ module.exports = function (RED) {
 					}
 				} */
 			//var oRetMsg = RED.util.cloneMessage(_msg);
+			if (_msg.payload) return;
 			if (_msg.payload.hasOwnProperty("CIDEvent") && _msg.payload.CIDEvent.type.toString().toLowerCase() === "zonealarm" && _msg.payload.CIDEvent.hasOwnProperty("zone")) {
 				var oRetMsg = {}; // Return message
 				oRetMsg.connected = _msg.connected;
