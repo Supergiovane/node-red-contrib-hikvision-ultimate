@@ -11,6 +11,7 @@ module.exports = (RED) => {
         var node = this
         node.host = config.host;
         node.port = config.port;
+        node.protocol = config.protocol || "http";
         node.nodeClients = []; // Stores the registered clients
         node.isConnected = true; // Assume it's connected, to signal the disconnection on start
         node.lastPicName = "";
@@ -47,7 +48,7 @@ module.exports = (RED) => {
             if (_lastPicName == undefined || _lastPicName == null || _lastPicName == "") return null;
 
             var client;
-            if (node.authentication === "digest")  client= new DigestFetch(node.credentials.user, node.credentials.password); // Instantiate the fetch client.
+            if (node.authentication === "digest") client = new DigestFetch(node.credentials.user, node.credentials.password); // Instantiate the fetch client.
             if (node.authentication === "basic") client = new DigestFetch(node.credentials.user, node.credentials.password, { basic: true }); // Instantiate the fetch client.
 
             controller = new AbortController(); // For aborting the stream request
@@ -67,7 +68,7 @@ module.exports = (RED) => {
                 agent: null         // http(s).Agent instance or function that returns an instance (see below)
             };
             try {
-                const response = await client.fetch("http://" + node.host + "/ISAPI/Traffic/channels/1/vehicleDetect/plates", options);
+                const response = await client.fetch(node.protocol + "://" + node.host + "/ISAPI/Traffic/channels/1/vehicleDetect/plates", options);
                 if (response.status >= 200 && response.status <= 300) {
                     //node.setAllClientsStatus({ fill: "green", shape: "ring", text: "Connected." });
                 } else {

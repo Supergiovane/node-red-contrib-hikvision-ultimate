@@ -12,6 +12,7 @@ module.exports = (RED) => {
         var node = this
         node.host = config.host;
         node.port = config.port;
+        node.protocol = config.protocol || "http";
         node.nodeClients = []; // Stores the registered clients
         node.isConnected = true; // Assumes, that is already connected.
         node.timerCheckHeartBeat = null;
@@ -139,7 +140,7 @@ module.exports = (RED) => {
                 // ###################################
                 //#endregion
 
-                const response = await client.fetch("http://" + node.host + "/ISAPI/Event/notification/alertStream", options);
+                const response = await client.fetch(node.protocol + "://" + node.host + "/ISAPI/Event/notification/alertStream", options);
 
                 if (response.status >= 200 && response.status <= 300) {
                     node.setAllClientsStatus({ fill: "green", shape: "ring", text: "Waiting for Alarm." });

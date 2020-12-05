@@ -5,7 +5,8 @@
             host: { value: "", required: true },
             port: { value: 80, required: true, validate: RED.validators.number() },
             name: { value: "Server" },
-            authentication: { value: "digest" }
+            authentication: { value: "digest" },
+            protocol: { value: "http" }
         },
         credentials: {
             user: { type: "text" },
@@ -41,6 +42,13 @@
     <div class="form-row">
         <label for="node-config-input-port"> Port</label>
         <input type="text" id="node-config-input-port" placeholder="">
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-protocol"><i class="fa fa-sign-in"></i> Protocol</label>
+        <select type="text" id="node-config-input-protocol">
+        <option value="http">Http</option>
+        <option value="https">Https</option>
+        </select>
     </div>
     <div class="form-row">
         <label for="node-config-input-user"> Username</label>
