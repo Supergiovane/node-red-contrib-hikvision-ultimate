@@ -250,7 +250,7 @@ module.exports = (RED) => {
                                 node.nodeClients.forEach(oClient => {
                                     oClient.sendPayload({ topic: oClient.topic || "", plate: oPlate, payload: oPlate.plateNumber, connected: true });
                                 })
-                                console.log("BANANA SINGOLA PLATE: " + oPlate.plateNumber);
+                                //console.log("BANANA SINGOLA PLATE: " + oPlate.plateNumber);
                             }
                         } else {
                             // No new plates found

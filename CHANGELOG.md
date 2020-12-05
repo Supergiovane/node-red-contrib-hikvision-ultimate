@@ -2,6 +2,10 @@
 [![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square)](https://www.paypal.me/techtoday) 
 
 <p>
+<b>Version 0.0.24 GA VERSION WITH STABLE BEHAVOUR</b> December 2020<br/>
+- Better handling of malformed alert messages.<br/>
+</p>
+<p>
 <b>Version 0.0.23 GA VERSION WITH STABLE BEHAVOUR</b> December 2020<br/>
 - NEW: added "http" and "https" protocol selection.<br/>
 </p>
