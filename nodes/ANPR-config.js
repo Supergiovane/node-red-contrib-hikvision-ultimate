@@ -55,7 +55,7 @@ module.exports = (RED) => {
             var options = {
                 // These properties are part of the Fetch Standard
                 method: 'POST',
-                headers: { 'content-type': 'application/xml' },        // request headers. format is the identical to that accepted by the Headers constructor (see below)
+                headers: { },        // request headers. format is the identical to that accepted by the Headers constructor (see below)
                 body: "<AfterTime><picTime>" + _lastPicName + "</picTime></AfterTime>",         // request body. can be null, a string, a Buffer, a Blob, or a Node.js Readable stream
                 redirect: 'follow', // set to `manual` to extract redirect headers, `error` to reject redirect
                 signal: controller.signal,       // pass an instance of AbortSignal to optionally abort requests
@@ -89,13 +89,21 @@ module.exports = (RED) => {
                             sRet = sRet.substring(i);
                             // By xml2js
                             xml2js(sRet, function (err, result) {
-                                oPlates = result;
+                                if (err) {
+                                    oPlates = null;
+                                } else {
+                                    oPlates = result;
+                                }
                             });
                         } else {
                             i = sRet.indexOf("{") // It's a Json
                             if (i > -1) {
                                 sRet = sRet.substring(i);
-                                oPlates = JSON.parse(result);
+                                try {
+                                    oPlates = JSON.parse(result);
+                                } catch (error) {
+                                    oPlates = null;
+                                }
                             } else {
                                 // Invalid body
                                 RED.log.info("ANPR-config: DecodingBody: Invalid Json " + sRet);
@@ -136,9 +144,9 @@ module.exports = (RED) => {
                         }
 
                     } catch (error) {
-                        RED.log.warn("ANPR-config: ERRORE CATCHATO initPlateReader:" + (error.message || ""));
+                        RED.log.warn("ANPR-config: ERRORE CATCHATO getPlates:" + (error.message || ""));
                         // console.log("BANANA ANPR-config: ERRORE CATCHATO initPlateReader: " + error);
-                        throw new Error("Error initPlateReader: " + (error.message || ""));
+                        throw new Error("Error getPlates: " + (error.message || ""));
                     }
                 }
                 //#endregion 
@@ -153,7 +161,7 @@ module.exports = (RED) => {
                 }
                 // Abort request
                 try {
-                    if (controller !== null) controller.abort();
+                    if (controller !== null) controller.abort().then(ok => { }).catch(err => { });
                 } catch (error) { }
                 node.isConnected = false;
                 return null;
@@ -260,7 +268,7 @@ module.exports = (RED) => {
         //#region "FUNCTIONS"
         node.on('close', function (removed, done) {
             try {
-                controller.abort();
+                if (controller !== null) controller.abort().then(ok => { }).catch(err => { });
             } catch (error) { }
             done();
         });

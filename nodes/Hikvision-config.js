@@ -42,7 +42,7 @@ module.exports = (RED) => {
                     node.setAllClientsStatus({ fill: "red", shape: "ring", text: "Lost connection...Retry... " + node.errorDescription });
                 }
                 try {
-                    if (controller !== null) controller.abort();
+                    if (controller !== null) controller.abort().then(ok => { }).catch(err => { });
                 } catch (error) { }
                 node.isConnected = false;
                 setTimeout(startAlarmStream, 2000); // Reconnect
@@ -55,7 +55,7 @@ module.exports = (RED) => {
             node.setAllClientsStatus({ fill: "grey", shape: "ring", text: "Connecting..." });
 
             var client;
-            if (node.authentication === "digest")  client= new DigestFetch(node.credentials.user, node.credentials.password); // Instantiate the fetch client.
+            if (node.authentication === "digest") client = new DigestFetch(node.credentials.user, node.credentials.password); // Instantiate the fetch client.
             if (node.authentication === "basic") client = new DigestFetch(node.credentials.user, node.credentials.password, { basic: true }); // Instantiate the fetch client.
 
             controller = new AbortController(); // For aborting the stream request
@@ -72,7 +72,8 @@ module.exports = (RED) => {
                 timeout: 0,         // req/res timeout in ms, it resets on redirect. 0 to disable (OS limit applies). Signal is recommended instead.
                 compress: false,     // support gzip/deflate content encoding. false to disable
                 size: 0,            // maximum response body size in bytes. 0 to disable
-                agent: null         // http(s).Agent instance or function that returns an instance (see below)
+                agent: null
+
             };
             try {
 
@@ -87,47 +88,62 @@ module.exports = (RED) => {
                         let result = ""; // The complete message, as soon as --boudary is received.
                         for await (const chunk of stream) {
                             result += chunk.toString();
+                            //console.log("BANANA RESULT: " + result);
+                            //console.log("HEADESR " + JSON.stringify(stream))
                             // Gotta --boundary, process the message
-                            if (result.toString().indexOf("--boundary") > -1) {
-                                // console.log("BANANA FOUND BOUNDARY: PROCESSO: " + result);
-                                var sRet = result.toString();
+                            if (result.indexOf("--boundary") > -1) {
+                                // 05/12/2020 Check how many boundary i received i split result in every single message
+                                var aResults = result.split("--boundary");
                                 result = ""; // Reset the result
-                                //console.log("BANANA PROCESSING" + sRet);
-                                try {
-                                    sRet = sRet.replace(/--boundary/g, '');
-                                    var i = sRet.indexOf("<"); // Get only the XML, starting with "<"
-                                    if (i > -1) {
-                                        sRet = sRet.substring(i);
-                                        // console.log("BANANA SBANANATO " + sRet);
-                                        // By xml2js
-                                        xml2js(sRet, function (err, result) {
-                                            node.nodeClients.forEach(oClient => {
-                                                if (result !== undefined) oClient.sendPayload({ topic: oClient.topic || "", payload: result.EventNotificationAlert });
-                                            })
-                                        });
-                                    } else {
-                                        i = sRet.indexOf("{") // It's a Json
-                                        if (i > -1) {
-                                            sRet = sRet.substring(i);
-                                            //sRet = sRet.replace(/(['"])?([a-z0-9A-Z_]+)(['"])?:/g, '"$2": '); // Fix numbers and chars invalid in JSON
-                                            // console.log("BANANA JSONATO: " + sRet);
-                                            node.nodeClients.forEach(oClient => {
-                                                oClient.sendPayload({ topic: oClient.topic || "", payload: JSON.parse(sRet) });
-                                            })
-                                        } else {
-                                            // Invalid body
-                                            RED.log.info("Hikvision-config: DecodingBody: Invalid Json " + sRet);
+                                aResults.forEach(sRet => {
+                                    //if (aResults.length > 1) console.log("SINGOLO RESULT: " + sRet.replace(/\s/g,"-"));
+                                    if (sRet.trim() !== "") {
+                                        //console.log("BANANA PROCESSING" + sRet);
+                                        try {
+                                            //sRet = sRet.replace(/--boundary/g, '');
+                                            var i = sRet.indexOf("<"); // Get only the XML, starting with "<"
+                                            if (i > -1) {
+                                                sRet = sRet.substring(i);
+                                                // console.log("BANANA SBANANATO " + sRet);
+                                                // By xml2js
+                                                xml2js(sRet, function (err, result) {
+                                                    if (err) {
+                                                        sRet = "";
+                                                    } else {
+                                                        node.nodeClients.forEach(oClient => {
+                                                            if (result !== undefined) oClient.sendPayload({ topic: oClient.topic || "", payload: result.EventNotificationAlert });
+                                                        });
+                                                    }
+                                                });
+                                            } else {
+                                                i = sRet.indexOf("{") // It's a Json
+                                                if (i > -1) {
+                                                    sRet = sRet.substring(i);
+                                                    try {
+                                                        sRet = JSON.parse(sRet);
+                                                        // console.log("BANANA JSONATO: " + sRet);
+                                                        node.nodeClients.forEach(oClient => {
+                                                            oClient.sendPayload({ topic: oClient.topic || "", payload: sRet });
+                                                        })
+                                                    } catch (error) {
+                                                        sRet = "";
+                                                    }
+                                                } else {
+                                                    // Invalid body
+                                                    RED.log.info("Hikvision-config: DecodingBody Info only: Invalid Json " + sRet);
+                                                }
+                                            }
+                                            // All is fine. Reset and restart the hearbeat timer
+                                            // Hikvision sends an heartbeat alarm (videoloss), depending on firmware, every 300ms or more.
+                                            // If this HeartBeat isn't received, abort the stream request and restart.
+                                            node.resetHeartBeatTimer();
+                                        } catch (error) {
+                                            // console.log("BANANA startAlarmStream decodifica body: " + error);
+                                            RED.log.warn("Hikvision-config: DecodingBody error: " + (error.message || " unknown error"));
+                                            throw (error);
                                         }
                                     }
-                                    // All is fine. Reset and restart the hearbeat timer
-                                    // Hikvision sends an heartbeat alarm (videoloss), depending on firmware, every 300ms or more.
-                                    // If this HeartBeat isn't received, abort the stream request and restart.
-                                    node.resetHeartBeatTimer();
-                                } catch (error) {
-                                    // console.log("BANANA startAlarmStream decodifica body: " + error);
-                                    RED.log.warn("Hikvision-config: DecodingBody error: " + (error.message || " unknown error"));
-                                    throw (error);
-                                }
+                                });
                             }
                         }
                     } catch (error) {
@@ -178,7 +194,7 @@ module.exports = (RED) => {
         //#region "FUNCTIONS"
         node.on('close', function (removed, done) {
             try {
-                controller.abort();
+                if (controller !== null) controller.abort().then(ok => { }).catch(err => { });
             } catch (error) { }
             if (node.timerCheckHeartBeat !== null) clearTimeout(node.timerCheckHeartBeat);
             done();
