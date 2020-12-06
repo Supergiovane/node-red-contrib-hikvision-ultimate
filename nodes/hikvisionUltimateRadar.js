@@ -49,7 +49,7 @@ module.exports = function (RED) {
 				} */
 			//var oRetMsg = RED.util.cloneMessage(_msg);
 		
-			if (_msg.payload.hasOwnProperty("payload")
+			if (_msg.hasOwnProperty("payload")
 				&& _msg.payload.hasOwnProperty("CIDEvent")
 				&& _msg.payload.CIDEvent.type.toString().toLowerCase() === "zonealarm"
 				&& _msg.payload.CIDEvent.hasOwnProperty("zone")) {

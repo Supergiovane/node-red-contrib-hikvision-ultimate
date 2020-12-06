@@ -1,11 +1,11 @@
 <script type="text/javascript">
-	RED.nodes.registerType('hikvisionUltimateRadar', {
+	RED.nodes.registerType('hikvisionUltimateAlarm', {
 		category: 'Hikvision Ultimate',
 		color: '#e6e6e6',
 		defaults: {
 			name: { value: "" },
 			server: { type: "Hikvision-config", required: true },
-			filterzone: { value: "0" }			
+			reactto: { value: "vmd" }		
 		},
 		inputs: 0,
 		outputs: 2,
@@ -29,11 +29,11 @@
 		icon: "node-radar-icon.png",
 		label:
 			function () {
-				var label = "hikvisionUltimateRadar"
+				var label = "hikvisionUltimateAlarm"
 				if (this.name !== undefined && this.name.length > 0) {
 					label = this.name;
 				}
-				return label;
+				return label + " " + this.reactto;
 			},
 		paletteLabel: function () {
 			return "Radar alarm";
@@ -50,7 +50,7 @@
 
 </script>
 
-<script type="text/x-red" data-template-name="hikvisionUltimateRadar">
+<script type="text/x-red" data-template-name="hikvisionUltimateAlarm">
 	<div class="form-row">
 		<label for="node-input-server">Server</label>
 		<input type="text" id="node-input-server" />
@@ -64,26 +64,22 @@
         <input type="text" id="node-input-topic" placeholder="Node's own topic">
 	</div>
 	<div class="form-row">
-        <label for="node-input-filterzone"><i class="fa fa-tasks"></i> React to</label>
-		<select id="node-input-filterzone">
-			<option value="0">All zones</option>
-			<option value="1">Zone 1</option>
-			<option value="2">Zone 2</option>
-			<option value="3">Zone 3</option>
-			<option value="4">Zone 4</option>
-			<option value="5">Zone 5</option>
-			<option value="6">Zone 6</option>
-			<option value="7">Zone 7</option>
-			<option value="8">Zone 8</option>
+        <label for="node-input-reactto"><i class="fa fa-tasks"></i> React to</label>
+		<select id="node-input-reactto">
+			<option value="vmd">Video motion (when motion is detected)</option>
+			<option value="io">Local alarm input (it's the device's IO pigtail connector)</option>
+			<option value="linedetection">Line crossing (when someone crosses a line)</option>
+			<option value="videoloss">Video loss (when the camera loses the video signal)</option>
+			<option value="shelteralarm">Video blind (when you put something in front of the camera to block image)</option>
 		</select>
 		<div class="form-tips" style="margin-top:11px">
-           The above option allow the node to react to alarms coming from all zones or from a specified one.
+           The above option allow the node to react to alarms coming from one of these events.
         </div>
 	</div>
   
 </script>
 
-<script type="text/x-red" data-help-name="hikvisionUltimateRadar">
+<script type="text/x-red" data-help-name="hikvisionUltimateAlarm">
 	<p>
         <a href="https://www.paypal.me/techtoday" target="_blank"><img src='https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square' width='30%'></a>
         

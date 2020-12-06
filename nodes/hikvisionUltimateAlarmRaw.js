@@ -14,19 +14,20 @@ module.exports = function (RED) {
 		// Called from config node, to send output to the flow
 		node.sendPayload = (_msg) => {
 			if (_msg === null || _msg === undefined) return;
-			if (_msg.hasOwnProperty("errorDescription")) { node.send([null,_msg]); return; }; // It's a connection error/restore comunication.
+			if (_msg.hasOwnProperty("errorDescription")) { node.send([null, _msg]); return; }; // It's a connection error/restore comunication.
 
 			if (_msg.hasOwnProperty("payload")
 				&& _msg.payload.hasOwnProperty("eventType")
 				&& _msg.payload.eventType.toString().toLowerCase() === "videoloss"
-				&& _msg.payload.eventState.toString().toLowerCase() === "inactive") {
+				&& _msg.payload.eventState.toString().toLowerCase() === "inactive"
+				&& _msg.payload.hasOwnProperty("activePostCount") && Number(_msg.payload.activePostCount) === 0) {
 				// It's a HertBeat, exit.
 				node.setNodeStatus({ fill: "green", shape: "ring", text: "Waiting for alert..." });
-				return ;
-			}; 
-			
+				return;
+			};
+
 			node.setNodeStatus({ fill: "green", shape: "dot", text: "Alert received" });
-			node.send([_msg,null]);
+			node.send([_msg, null]);
 		}
 
 		// On each deploy, unsubscribe+resubscribe
@@ -36,7 +37,7 @@ module.exports = function (RED) {
 		}
 
 		this.on('input', function (msg) {
-			
+
 		});
 
 		node.on("close", function (done) {

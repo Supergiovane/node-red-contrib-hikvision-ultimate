@@ -18,13 +18,13 @@ Digest authentication: it should work with all devices.<br/>
 All nodes are capable of auto reconnect if the connection is lost and are able to actively monitor the connection.<br/>
 The node uses pipelines to handle streams, so you need at least **Node V.10.0.0**, or newer, installed. To check Node version, type **node -v** in a command prompt.<br/>
 
-***THIS NODE IS IN BETA***<br/>
-I'll add helps, docs and samples in this README page. Please have some patience...<br/>
 
 ## CHANGELOG
 * See <a href="https://github.com/Supergiovane/node-red-contrib-hikvision-ultimate/blob/master/CHANGELOG.md">here the changelog</a>
 
 <br/>
+
+---
 
 ## - RAW Alarm Node
 The RAW alarm node connects to ***NVR, Camera, Alarm system, Radars etc...*** and outputs the alarm received. <br/>
@@ -86,6 +86,54 @@ msg = {
 <br/>
 <br/>
 
+---
+
+## - Alarm node
+The alarm node connects to ***NVR, Camera, Alarm system, Radars etc...*** and outputs true/false whenever an alarm occurs. <br/>
+
+<img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/GenericAlarm.png' width="80%">
+
+You can choose from different alarms, for example: <br/>
+- Video Motion Alarm (When motion is detected)
+- Local alarm input (it's the device's IO pigtail connector)
+- Line crossing (when someone crosses a line)
+- Video loss (when the camera loses the video signal)
+- Video blind (when you put something in front of the camera to block image)
+
+For other advanced alarms, not present in this node, use the ***RAW Alarm*** node instead.		
+
+
+**Output message**
+
+The node outputs a payload on **PIN 1**, true if alarm starts, false when alarm ended. Some alarm type doesn't support the alarm end event, so the node sends only a true payload when alarm occurs.</br>
+The node outputs a payload on **PIN 2**, representing a connection error. ***TRUE*** if error, otherwise ***FALSE***</br>
+This below is an example of msg output:</br>
+
+
+**Output PIN 1**
+```javascript
+msg.payload = {
+    {"payload":true, // True if alarm starts, false if ends.
+    "description":"Motion alarm", // Type of alarm
+    "_msgid":"28f2b9e6.7c74f6"
+    }
+}
+```
+
+**Output PIN 2 (connection error)**
+```javascript
+msg = {
+    "topic": "",
+    "errorDescription": "", // This will contain the error rescription, in case of errors.
+    "payload": false, // Or TRUE if error
+    "_msgid": "dd5b3622.884a78"
+}
+```
+<br/>
+<br/>
+
+---
+
 ## - ANPR (License Plate) Node
 This node works with Hikvision ANPR cameras.<br/>
 
@@ -123,6 +171,8 @@ msg = {
 ```
 <br/>
 <br/>
+
+---
 
 ## - Radar Alarm Node
 This node works with Hikvision Radars.<br/>

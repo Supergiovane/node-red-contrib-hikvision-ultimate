@@ -2,6 +2,11 @@
 [![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square)](https://www.paypal.me/techtoday) 
 
 <p>
+<b>Version 1.0.0 FIRST OFFICIAL VERSION</b> December 2020<br/>
+- NEW: added Generic Alarm node.<br/>
+- NEW: added warning in the node-red log, specify that the node requires Node V.10.0.0 or newer.<br/>
+</p>
+<p>
 <b>Version 0.0.25 GA VERSION WITH STABLE BEHAVOUR</b> December 2020<br/>
 - Fine tuning some msg handlers.<br/>
 - Debug mode avaiable. Just type banana after the server ip, for example 192.168.1.5banana<br/>
