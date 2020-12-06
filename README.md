@@ -26,7 +26,7 @@ The node uses pipelines to handle streams, so you need at least **Node V.10.0.0*
 
 ---
 
-## - ALARM NODE
+## ALARM NODE
 The alarm node connects to ***NVR, Camera, Alarm system, Radars etc...*** and outputs true/false whenever an alarm occurs. <br/>
 
 <img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/GenericAlarm.png' width="80%">
@@ -71,7 +71,7 @@ msg = {
 
 ---
 
-## - ANPR (License Plate) NODE
+## ANPR (License Plate) NODE
 This node works with Hikvision ANPR cameras.<br/>
 
 <img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/ANPR.png' width="80%">
@@ -111,7 +111,7 @@ msg = {
 
 ---
 
-## - RADAR ALARM NODE
+## RADAR ALARM NODE
 This node works with Hikvision Radars.<br/>
 
 <img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/Radar.png' width="80%">
