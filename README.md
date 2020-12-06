@@ -112,11 +112,10 @@ This below is an example of msg output:</br>
 
 **Output PIN 1**
 ```javascript
-msg.payload = {
-    {"payload":true, // True if alarm starts, false if ends.
+msg = {
+    "payload":true, // True if alarm starts, false if ends.
     "description":"Motion alarm", // Type of alarm
     "_msgid":"28f2b9e6.7c74f6"
-    }
 }
 ```
 
