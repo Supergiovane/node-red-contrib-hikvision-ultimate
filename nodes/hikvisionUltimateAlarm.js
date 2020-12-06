@@ -35,7 +35,7 @@ module.exports = function (RED) {
 					node.setNodeStatus({ fill: "red", shape: "ring", text: "Received alarm but no state!" });
 					return;
 				}
-				console.log ("BANANA " + _msg.payload.eventState.toString().toLowerCase())
+				//console.log ("BANANA " + _msg.payload.eventState.toString().toLowerCase())
 				// check alarm filter
 				if (sAlarmType === node.reactto) {
 					var oRetMsg = {}; // Return message
