@@ -26,69 +26,7 @@ The node uses pipelines to handle streams, so you need at least **Node V.10.0.0*
 
 ---
 
-## - RAW Alarm Node
-The RAW alarm node connects to ***NVR, Camera, Alarm system, Radars etc...*** and outputs the alarm received. <br/>
-
-<img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/RawAlarm.png' width="80%">
-
-**Output message**
-
-The node outputs a payload on **PIN 1** that can vary, depending on the alarm type sent by the connected device.</br>
-The node outputs a payload on **PIN 2**, representing a connection error. ***TRUE*** if error, otherwise ***FALSE***</br>
-This below is an example of msg output (in this case, a movement detected from a radar)</br>
-
-
-**Output PIN 1**
-```javascript
-msg.payload = {
-    "topic": "",
-    "payload": {
-        "ipAddress": "192.168.1.25",
-        "ipv6Address": "",
-        "portNo": 80,
-        "protocol": "HTTP",
-        "macAddress": "banana",
-        "channelID": 1,
-        "dateTime": "2012-01-13T04:32:47+01:00",
-        "activePostCount": 1,
-        "eventType": "MultiRadarTargetEvent",
-        "eventState": "active",
-        "eventDescription": "MultiRadar Target Event",
-        "MultiRadarTargetEventList": [
-            {
-                "targetID": 25,
-                "isTargetDisappear": false,
-                "targetType": "people",
-                "Coordinate": {
-                    "angle": 101.49,
-                    "distance": 24.59
-                },
-                "speed": -0.2,
-                "signalStrength": "strong",
-                "TrackedInfoList": [],
-                "trackedByIPC": false
-            }
-        ]
-    },
-    "_msgid": "dba1850a.2dc5e8"
-}
-```
-
-**Output PIN 2 (connection error)**
-```javascript
-msg = {
-    "topic": "",
-    "errorDescription": "", // This will contain the error rescription, in case of errors.
-    "payload": false, // Or TRUE if error
-    "_msgid": "dd5b3622.884a78"
-}
-```
-<br/>
-<br/>
-
----
-
-## - Alarm node
+## - ALARM NODE
 The alarm node connects to ***NVR, Camera, Alarm system, Radars etc...*** and outputs true/false whenever an alarm occurs. <br/>
 
 <img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/GenericAlarm.png' width="80%">
@@ -133,7 +71,7 @@ msg = {
 
 ---
 
-## - ANPR (License Plate) Node
+## - ANPR (License Plate) NODE
 This node works with Hikvision ANPR cameras.<br/>
 
 <img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/ANPR.png' width="80%">
@@ -173,7 +111,7 @@ msg = {
 
 ---
 
-## - Radar Alarm Node
+## - RADAR ALARM NODE
 This node works with Hikvision Radars.<br/>
 
 <img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/Radar.png' width="80%">
@@ -222,6 +160,68 @@ msg.payload = {
         }
     }
     "_msgid": "b07e50f6.86a72"
+}
+```
+
+**Output PIN 2 (connection error)**
+```javascript
+msg = {
+    "topic": "",
+    "errorDescription": "", // This will contain the error rescription, in case of errors.
+    "payload": false, // Or TRUE if error
+    "_msgid": "dd5b3622.884a78"
+}
+```
+<br/>
+<br/>
+
+---
+
+## RAW ALARM NODE
+The RAW alarm node reacts to every message sent. You can use this node when the other nodes doesn't fit your needs. It connects to ***NVR, Camera, Alarm system, Radars etc...*** and outputs the alarm received. <br/>
+
+<img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/RawAlarm.png' width="80%">
+
+**Output message**
+
+The node outputs a payload on **PIN 1** that can vary, depending on the alarm type sent by the connected device.</br>
+The node outputs a payload on **PIN 2**, representing a connection error. ***TRUE*** if error, otherwise ***FALSE***</br>
+This below is an example of msg output (in this case, a movement detected from a radar)</br>
+
+
+**Output PIN 1**
+```javascript
+msg.payload = {
+    "topic": "",
+    "payload": {
+        "ipAddress": "192.168.1.25",
+        "ipv6Address": "",
+        "portNo": 80,
+        "protocol": "HTTP",
+        "macAddress": "banana",
+        "channelID": 1,
+        "dateTime": "2012-01-13T04:32:47+01:00",
+        "activePostCount": 1,
+        "eventType": "MultiRadarTargetEvent",
+        "eventState": "active",
+        "eventDescription": "MultiRadar Target Event",
+        "MultiRadarTargetEventList": [
+            {
+                "targetID": 25,
+                "isTargetDisappear": false,
+                "targetType": "people",
+                "Coordinate": {
+                    "angle": 101.49,
+                    "distance": 24.59
+                },
+                "speed": -0.2,
+                "signalStrength": "strong",
+                "TrackedInfoList": [],
+                "trackedByIPC": false
+            }
+        ]
+    },
+    "_msgid": "dba1850a.2dc5e8"
 }
 ```
 
