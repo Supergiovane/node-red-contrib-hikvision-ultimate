@@ -235,12 +235,7 @@ msg = {
 }
 ```
 
-
-
-
-
-
-
+![Logo](https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/madeinitaly.png)
 
 [license-image]: https://img.shields.io/badge/license-MIT-blue.svg
 [license-url]: https://github.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/LICENSE
