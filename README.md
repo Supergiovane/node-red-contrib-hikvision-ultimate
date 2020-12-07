@@ -52,6 +52,7 @@ This below is an example of msg output:</br>
 ```javascript
 msg = {
     "payload":true, // True if alarm starts, false if ends.
+    "channelid":"1", // If you have many video channels on your camera, this represents the channel number.
     "description":"Motion alarm", // Type of alarm
     "_msgid":"28f2b9e6.7c74f6"
 }
