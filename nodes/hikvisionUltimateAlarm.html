@@ -26,7 +26,7 @@
 					break;
 			}
 		},
-		icon: "node-radar-icon.png",
+		icon: "node-alarm.png",
 		label:
 			function () {
 				var label = "hikvisionUltimateAlarm"
@@ -66,11 +66,113 @@
 	<div class="form-row">
         <label for="node-input-reactto"><i class="fa fa-tasks"></i> React to</label>
 		<select id="node-input-reactto">
-			<option value="vmd">Video motion (when motion is detected)</option>
-			<option value="io">Local alarm input (it's the device's IO pigtail connector)</option>
-			<option value="linedetection">Line crossing (when someone crosses a line)</option>
-			<option value="videoloss">Video loss (when the camera loses the video signal)</option>
-			<option value="shelteralarm">Video blind (when you put something in front of the camera to block image)</option>
+			<option value="vmd">Video motion (MOST COMMON: when motion is detected)</option>
+			<option value="io">Local alarm input (MOST COMMON: it's the device's IO pigtail connector)</option>
+			<option value="linedetection">Line crossing (MOST COMMON: when someone crosses a line)</option>
+			<option value="videoloss">Video loss (MOST COMMON: when the camera loses the video signal)</option>
+			<option value="shelteralarm">Video blind (MOST COMMON: when you put something in front of the camera to block image)</option>
+			<option value="fielddetection">Intrusion detection</option>
+			<option value="ROI">Region of interest</option>
+			<option value="facedetection">Face detection</option>
+			<option value="intelliTrace">Auto-track</option>
+			<option value="defocus,defocusDetection">Defocus detection</option>
+			<option value="audioexception,audioDetection">Audio exception detection</option>
+			<option value="scenechangedetection">Sudden scene change detection</option>
+			<option value="regionEntrance">Region entrance detection</option>
+			<option value="regionExiting">Region exiting detection</option>
+			<option value="loitering">Loitering detection</option>
+			<option value="group">People gathering detection </option>
+			<option value="rapidMove">Fast moving detection</option>
+			<option value="parking">Parking detection</option>
+			<option value="unattendedBaggage">Unattended baggage</option>
+			<option value="attendedBaggage">Object removal detection</option>
+			<option value="peopleDetection">Human detection</option>
+			<option value="storageDetection">HDD health detection</option>
+			<option value="behavior">Behavior analysis</option>
+			<option value="faceCapture,faceSnap">Face capture</option>
+			<option value="ANPR,vehicleDetection">Vehicle detection</option>
+			<option value="fireDetection">Fire detection</option>
+			<option value="shipsDetection">Ship detection</option>
+			<option value="PIR">PIR alarm</option>
+			<option value="targetCapture,humanRecognition">Target capture</option>
+			<option value="alarmResult,faceContrast">Face comparison</option>
+			<option value="framesPeopleCounting">People counting in single frame</option>
+			<option value="hide">Tampering detection</option>
+			<option value="audioLoss">Audio loss</option>
+			<option value="cameraAngleAnormaly">Image exception</option>
+			<option value="violentMotion">Violent motion</option>
+			<option value="trial">Tailing</option>
+			<option value="humanEnter">Human entrance</option>
+			<option value="operateOverTime">Operation timed out</option>
+			<option value="stickUp">Sticking scrip</option>
+			<option value="installScanner">Installing scanner</option>
+			<option value="faceDetect">ATM face detection</option>
+			<option value="temperature,temperatureDetection">Temperature difference detection</option>
+			<option value="PeopleCounting">People counting</option>
+			<option value="personQueueDetection">People queuing-up detection</option>
+			<option value="heatmap">Heat map</option>
+			<option value="mixedTargetDetection">Multi-target-type detection</option>
+			<option value="MTD_face">Supported face attributes of multi-target-type detection (MTD)</option>
+			<option value="MTD_human">Supported human attributes of multi-target-type detection (MTD)</option>
+			<option value="MTD_vehicle">Supported motor vehicle attributes of multi-target- type detection (MTD)</option>
+			<option value="MTD_nonMotor">Supported non-motor vehicle attributes of multi- target-type detection (MTD)</option>
+			<option value="faceSnapModeling">Face capture modeling</option>
+			<option value="HVTVehicleDetection">Mixed-traffic detection</option>
+			<option value="PictureCaptureComparision">N:1 face comparison</option>
+			<option value="smokeDetection">Smoke detection</option>
+			<option value="smokeAndFireDetection">Smoke and fire detection</option>
+			<option value="diskfull">HDD is full</option>
+			<option value="diskerror">HDD error</option>
+			<option value="nicbroken">Network disconnected</option>
+			<option value="ipconflict">IP address conflicted</option>
+			<option value="illaccess">Illegal access</option>
+			<option value="personDensityDetection">People density detection</option>
+			<option value="vehicleControl">Upload alarm of vehicle in whitelist and blacklist</option>
+			<option value="vehicleRcogResult">Vehicle secondary recognition</option>
+			<option value="cardMatch">Authentication</option>
+			<option value="overSpeed">Overspeed alarm</option>
+			<option value="highTempAlarm">High temperature alarm</option>
+			<option value="abnormalAcceleration">Abnormal accelerated speed alarm</option>
+			<option value="failDown">People falling down</option>
+			<option value="leavePosition">Absence detection</option>
+			<option value="peopleNumChange">The number of people changed</option>
+			<option value="retention">Overstay detection</option>
+			<option value="running">Running</option>
+			<option value="thermometry">Temperature measurement</option>
+			<option value="heatmapPDC">Heat map people counting</option>
+			<option value="heatmapDuration">Heat map people staying duration</option>
+			<option value="intersectionAnalysis">Intersection analysis</option>
+			<option value="AID_abandonedObject">Thrown object in traffic events</option>
+			<option value="AID_pedestrian">Pedestrian detection in traffic events</option>
+			<option value="AID_​congestion">Congestion detection in traffic events</option>
+			<option value="AID_roadBlock">Roadblock detection in traffic events</option>
+			<option value="AID_​construction">Construction detection in traffic events</option>
+			<option value="AID_​trafficAccident">Traffic accident detection in traffic events</option>
+			<option value="AID_​fogDetection">Fog detection in traffic events</option>
+			<option value="TFS_illegalParking">Illegal parking of enforcement events</option>
+			<option value="TFS_​wrongDirection">Wrong-way driving of enforcement events</option>
+			<option value="TFS_crossLane">Driving on lane line of enforcement events</option>
+			<option value="TFS_laneChange">Lane change of enforcement events</option>
+			<option value="TFS_vehicleExist">Vehicle existing of enforcement events</option>
+			<option value="TFS_turnRound">Turning round of enforcement events</option>
+			<option value="TFS_parallelParking">Parallel parking of enforcement events</option>
+			<option value="TPS">Traffic data collection configuration</option>
+			<option value="luma">Brightness exception</option>
+			<option value="chroma">Color cast detection</option>
+			<option value="snow">Snow noise</option>
+			<option value="streak">Stripe noise</option>
+			<option value="freeze">Image freeze</option>
+			<option value="sigLose">Signal loss</option>
+			<option value="clarity">Clarity exception</option>
+			<option value="jitter">Image flutter</option>
+			<option value="block">Video tampering</option>
+			<option value="flowers">Blurred screen detection</option>
+			<option value="noise">Image noise</option>
+			<option value="ghost">Abnormal light spot detection</option>
+			<option value="purple">Image purple edge detection</option>
+			<option value="ICR">ICR exception detection</option>
+			<option value="protectiveFilm">Protective film unremoved</option>
+			<option value="certificateRevocation">Certificate is expired</option>
 		</select>
 		<div class="form-tips" style="margin-top:11px">
            The above option allow the node to react to alarms coming from one of these events.

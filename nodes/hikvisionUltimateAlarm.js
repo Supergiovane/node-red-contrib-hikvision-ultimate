@@ -5,7 +5,7 @@ module.exports = function (RED) {
 		RED.nodes.createNode(this, config);
 		var node = this;
 		node.server = RED.nodes.getNode(config.server)
-		node.reactto = (config.reactto === null || config.reactto === undefined) ? "vmd" : config.reactto;// Rect to alarm coming from...
+		node.reactto = (config.reactto === null || config.reactto === undefined) ? "vmd" : config.reactto.toLowerCase();// Rect to alarm coming from...
 
 		node.setNodeStatus = ({ fill, shape, text }) => {
 			var dDate = new Date();
@@ -37,14 +37,20 @@ module.exports = function (RED) {
 				}
 				//console.log ("BANANA " + _msg.payload.eventState.toString().toLowerCase())
 				// check alarm filter
-				if (sAlarmType === node.reactto) {
-					var oRetMsg = {}; // Return message
-					oRetMsg.payload = bAlarmStatus;
-					oRetMsg.description = (_msg.payload.hasOwnProperty("eventDescription") ? _msg.payload.eventDescription : "");
-					node.send([oRetMsg, null]);
-					node.setNodeStatus({ fill: "green", shape: "dot", text: "Alarm " + (bAlarmStatus === true ? "start" : "end") });
-
-				}
+				var aReactTo = node.reactto.split(","); // node.reactto can contain multiple names for the same event, depending from firmware
+				for (let index = 0; index < aReactTo.length; index++) {
+					const element = aReactTo[index];
+					if (element !== null && element !== undefined && element.trim() !== "" && sAlarmType === element) {
+						var oRetMsg = {}; // Return message
+						oRetMsg.payload = bAlarmStatus;
+						oRetMsg.channelid = (_msg.payload.hasOwnProperty("channelID") ? _msg.payload.channelID : "0");
+						oRetMsg.description = (_msg.payload.hasOwnProperty("eventDescription") ? _msg.payload.eventDescription : "");
+						node.send([oRetMsg, null]);
+						node.setNodeStatus({ fill: "green", shape: "dot", text: "Alarm " + (bAlarmStatus === true ? "start" : "end") });
+						return; // Find first occurrence, exit.
+	
+					}
+				}				
 			}
 		}
 

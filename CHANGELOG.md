@@ -2,6 +2,11 @@
 [![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square)](https://www.paypal.me/techtoday) 
 
 <p>
+<b>Version 1.0.1</b> December 2020<br/>
+- NEW: added more events to the alarm node.<br/>
+- Changed icon of alarm node.<br/>
+</p>
+<p>
 <b>Version 1.0.0 FIRST OFFICIAL VERSION</b> December 2020<br/>
 - NEW: added Generic Alarm node.<br/>
 - NEW: added warning in the node-red log, specify that the node requires Node V.10.0.0 or newer.<br/>
