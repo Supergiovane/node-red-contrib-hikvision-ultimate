@@ -122,9 +122,7 @@ Just select the preset in the configuration window and recall it by passing ***t
 **Output message**
 
 The node outputs ***true*** on PIN 1 if the command is executed, otherwise an error on PIN 2.</br>
-The payload is TRUE whenever alarm occurs, otherwise FALSE whenever alarm ends.</br>
-The complete alarm event is stored in the "alarm" property of the payload.</br>
-In an **unknown CID event** arrives from the Radar, the node will output a message containing the CID code, the full alarm and a null payload.</br>
+
 
 **Input**
 ```javascript
