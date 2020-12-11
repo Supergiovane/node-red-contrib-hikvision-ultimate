@@ -1,0 +1,112 @@
+<script type="text/javascript">
+	RED.nodes.registerType('hikvisionUltimatePTZ', {
+		category: 'Hikvision Ultimate',
+		color: '#e6e6e6',
+		defaults: {
+			name: { value: "" },
+			server: { type: "Hikvision-config", required: true },
+			channelID: { value: "1" },
+			PTZPreset: { value: "1" }
+		},
+		inputs: 1,
+		outputs: 2,
+		outputLabels: function (i) {
+			var ret = "";
+			switch (i) {
+				case 0:
+					return "Status";
+					break;
+				case 1:
+					return "Error";
+					break;
+				case 2
+					:
+					return "";
+					break;
+				default:
+					break;
+			}
+		},
+		icon: "ptz-icon.png",
+		label:
+			function () {
+				var label = "PTZ"
+				if (this.name !== undefined && this.name.length > 0) {
+					label = this.name;
+				}
+				return label + " " + this.PTZPreset;
+			},
+		paletteLabel: function () {
+			return "PTZ";
+		},
+		oneditprepare: function () {
+
+
+		},
+		oneditsave: function () {
+
+		}
+	});
+
+
+</script>
+
+<script type="text/x-red" data-template-name="hikvisionUltimatePTZ">
+	<div class="form-row">
+		<label for="node-input-server">Server</label>
+		<input type="text" id="node-input-server" />
+	</div>
+	<div class="form-row">
+        <label for="node-input-name"><i class="icon-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+	<div class="form-row">
+        <label for="node-input-topic"><i class="fa fa-tasks"></i> Node topic</label>
+        <input type="text" id="node-input-topic" placeholder="Node's own topic">
+	</div>
+	<div class="form-row">
+        <label for="node-input-channelID"><i class="fa fa-tasks"></i> Channel</label>
+		<select id="node-input-channelID">
+			<option value="1">1 (DEFAULT)</option>
+			<option value="2">2</option>
+			<option value="3">3</option>
+			<option value="4">4</option>
+		</select>
+		<div class="form-tips" style="margin-top:11px">
+           Leave 1 if your camera has only one channel (most of the time)
+        </div>
+	</div>
+	<div class="form-row">
+        <label for="node-input-PTZPreset"><i class="fa fa-tasks"></i> Preset</label>
+		<select id="node-input-PTZPreset">
+			<option value="1">Preset 1</option>
+			<option value="2">Preset 2</option>
+			<option value="3">Preset 3</option>
+			<option value="4">Preset 4</option>
+			<option value="5">Preset 5</option>
+			<option value="6">Preset 6</option>
+			<option value="7">Preset 7</option>
+			<option value="8">Preset 8</option>
+			<option value="9">Preset 9</option>
+			<option value="10">Preset 10</option>
+			<option value="11">Preset 11</option>
+			<option value="12">Preset 12</option>
+			<option value="13">Preset 13</option>
+		</select>
+		<div class="form-tips" style="margin-top:11px">
+           Pass TRUE as payload to directly recall the above preset.
+        </div>
+	</div>
+  
+</script>
+
+<script type="text/x-red" data-help-name="hikvisionUltimatePTZ">
+	<p>
+        <a href="https://www.paypal.me/techtoday" target="_blank"><img src='https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square' width='30%'></a>
+        
+	</p>
+	<p>
+		The node outputs nothing on PIN 1, and a connection state on PIN 2 (true if the node is connecte to the server, otherwise false).
+	</p>
+	
+</script>

@@ -1,3 +1,4 @@
+const { resolve } = require('path');
 
 
 module.exports = (RED) => {
@@ -11,7 +12,7 @@ module.exports = (RED) => {
         RED.nodes.createNode(this, config)
         var node = this
         node.debug = config.host.indexOf("banana") > -1;
-        node.host = config.host.replace("banana","");
+        node.host = config.host.replace("banana", "");
         node.port = config.port;
         node.protocol = config.protocol || "http";
         node.nodeClients = []; // Stores the registered clients
@@ -50,6 +51,7 @@ module.exports = (RED) => {
             }, 50000);
         }
 
+        //#region ALARMSTREAM
         async function startAlarmStream() {
 
             node.resetHeartBeatTimer(); // First thing, start the heartbeat timer.
@@ -90,7 +92,7 @@ module.exports = (RED) => {
                         for await (const chunk of stream) {
                             result += chunk.toString();
                             if (node.debug) RED.log.error("BANANA CHUNK: ######################\n" + chunk.toString() + "\n###################### FINE BANANA CHUNK");
-                             if (node.debug) RED.log.error("BANANA RESULT: \n" + result +  "\n###################### FINE BANANA RESULT");
+                            if (node.debug) RED.log.error("BANANA RESULT: \n" + result + "\n###################### FINE BANANA RESULT");
                             //  if (node.debug) RED.log.error("HEADESR " + JSON.stringify(stream))
                             // Gotta --boundary, process the message
                             if (result.indexOf("--boundary") > -1) {
@@ -98,9 +100,9 @@ module.exports = (RED) => {
                                 var aResults = result.split("--boundary");
                                 result = ""; // Reset the result
                                 aResults.forEach(sRet => {
-                                     if (node.debug) RED.log.error("SPLITTATO RESULT: ######################\n" + sRet+ "\n###################### FINE SPLITTATO RESULT");
+                                    if (node.debug) RED.log.error("SPLITTATO RESULT: ######################\n" + sRet + "\n###################### FINE SPLITTATO RESULT");
                                     if (sRet.trim() !== "") {
-                                         if (node.debug) RED.log.error("BANANA PROCESSING" + sRet);
+                                        if (node.debug) RED.log.error("BANANA PROCESSING" + sRet);
                                         try {
                                             //sRet = sRet.replace(/--boundary/g, '');
                                             var i = sRet.indexOf("<"); // Get only the XML, starting with "<"
@@ -111,7 +113,7 @@ module.exports = (RED) => {
                                                     if (err) {
                                                         sRet = "";
                                                     } else {
-                                                         if (node.debug) RED.log.error("BANANA SBANANATO XML -> JSON " + JSON.stringify(result));
+                                                        if (node.debug) RED.log.error("BANANA SBANANATO XML -> JSON " + JSON.stringify(result));
                                                         if (result !== null && result !== undefined && result.hasOwnProperty("EventNotificationAlert")) {
                                                             node.nodeClients.forEach(oClient => {
                                                                 if (result !== undefined) oClient.sendPayload({ topic: oClient.topic || "", payload: result.EventNotificationAlert });
@@ -122,7 +124,7 @@ module.exports = (RED) => {
                                             } else {
                                                 i = sRet.indexOf("{") // It's a Json
                                                 if (i > -1) {
-                                                     if (node.debug) RED.log.error("BANANA SBANANATO JSON " + sRet);
+                                                    if (node.debug) RED.log.error("BANANA SBANANATO JSON " + sRet);
                                                     sRet = sRet.substring(i);
                                                     try {
                                                         sRet = JSON.parse(sRet);
@@ -194,8 +196,62 @@ module.exports = (RED) => {
             };
 
         };
-
         setTimeout(startAlarmStream, 10000); // First connection.
+        //#endregion
+
+        //#region GENERIC GET OT PUT CALL
+        // Function to get or post generic data on camera
+        node.request = async function(_callerNode, _method, _URL, _body) {
+            var client;
+            if (node.authentication === "digest") client = new DigestFetch(node.credentials.user, node.credentials.password); // Instantiate the fetch client.
+            if (node.authentication === "basic") client = new DigestFetch(node.credentials.user, node.credentials.password, { basic: true }); // Instantiate the fetch client.
+
+            reqController = new AbortController(); // For aborting the stream request
+            var options = {
+                // These properties are part of the Fetch Standard
+                method: _method.toString().toUpperCase(),
+                headers: {},        // request headers. format is the identical to that accepted by the Headers constructor (see below)
+                body: _body,         // request body. can be null, a string, a Buffer, a Blob, or a Node.js Readable stream
+                redirect: 'follow', // set to `manual` to extract redirect headers, `error` to reject redirect
+                signal: reqController.signal,       // pass an instance of AbortSignal to optionally abort requests
+
+                // The following properties are node-fetch extensions
+                follow: 20,         // maximum redirect count. 0 to not follow redirect
+                timeout: 5000,         // req/res timeout in ms, it resets on redirect. 0 to disable (OS limit applies). Signal is recommended instead.
+                compress: false,     // support gzip/deflate content encoding. false to disable
+                size: 0,            // maximum response body size in bytes. 0 to disable
+                agent: null         // http(s).Agent instance or function that returns an instance (see below)
+            };
+            try {
+                if (!_URL.startsWith("/")) _URL = "/" + _URL;
+                const response = await client.fetch(node.protocol + "://" + node.host + _URL, options);
+                if (response.status >= 200 && response.status <= 300) {
+                    //node.setAllClientsStatus({ fill: "green", shape: "ring", text: "Connected." });
+                } else {
+                    _callerNode.setNodeStatus({ fill: "red", shape: "ring", text: response.statusText || " unknown response code" });
+                    //console.log("BANANA Error response " + response.statusText);
+                    throw new Error("Error response: " + response.statusText || " unknown response code");
+                }
+                if (response.ok) {
+                    var body = "";
+                    body = await response.text();
+                    _callerNode.sendPayload({ topic: _callerNode.topic || "", payload: true });
+                }
+                
+            } catch (err) {
+                console.log("ORRORE " + err.message);
+                // Main Error
+                _callerNode.setNodeStatus({ fill: "grey", shape: "ring", text: "Error: " + err.message });
+                _callerNode.sendPayload({ topic: _callerNode.topic || "", errorDescription: err.message, payload: true });
+                // Abort request
+                try {
+                    if (reqController !== null) reqController.abort().then(ok => { }).catch(err => { });
+                } catch (error) { }
+            }
+        };
+        //#endregion
+
+
 
 
         //#region "FUNCTIONS"

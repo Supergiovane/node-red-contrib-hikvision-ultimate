@@ -29,14 +29,14 @@
 		icon: "node-alarm.png",
 		label:
 			function () {
-				var label = "hikvisionUltimateAlarm"
+				var label = "Camera Alarm"
 				if (this.name !== undefined && this.name.length > 0) {
 					label = this.name;
 				}
 				return label + " " + this.reactto;
 			},
 		paletteLabel: function () {
-			return "Radar alarm";
+			return "Camera Alarm";
 		},
 		oneditprepare: function () {
 

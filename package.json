@@ -1,6 +1,6 @@
 {
     "name": "node-red-contrib-hikvision-ultimate",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "description": "A native set of node for Hikvision Cameras, Alarms, Radars etc.",
     "author": "Supergiovane (https://github.com/Supergiovane)",
     "dependencies": {
@@ -31,10 +31,11 @@
         "nodes": {
             "Hikvision-config": "nodes/Hikvision-config.js",
             "ANPR-config": "nodes/ANPR-config.js",
-            "hikvisionUltimateAlarmRaw": "nodes/hikvisionUltimateAlarmRaw.js",
+            "hikvisionUltimateRadar": "nodes/hikvisionUltimateRadar.js",
             "hikvisionUltimateAlarm": "nodes/hikvisionUltimateAlarm.js",
+            "hikvisionUltimateAlarmRaw": "nodes/hikvisionUltimateAlarmRaw.js",
             "hikvisionUltimateANPR": "nodes/hikvisionUltimateANPR.js",
-            "hikvisionUltimateRadar": "nodes/hikvisionUltimateRadar.js"
+            "hikvisionUltimatePTZ": "nodes/hikvisionUltimatePTZ.js"
             
             
         }

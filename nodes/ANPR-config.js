@@ -26,6 +26,7 @@ module.exports = (RED) => {
             node.nodeClients.map(nextStatus);
         }
 
+        //#region "PLATES ANPR"
         // Sort the plates, in any case, even if the anpr camera returns a sorted list. It's not always true!
         function sortPlates(a, b) {
             try {
@@ -55,7 +56,7 @@ module.exports = (RED) => {
             var options = {
                 // These properties are part of the Fetch Standard
                 method: 'POST',
-                headers: { },        // request headers. format is the identical to that accepted by the Headers constructor (see below)
+                headers: {},        // request headers. format is the identical to that accepted by the Headers constructor (see below)
                 body: "<AfterTime><picTime>" + _lastPicName + "</picTime></AfterTime>",         // request body. can be null, a string, a Buffer, a Blob, or a Node.js Readable stream
                 redirect: 'follow', // set to `manual` to extract redirect headers, `error` to reject redirect
                 signal: controller.signal,       // pass an instance of AbortSignal to optionally abort requests
@@ -263,7 +264,7 @@ module.exports = (RED) => {
 
         // Start!
         setTimeout(node.initPlateReader, 10000); // First connection.
-
+        //#endregion
 
         //#region "FUNCTIONS"
         node.on('close', function (removed, done) {

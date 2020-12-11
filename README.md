@@ -37,6 +37,7 @@ You can choose from different alarms, for example: <br/>
 - Line crossing (when someone crosses a line)
 - Video loss (when the camera loses the video signal)
 - Video blind (when you put something in front of the camera to block image)
+- Many more.....
 
 For other advanced alarms, not present in this node, use the ***RAW Alarm*** node instead.		
 
@@ -96,6 +97,47 @@ msg.payload = {
         "matchingResult":"otherlist"
         }
     }
+```
+
+**Output PIN 2 (connection error)**
+```javascript
+msg = {
+    "topic": "",
+    "errorDescription": "", // This will contain the error rescription, in case of errors.
+    "payload": false, // Or TRUE if error
+    "_msgid": "dd5b3622.884a78"
+}
+```
+<br/>
+<br/>
+
+---
+
+## PTZ NODE
+This node works with Hikvision PTZ cameras.<br/>
+Just select the preset in the configuration window and recall it by passing ***true*** as payload.<br/>
+
+<img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/PTZ.png' width="80%">
+
+**Output message**
+
+The node outputs ***true*** on PIN 1 if the command is executed, otherwise an error on PIN 2.</br>
+The payload is TRUE whenever alarm occurs, otherwise FALSE whenever alarm ends.</br>
+The complete alarm event is stored in the "alarm" property of the payload.</br>
+In an **unknown CID event** arrives from the Radar, the node will output a message containing the CID code, the full alarm and a null payload.</br>
+
+**Input**
+```javascript
+msg.payload = true; // Recalls the preset
+```
+
+**Output PIN 1**
+```javascript
+msg.payload = {
+{
+    "payload": true, // true after the camera has reached the PTZ preset position
+    "_msgid": "b07e50f6.86a72"
+}
 ```
 
 **Output PIN 2 (connection error)**
