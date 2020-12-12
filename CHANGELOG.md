@@ -2,6 +2,10 @@
 [![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square)](https://www.paypal.me/techtoday) 
 
 <p>
+<b>Version 1.0.5</b> December 2020<br/>
+- NEW: Picture node. This node get a picture from camera, ready to be shown in the dashboard UI. The image can be rotated and resized.<br/>
+</p>
+<p>
 <b>Version 1.0.4</b> December 2020<br/>
 - Getting rid of old debug logs. Thanks @oliveres for advice.<br/>
 </p>

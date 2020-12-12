@@ -1,10 +1,17 @@
+
 module.exports = function (RED) {
-	function hikvisionUltimatePTZ(config) {
+
+	const sharp = require("sharp"); // Resize
+
+	function hikvisionUltimatePicture(config) {
 		RED.nodes.createNode(this, config);
 		var node = this;
 		node.server = RED.nodes.getNode(config.server)
 		node.PTZPreset = (config.PTZPreset === null || config.PTZPreset === undefined) ? "1" : config.PTZPreset;
 		node.channelID = (config.channelID === null || config.channelID === undefined) ? "1" : config.channelID;
+		node.rotateimage = (config.rotateimage === null || config.rotateimage === undefined) ? "0" : config.rotateimage;
+		node.heightimage = (config.heightimage === null || config.heightimage === undefined || config.heightimage.trim() === "") ? "0" : config.heightimage;
+		node.widthimage = (config.widthimage === null || config.widthimage === undefined || config.rotateimage.trim() === "") ? "0" : config.widthimage;
 
 		node.setNodeStatus = ({ fill, shape, text }) => {
 			var dDate = new Date();
@@ -26,9 +33,25 @@ module.exports = function (RED) {
 						}
 					} catch (error) { }
 				}
-			}
-			node.send([_msg, null]);
-			node.setNodeStatus({ fill: "green", shape: "dot", text: "PTZ Pteset recalled." });
+			};
+
+			var msg_payload = sharp(_msg.payload);
+			if (node.rotateimage !== 0) msg_payload = msg_payload.rotate(Number(node.rotateimage));
+			if (node.heightimage !== "0" && node.widthimage !== "0") msg_payload = msg_payload.resize(Number(node.widthimage), Number(node.heightimage));
+			msg_payload.toBuffer().then(picture => {
+				_msg.payload = "data:image/jpg;base64," + picture.toString("base64");
+				node.send(_msg, null);
+				node.setNodeStatus({ fill: "green", shape: "dot", text: "Picture received" });
+			}).catch(err => { });
+
+			// sharp(_msg.payload).rotate().resize(4000, 3000).toBuffer().then(picture => {
+			// 	_msg.payload = picture.toString("base64");
+			// 	node.send(_msg, null);
+			// 	node.setNodeStatus({ fill: "green", shape: "dot", text: "Picture received" });
+			// }).catch(err => { });
+
+
+
 		}
 
 		// On each deploy, unsubscribe+resubscribe
@@ -44,7 +67,8 @@ module.exports = function (RED) {
 					// Recall PTZ Preset
 					// Params: _callerNode, _method, _URL, _body
 					try {
-						node.server.request(node, "PUT", "/ISAPI/PTZCtrl/channels/" + node.channelID + "/presets/" + node.PTZPreset + "/goto", "");
+						// http://192.168.1.13/ISAPI/Streaming/Channels/101/picture
+						node.server.request(node, "GET", "/ISAPI/Streaming/channels/" + node.channelID + "01/picture", null);
 					} catch (error) {
 
 					}
@@ -62,5 +86,5 @@ module.exports = function (RED) {
 
 	}
 
-	RED.nodes.registerType("hikvisionUltimatePTZ", hikvisionUltimatePTZ);
+	RED.nodes.registerType("hikvisionUltimatePicture", hikvisionUltimatePicture);
 }

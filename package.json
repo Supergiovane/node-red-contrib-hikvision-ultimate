@@ -8,7 +8,8 @@
         "node-fetch": "2.6.1",
         "digest-fetch": "1.1.5",
         "abort-controller": ">=3.0.0",
-        "util": ">=0.12.3"
+        "util": ">=0.12.3",
+        "sharp": "0.26.3"
     },
     "keywords": [
         "node-red",
@@ -21,7 +22,7 @@
     ],
     "engines": {
         "node": ">=10.0.0"
-      },
+    },
     "license": "MIT",
     "repository": {
         "type": "git",
@@ -35,9 +36,8 @@
             "hikvisionUltimateAlarm": "nodes/hikvisionUltimateAlarm.js",
             "hikvisionUltimateAlarmRaw": "nodes/hikvisionUltimateAlarmRaw.js",
             "hikvisionUltimateANPR": "nodes/hikvisionUltimateANPR.js",
-            "hikvisionUltimatePTZ": "nodes/hikvisionUltimatePTZ.js"
-            
-            
+            "hikvisionUltimatePTZ": "nodes/hikvisionUltimatePTZ.js",
+            "hikvisionUltimatePicture": "nodes/hikvisionUltimatePicture.js"
         }
     }
 }

@@ -1,5 +1,3 @@
-const { resolve } = require('path');
-
 
 module.exports = (RED) => {
 
@@ -234,14 +232,20 @@ module.exports = (RED) => {
                 }
                 if (response.ok) {
                     var body = "";
-                    body = await response.text();
-                    _callerNode.sendPayload({ topic: _callerNode.topic || "", payload: true });
+                    // Based on URL, will return the appropriate encoded body
+                    if (_URL.toLowerCase().includes("/ptzctrl/")) {
+                        _callerNode.sendPayload({ topic: _callerNode.topic || "", payload: true });
+                    }else if (_URL.toLowerCase().includes("/streaming/")) {
+                        body = await response.buffer(); // "data:image/png;base64," +
+                        //_callerNode.sendPayload({ topic: _callerNode.topic || "", payload:  body.toString("base64")});
+                        _callerNode.sendPayload({ topic: _callerNode.topic || "", payload:  body});
+                    }
                 }
                 
             } catch (err) {
-                console.log("ORRORE " + err.message);
+                //console.log("ORRORE " + err.message);
                 // Main Error
-                _callerNode.setNodeStatus({ fill: "grey", shape: "ring", text: "Error: " + err.message });
+                _callerNode.setNodeStatus({ fill: "grey", shape: "ring", text: "Horror: " + err.message });
                 _callerNode.sendPayload({ topic: _callerNode.topic || "", errorDescription: err.message, payload: true });
                 // Abort request
                 try {

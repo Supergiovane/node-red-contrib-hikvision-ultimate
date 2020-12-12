@@ -1,0 +1,118 @@
+<script type="text/javascript">
+	RED.nodes.registerType('hikvisionUltimatePicture', {
+		category: 'Hikvision Ultimate',
+		color: '#e6e6e6',
+		defaults: {
+			name: { value: "" },
+			server: { type: "Hikvision-config", required: true },
+			channelID: { value: "1" },
+			rotateimage: { value: "0" },
+			heightimage: { value: "" },
+			widthimage: { value: "" }
+		},
+		inputs: 1,
+		outputs: 2,
+		outputLabels: function (i) {
+			var ret = "";
+			switch (i) {
+				case 0:
+					return "Picture";
+					break;
+				case 1:
+					return "Error";
+					break;
+				case 2
+					:
+					return "";
+					break;
+				default:
+					break;
+			}
+		},
+		icon: "camera-icon.png",
+		label:
+			function () {
+				var label = "Picture"
+				if (this.name !== undefined && this.name.length > 0) {
+					label = this.name;
+				}
+				return label;
+			},
+		paletteLabel: function () {
+			return "Picture";
+		},
+		oneditprepare: function () {
+
+
+		},
+		oneditsave: function () {
+
+		}
+	});
+
+
+</script>
+
+<script type="text/x-red" data-template-name="hikvisionUltimatePicture">
+	<div class="form-row">
+		<b>Picture node</b>&nbsp&nbsp&nbsp&nbsp<span style="color:red"><i class="fa fa-question-circle"></i>&nbsp<a target="_blank" href="https://github.com/Supergiovane/node-red-contrib-hikvision-ultimate"><u>Help online</u></a></span>
+        <br/>
+		<br/>
+
+		<label for="node-input-server">Server</label>
+		<input type="text" id="node-input-server" />
+	</div>
+	<div class="form-row">
+        <label for="node-input-name"><i class="icon-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+	<div class="form-row">
+        <label for="node-input-topic"><i class="fa fa-tasks"></i> Node topic</label>
+        <input type="text" id="node-input-topic" placeholder="Node's own topic">
+	</div>
+	<div class="form-row">
+        <label for="node-input-channelID"><i class="fa fa-tasks"></i> Channel</label>
+		<select id="node-input-channelID">
+			<option value="1">1 (DEFAULT)</option>
+			<option value="2">2</option>
+			<option value="3">3</option>
+			<option value="4">4</option>
+		</select>
+		<div class="form-tips" style="margin-top:11px">
+           Above option: Leave 1 if your camera has only one channel (most of the time)
+        </div>
+	</div>
+	<div class="form-row">
+        <label for="node-input-rotateimage"><i class="fa fa-tasks"></i> Rotate</label>
+		<select id="node-input-rotateimage">
+			<option value="0">No</option>
+			<option value="45">45°</option>
+			<option value="90">90°</option>
+			<option value="135">135°</option>
+			<option value="180">180°</option>
+			<option value="225">225°</option>
+		</select>
+	</div>
+	<div class="form-row">
+        <label for="node-input-widthimage"><i class="fa fa-tasks"></i> Max Width</label>
+		<input type="text" id="node-input-widthimage" placeholder="Leave as is">
+	</div>
+	<div class="form-row"> 
+        <label for="node-input-heightimage"><i class="fa fa-tasks"></i> Max Height</label>
+		<input type="text" id="node-input-heightimage" placeholder="Leave as is">
+		<div class="form-tips" style="margin-top:11px">
+			Above options: Resizes the image. Set the MAX width and height in pixels. Leave empty not to resize. When possible, mantain the same aspect ratio of the original image, to obtain a better result.
+		 </div>
+	</div>  
+</script>
+
+<script type="text/x-red" data-help-name="hikvisionUltimatePicture">
+	<p>
+        <a href="https://www.paypal.me/techtoday" target="_blank"><img src='https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square' width='30%'></a>
+        
+	</p>
+	<p>
+		The node outputs the picture on PIN 1 and a connection ERROR on PIN 2 (true if the node is DISCONNECTED to the server, otherwise false IF IT'S RECONNECTED).
+	</p>
+	
+</script>

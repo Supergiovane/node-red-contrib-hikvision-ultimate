@@ -152,6 +152,57 @@ msg = {
 
 ---
 
+<br/>
+<br/>
+
+---
+
+## PICTURE NODE
+This node gets a picture from camera, ready to be shown in the dashboard UI.<br/>
+The image can be rotated and resized as well.<br/>
+Pass **true** as payload to obtain the image.<br/>
+You can, for example, link the ***Alarm node*** to the ***Picture node*** to get an image whenever an alarm occurs.<br/>
+
+<img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/picture.png' width="80%">
+
+The ***Template*** node in this example, contains this code:
+```javascript
+<img src="{{payload}}"/>
+```
+The ***Dashboard*** node in this example, contains this code:
+```javascript
+<div ng-bind-html="msg.payload"></div>
+```
+
+**Output message**
+
+The node outputs the image in base64 string format, ready for the UI Dashboard, on PIN 1, otherwise an error on PIN 2.</br>
+
+
+**Input**
+```javascript
+msg.payload = true; // To get the image
+```
+
+**Output PIN 1**
+```javascript
+msg.payload = {
+{
+    "payload": image in base64 format, // Ready for the Dashboard UI
+    "_msgid": "b07e50f6.86a72"
+}
+```
+
+**Output PIN 2 (connection error)**
+```javascript
+msg = {
+    "topic": "",
+    "errorDescription": "", // This will contain the error rescription, in case of errors.
+    "payload": false, // Or TRUE if error
+    "_msgid": "dd5b3622.884a78"
+}
+```
+
 ## RADAR ALARM NODE
 This node works with Hikvision Radars.<br/>
 
