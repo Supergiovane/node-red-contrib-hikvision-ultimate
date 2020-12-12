@@ -42,7 +42,7 @@ You can choose from different alarms, for example: <br/>
 For other advanced alarms, not present in this node, use the ***RAW Alarm*** node instead.		
 
 
-**Output message**
+**Flow Messages**
 
 The node outputs a payload on **PIN 1**, true if alarm starts, false when alarm ended. Some alarm type doesn't support the alarm end event, so the node sends only a true payload when alarm occurs.</br>
 The node outputs a payload on **PIN 2**, representing a connection error. ***TRUE*** if error, otherwise ***FALSE***</br>
@@ -78,7 +78,7 @@ This node works with Hikvision ANPR cameras.<br/>
 
 <img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/ANPR.png' width="80%">
 
-**Output message**
+**Flow Messages**
 
 The payload contains the license plate number and the property "plate" contains other useful informations.</br>
 
@@ -119,10 +119,9 @@ Just select the preset in the configuration window and recall it by passing ***t
 
 <img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/PTZ.png' width="80%">
 
-**Output message**
+**Flow Messages**
 
 The node outputs ***true*** on PIN 1 if the command is executed, otherwise an error on PIN 2.</br>
-
 
 **Input**
 ```javascript
@@ -171,6 +170,7 @@ The ***Dashboard*** node in this example, contains this code:
 ```
 
 **Flow Messages**
+
 The node outputs the image in base64 string format, ready for the UI Dashboard, on PIN 1, otherwise an error on PIN 2.</br>
 
 **Input**
@@ -206,7 +206,7 @@ This node works with Hikvision Radars.<br/>
 
 <img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/Radar.png' width="80%">
 
-**Output message**
+**Flow Messages**
 
 The node outputs a message whenever an alarm starts or ends. It uses CID codes to identify the alarm type.</br>
 The payload is TRUE whenever alarm occurs, otherwise FALSE whenever alarm ends.</br>
@@ -272,7 +272,7 @@ The RAW alarm node reacts to every message sent. You can use this node when the 
 
 <img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/RawAlarm.png' width="80%">
 
-**Output message**
+**Flow Messages**
 
 The node outputs a payload on **PIN 1** that can vary, depending on the alarm type sent by the connected device.</br>
 The node outputs a payload on **PIN 2**, representing a connection error. ***TRUE*** if error, otherwise ***FALSE***</br>
