@@ -152,10 +152,6 @@ msg = {
 
 ---
 
-<br/>
-<br/>
-
----
 
 ## PICTURE NODE
 This node gets a picture from camera, ready to be shown in the dashboard UI.<br/>
@@ -174,10 +170,8 @@ The ***Dashboard*** node in this example, contains this code:
 <div ng-bind-html="msg.payload"></div>
 ```
 
-**Output message**
-
+**Flow Messages**
 The node outputs the image in base64 string format, ready for the UI Dashboard, on PIN 1, otherwise an error on PIN 2.</br>
-
 
 **Input**
 ```javascript
@@ -202,6 +196,10 @@ msg = {
     "_msgid": "dd5b3622.884a78"
 }
 ```
+<br/>
+<br/>
+
+---
 
 ## RADAR ALARM NODE
 This node works with Hikvision Radars.<br/>
