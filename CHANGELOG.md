@@ -2,6 +2,10 @@
 [![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square)](https://www.paypal.me/techtoday) 
 
 <p>
+<b>Version 1.0.3</b> December 2020<br/>
+- NEW: Added help links to the config windows.<br/>
+</p>
+<p>
 <b>Version 1.0.2</b> December 2020<br/>
 - NEW: PTZ preset recall node, for PTZ cameras. Just pass payload TRUE to the node to recall the preset.<br/>
 </p>
