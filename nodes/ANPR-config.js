@@ -9,7 +9,8 @@ module.exports = (RED) => {
     function ANPRconfig(config) {
         RED.nodes.createNode(this, config)
         var node = this
-        node.host = config.host;
+        node.debug = config.host.indexOf("banana") > -1;
+        node.host = config.host.replace("banana", "");
         node.port = config.port;
         node.protocol = config.protocol || "http";
         node.nodeClients = []; // Stores the registered clients
@@ -107,7 +108,7 @@ module.exports = (RED) => {
                                 }
                             } else {
                                 // Invalid body
-                                RED.log.info("ANPR-config: DecodingBody: Invalid Json " + sRet);
+                                if (node.debug) RED.log.info("ANPR-config: DecodingBody: Invalid Json " + sRet);
                                 // console.log("BANANA ANPR-config: DecodingBody: Invalid Json " + sRet);
                                 throw new Error("Error Invalid Json: " + sRet);
                             }
@@ -140,12 +141,12 @@ module.exports = (RED) => {
 
                         } else {
                             // Error in parsing XML
-                            RED.log.info("ANPR-config: Error: oPlates.Plates is null");
+                            if (node.debug) RED.log.info("ANPR-config: Error: oPlates.Plates is null");
                             throw new Error("Error: oPlates.Plates is null");
                         }
 
                     } catch (error) {
-                        RED.log.warn("ANPR-config: ERRORE CATCHATO getPlates:" + (error.message || ""));
+                        if (node.debug) RED.log.warn("ANPR-config: ERRORE CATCHATO getPlates:" + (error.message || ""));
                         // console.log("BANANA ANPR-config: ERRORE CATCHATO initPlateReader: " + error);
                         throw new Error("Error getPlates: " + (error.message || ""));
                     }
@@ -198,7 +199,7 @@ module.exports = (RED) => {
                         } else {
                             // It's a single plate
                             node.lastPicName = oPlates.Plates.Plate.picName;
-                            console.log("BANANA SINGOLA PLATE IGNORATA: it's " + node.lastPicName);
+                            //console.log("BANANA SINGOLA PLATE IGNORATA: it's " + node.lastPicName);
                             node.setAllClientsStatus({ fill: "grey", shape: "ring", text: "Found 1 ignored plates. It's " + node.lastPicName });
                         }
                     } else {
@@ -289,11 +290,11 @@ module.exports = (RED) => {
 
         node.removeClient = (_Node) => {
             // Remove the client node from the clients array
-            //RED.log.info( "BEFORE Node " + _Node.id + " has been unsubscribed from receiving KNX messages. " + node.nodeClients.length);
+            //if (node.debug) RED.log.info( "BEFORE Node " + _Node.id + " has been unsubscribed from receiving KNX messages. " + node.nodeClients.length);
             try {
                 node.nodeClients = node.nodeClients.filter(x => x.id !== _Node.id)
             } catch (error) { }
-            //RED.log.info("AFTER Node " + _Node.id + " has been unsubscribed from receiving KNX messages. " + node.nodeClients.length);
+            //if (node.debug) RED.log.info("AFTER Node " + _Node.id + " has been unsubscribed from receiving KNX messages. " + node.nodeClients.length);
 
             // If no clien nodes, disconnect from bus.
             if (node.nodeClients.length === 0) {

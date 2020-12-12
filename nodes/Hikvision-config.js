@@ -91,18 +91,18 @@ module.exports = (RED) => {
                         let result = ""; // The complete message, as soon as --boudary is received.
                         for await (const chunk of stream) {
                             result += chunk.toString();
-                            if (node.debug) RED.log.error("BANANA CHUNK: ######################\n" + chunk.toString() + "\n###################### FINE BANANA CHUNK");
-                            if (node.debug) RED.log.error("BANANA RESULT: \n" + result + "\n###################### FINE BANANA RESULT");
-                            //  if (node.debug) RED.log.error("HEADESR " + JSON.stringify(stream))
+                            if (node.debug)  RED.log.error("BANANA CHUNK: ######################\n" + chunk.toString() + "\n###################### FINE BANANA CHUNK");
+                            if (node.debug)  RED.log.error("BANANA RESULT: \n" + result + "\n###################### FINE BANANA RESULT");
+                            //  if (node.debug)  RED.log.error("HEADESR " + JSON.stringify(stream))
                             // Gotta --boundary, process the message
                             if (result.indexOf("--boundary") > -1) {
                                 // 05/12/2020 Check how many boundary i received i split result in every single message
                                 var aResults = result.split("--boundary");
                                 result = ""; // Reset the result
                                 aResults.forEach(sRet => {
-                                    if (node.debug) RED.log.error("SPLITTATO RESULT: ######################\n" + sRet + "\n###################### FINE SPLITTATO RESULT");
+                                    if (node.debug)  RED.log.error("SPLITTATO RESULT: ######################\n" + sRet + "\n###################### FINE SPLITTATO RESULT");
                                     if (sRet.trim() !== "") {
-                                        if (node.debug) RED.log.error("BANANA PROCESSING" + sRet);
+                                        if (node.debug)  RED.log.error("BANANA PROCESSING" + sRet);
                                         try {
                                             //sRet = sRet.replace(/--boundary/g, '');
                                             var i = sRet.indexOf("<"); // Get only the XML, starting with "<"
@@ -113,7 +113,7 @@ module.exports = (RED) => {
                                                     if (err) {
                                                         sRet = "";
                                                     } else {
-                                                        if (node.debug) RED.log.error("BANANA SBANANATO XML -> JSON " + JSON.stringify(result));
+                                                        if (node.debug)  RED.log.error("BANANA SBANANATO XML -> JSON " + JSON.stringify(result));
                                                         if (result !== null && result !== undefined && result.hasOwnProperty("EventNotificationAlert")) {
                                                             node.nodeClients.forEach(oClient => {
                                                                 if (result !== undefined) oClient.sendPayload({ topic: oClient.topic || "", payload: result.EventNotificationAlert });
@@ -124,11 +124,11 @@ module.exports = (RED) => {
                                             } else {
                                                 i = sRet.indexOf("{") // It's a Json
                                                 if (i > -1) {
-                                                    if (node.debug) RED.log.error("BANANA SBANANATO JSON " + sRet);
+                                                    if (node.debug)  RED.log.error("BANANA SBANANATO JSON " + sRet);
                                                     sRet = sRet.substring(i);
                                                     try {
                                                         sRet = JSON.parse(sRet);
-                                                        //  if (node.debug) RED.log.error("BANANA JSONATO: " + sRet);
+                                                        //  if (node.debug)  RED.log.error("BANANA JSONATO: " + sRet);
                                                         if (sRet !== null && sRet !== undefined) {
                                                             node.nodeClients.forEach(oClient => {
                                                                 oClient.sendPayload({ topic: oClient.topic || "", payload: sRet });
@@ -139,7 +139,7 @@ module.exports = (RED) => {
                                                     }
                                                 } else {
                                                     // Invalid body
-                                                    RED.log.info("Hikvision-config: DecodingBody Info only: Invalid Json " + sRet);
+                                                    if (node.debug) RED.log.info("Hikvision-config: DecodingBody Info only: Invalid Json " + sRet);
                                                 }
                                             }
                                             // All is fine. Reset and restart the hearbeat timer
@@ -148,7 +148,7 @@ module.exports = (RED) => {
                                             node.resetHeartBeatTimer();
                                         } catch (error) {
                                             //  if (node.debug) RED.log.error("BANANA startAlarmStream decodifica body: " + error);
-                                            RED.log.warn("Hikvision-config: DecodingBody error: " + (error.message || " unknown error"));
+                                            if (node.debug) RED.log.warn("Hikvision-config: DecodingBody error: " + (error.message || " unknown error"));
                                             throw (error);
                                         }
                                     }
@@ -156,7 +156,7 @@ module.exports = (RED) => {
                             }
                         }
                     } catch (error) {
-                        RED.log.info("Hikvision-config: readStream error: " + (error.message || " unknown error"));
+                        if (node.debug) RED.log.info("Hikvision-config: readStream error: " + (error.message || " unknown error"));
                         node.errorDescription = "readStream error " + (error.message || " unknown error");
                         throw (error);
 
@@ -171,7 +171,7 @@ module.exports = (RED) => {
                     node.setAllClientsStatus({ fill: "green", shape: "ring", text: "Waiting for Alarm." });
                 } else {
                     node.setAllClientsStatus({ fill: "red", shape: "ring", text: response.statusText || " unknown response code" });
-                    //  if (node.debug) RED.log.error("BANANA Error response " + response.statusText);
+                    //  if (node.debug)  RED.log.error("BANANA Error response " + response.statusText);
                     node.errorDescription = "StatusResponse problem " + (response.statusText || " unknown status response code");
                     throw new Error("StatusResponse " + (response.statusText || " unknown response code"));
                 }
@@ -192,7 +192,7 @@ module.exports = (RED) => {
                 // Abort request
                 //node.errorDescription = "Fetch error " + JSON.stringify(error, Object.getOwnPropertyNames(error));
                 node.errorDescription = "Fetch error " + (error.message || " unknown error");
-                RED.log.error("Hikvision-config: FETCH ERROR: " + (error.message || " unknown error"));
+                if (node.debug) RED.log.error("Hikvision-config: FETCH ERROR: " + (error.message || " unknown error"));
             };
 
         };
@@ -277,11 +277,11 @@ module.exports = (RED) => {
 
         node.removeClient = (_Node) => {
             // Remove the client node from the clients array
-            //RED.log.info( "BEFORE Node " + _Node.id + " has been unsubscribed from receiving KNX messages. " + node.nodeClients.length);
+            //if (node.debug) RED.log.info( "BEFORE Node " + _Node.id + " has been unsubscribed from receiving KNX messages. " + node.nodeClients.length);
             try {
                 node.nodeClients = node.nodeClients.filter(x => x.id !== _Node.id)
             } catch (error) { }
-            //RED.log.info("AFTER Node " + _Node.id + " has been unsubscribed from receiving KNX messages. " + node.nodeClients.length);
+            //if (node.debug) RED.log.info("AFTER Node " + _Node.id + " has been unsubscribed from receiving KNX messages. " + node.nodeClients.length);
 
             // If no clien nodes, disconnect from bus.
             if (node.nodeClients.length === 0) {

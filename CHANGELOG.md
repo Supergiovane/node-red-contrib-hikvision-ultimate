@@ -2,6 +2,10 @@
 [![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square)](https://www.paypal.me/techtoday) 
 
 <p>
+<b>Version 1.0.4</b> December 2020<br/>
+- Getting rid of old debug logs. Thanks @oliveres for advice.<br/>
+</p>
+<p>
 <b>Version 1.0.3</b> December 2020<br/>
 - NEW: Added help links to the config windows.<br/>
 </p>
