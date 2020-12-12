@@ -35,14 +35,18 @@ module.exports = function (RED) {
 				}
 			};
 
-			var msg_payload = sharp(_msg.payload);
-			if (node.rotateimage !== 0) msg_payload = msg_payload.rotate(Number(node.rotateimage));
-			if (node.heightimage !== "0" && node.widthimage !== "0") msg_payload = msg_payload.resize(Number(node.widthimage), Number(node.heightimage));
-			msg_payload.toBuffer().then(picture => {
-				_msg.payload = "data:image/jpg;base64," + picture.toString("base64");
-				node.send(_msg, null);
-				node.setNodeStatus({ fill: "green", shape: "dot", text: "Picture received" });
-			}).catch(err => { });
+			try {
+				var msg_payload = sharp(_msg.payload);
+				if (node.rotateimage !== 0) msg_payload = msg_payload.rotate(Number(node.rotateimage));
+				if (node.heightimage !== "0" && node.widthimage !== "0") msg_payload = msg_payload.resize(Number(node.widthimage), Number(node.heightimage));
+				msg_payload.toBuffer().then(picture => {
+					_msg.payload = "data:image/jpg;base64," + picture.toString("base64");
+					node.send(_msg, null);
+					node.setNodeStatus({ fill: "green", shape: "dot", text: "Picture received" });
+				}).catch(err => { });
+			} catch (error) {
+			}
+
 
 			// sharp(_msg.payload).rotate().resize(4000, 3000).toBuffer().then(picture => {
 			// 	_msg.payload = picture.toString("base64");
