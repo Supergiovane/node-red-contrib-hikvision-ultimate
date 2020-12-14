@@ -156,7 +156,7 @@ This node gets a picture from camera, ready to be shown in the dashboard UI.<br/
 The image can be rotated and resized as well.<br/>
 Pass **true** as payload to obtain the image.<br/>
 You can, for example, link the ***Alarm node*** to the ***Picture node*** to get an image whenever an alarm occurs.<br/>
-**CAUTION**: image handling is a very CPU/GPU consuming job. Use only if you have enough computational resources..<br/>
+**CAUTION**: image handling is a very CPU/GPU consuming job. Use only if you have enough computational resources.<br/>
 
 <img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/picture.png' width="80%">
 
