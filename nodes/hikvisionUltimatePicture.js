@@ -13,11 +13,57 @@ module.exports = function (RED) {
 		node.heightimage = (config.heightimage === null || config.heightimage === undefined || config.heightimage.trim() === "") ? "0" : config.heightimage;
 		node.widthimage = (config.widthimage === null || config.widthimage === undefined || config.rotateimage.trim() === "") ? "0" : config.widthimage;
 		node.qualityimage = (config.qualityimage === null || config.qualityimage === undefined || config.qualityimage.trim() === "") ? "80" : config.qualityimage;
+		node.picture; // Stores the cam image
 
 		node.setNodeStatus = ({ fill, shape, text }) => {
 			var dDate = new Date();
 			node.status({ fill: fill, shape: shape, text: text + " (" + dDate.getDate() + ", " + dDate.toLocaleTimeString() + ")" })
 		}
+		// 14/12/2020 Get the picture image from camera
+		RED.httpAdmin.get("/hikvisionUltimateGetPicture", RED.auth.needsPermission('hikvisionUltimatePicture.read'), function (req, res) {
+			node.picture = null;
+			node.server.request(node, "GET", "/ISAPI/Streaming/channels/" + node.channelID + "01/picture", null).then(success => {
+				var iTimeout = 0;
+				var CB = () => {
+					iTimeout += 1;
+					if (iTimeout >= 30) {
+						res.json({ picture: "" });
+					} else {
+						if (node.picture !== null) {
+							res.json({ picture: node.picture });
+							return;
+						}
+						setTimeout(CB, 500);
+					}
+				}
+				setTimeout(CB, 500);
+
+			}).catch(error => { });
+
+		});
+
+		// Get picture 
+		node.getPicture = (_picBase64) => new Promise(function (resolve, reject) {
+			try {
+				jimp.read(_picBase64)
+					.then(image => {
+						if (node.rotateimage !== 0) image = image.rotate(Number(node.rotateimage));
+						image = image.crop(160, 160, 60, 60);
+						if (node.heightimage !== "0" && node.widthimage !== "0") image = image.resize(Number(node.widthimage), Number(node.heightimage));
+						//image = image.crop(x, y, w, h);  
+						image = image.quality(Number(node.qualityimage));
+						image.getBufferAsync(jimp.MIME_JPEG).then(picture => {
+							node.picture = "data:image/jpg;base64," + picture.toString("base64");
+							resolve(node.picture);
+						}).catch(error => {
+							reject(error);
+						});
+					});
+			} catch (error) {
+				reject(error);
+			}
+		});
+
 
 		// Called from config node, to send output to the flow
 		node.sendPayload = (_msg) => {
@@ -36,25 +82,14 @@ module.exports = function (RED) {
 				}
 			};
 
+			node.getPicture(_msg.payload).then(data => {
+				_msg.payload = data;
+				node.send(_msg, null);
+				node.setNodeStatus({ fill: "green", shape: "dot", text: "Picture received" });
+			}).catch(error => {
+				node.setNodeStatus({ fill: "red", shape: "dot", text: "GetBuffer error: " + error.message });
+			})
 
-			try {
-				jimp.read(_msg.payload)
-					.then(image => {
-						if (node.rotateimage !== 0) image = image.rotate(Number(node.rotateimage));
-						if (node.heightimage !== "0" && node.widthimage !== "0") image = image.resize(Number(node.widthimage), Number(node.heightimage));
-						image = image.quality(Number(node.qualityimage));
-						image.getBufferAsync(jimp.MIME_JPEG).then(picture => {
-							_msg.payload = "data:image/jpg;base64," + picture.toString("base64");
-							node.send(_msg, null);
-							node.setNodeStatus({ fill: "green", shape: "dot", text: "Picture received" });
-						}).catch(error => {
-							node.setNodeStatus({ fill: "red", shape: "dot", text: "GetBuffer error: " + error.message });
-						});
-					});
-
-			} catch (error) {
-				node.setNodeStatus({ fill: "red", shape: "dot", text: "Image error: " + error.message });
-			}
 
 		}
 

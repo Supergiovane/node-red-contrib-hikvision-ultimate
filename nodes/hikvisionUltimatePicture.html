@@ -43,8 +43,9 @@
 			return "Picture";
 		},
 		oneditprepare: function () {
-
-
+			$.getJSON('hikvisionUltimateGetPicture', (data) => {
+				$("#picture").html("<img src=\"" + data.picture + "\" width=\"640px\" height=\"480px\" \">");
+			});
 		},
 		oneditsave: function () {
 
@@ -120,6 +121,9 @@
 			Above options: Resizes the image. Set the MAX width and height in pixels. Leave empty not to resize. If you specify one max dimension, you MUST specify BOTH! Otherwise, leave all blank.
 		 </div>
 	</div>  
+	<div class="form-row">
+		<div id="picture" <img src="https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/loading.gif"/></div>
+	</div>
 </script>
 
 <script type="text/x-red" data-help-name="hikvisionUltimatePicture">
