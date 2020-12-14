@@ -47,10 +47,8 @@
 		oneditprepare: function () {
 			var oNodeServer = RED.nodes.node($("#node-input-server").val()); // Store the config-node
 
-			// Timers
-			var twidthimage = null;
-			var theightimage = null;
-			var tcropimage = null;
+			// Timer
+			var tImage = null;
 			var bAlreadyIn = false;
 
 			// 19/02/2020 Used to alert the user if the CSV file has not been loaded and to get the server sooner als deploy
@@ -80,7 +78,12 @@
 					bAlreadyIn = false;
 				}).error(function (jqXHR, textStatus, errorThrown) {
 					bAlreadyIn = false;
-					RED.notify("Problem reading the image from camera: " + jqXHR.responseText);
+					RED.notify("Problem reading the image from camera: " + jqXHR.responseText,
+                    {
+                        modal: false,
+                        fixed: false,
+                        type: 'error'
+                    })
 				});
 
 			}
@@ -95,16 +98,34 @@
 				readPictureFromCamera(oNodeServer);
 			});
 			$("#node-input-widthimage").on("input", function () {
-				if (twidthimage !== null && twidthimage !== undefined) clearTimeout(twidthimage);
-				var twidthimage = setTimeout(() => {
+				if (tImage !== null && tImage !== undefined) clearTimeout(tImage);
+				if ($("#node-input-widthimage").val() !== "" && Number($("#node-input-widthimage").val()) > 9999) {
+					RED.notify("Max value is 9999",
+                    {
+                        modal: false,
+                        fixed: false,
+                        type: 'info'
+					})
+					return;
+				}
+				tImage = setTimeout(() => {
 					if ($("#node-input-widthimage").val().trim() !== "" && $("#node-input-heightimage").val().trim() !== "") readPictureFromCamera(oNodeServer);
 					if ($("#node-input-heightimage").val().trim() === "" && $("#node-input-widthimage").val().trim() === "") readPictureFromCamera(oNodeServer);
 				}, 1500)
 
 			});
 			$("#node-input-heightimage").on("input", function () {
-				if (theightimage !== null && theightimage !== undefined) clearTimeout(theightimage);
-				theightimage = setTimeout(() => {
+				if (tImage !== null && tImage !== undefined) clearTimeout(tImage);
+				if ($("#node-input-heightimage").val() !== "" && Number($("#node-input-heightimage").val()) > 9999) {
+					RED.notify("Max value is 9999",
+                    {
+                        modal: false,
+                        fixed: false,
+                        type: 'info'
+					})
+					return;
+				}
+				tImage = setTimeout(() => {
 					if ($("#node-input-widthimage").val().trim() !== "" && $("#node-input-heightimage").val().trim() !== "") readPictureFromCamera(oNodeServer);
 					if ($("#node-input-heightimage").val().trim() === "" && $("#node-input-widthimage").val().trim() === "") readPictureFromCamera(oNodeServer);
 				}, 1500)
@@ -112,8 +133,8 @@
 			$("#node-input-cropimage").on("input", function () {
 				if ($("#node-input-cropimage").val().split(",").length == 4 || $("#node-input-cropimage").val() === "") {
 					if ($("#node-input-cropimage").val().split(",")[3] !== "") {
-						if (tcropimage !== null && tcropimage !== undefined) clearTimeout(tcropimage);
-						tcropimage = setTimeout(() => {
+						if (tImage !== null && tImage !== undefined) clearTimeout(tImage);
+						tImage = setTimeout(() => {
 							readPictureFromCamera(oNodeServer);
 						}, 1500)
 					}
