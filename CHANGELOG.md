@@ -2,6 +2,10 @@
 [![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square)](https://www.paypal.me/techtoday) 
 
 <p>
+<b>Version 1.0.10</b> December 2020<br/>
+- NEW: You can now get info from the camera by pressing CONNECT button in the config window.<br/>
+</p>
+<p>
 <b>Version 1.0.9</b> December 2020<br/>
 - NEW: Picture node, you can now CROP the image, to obtain a zoomed portion, for example, of a door or things like this.<br/>
 - NEW: Picture node, the config window shows the actual picture you see, including all image manipulation you've done through settings.<br/>

@@ -15,7 +15,17 @@
         },
         oneditprepare: function () {
             var node = this;
+
             $("#getinfocam").click(function () {
+                if (node.host == undefined) {
+                    RED.notify("The node is not saved. Please save the node, deploy, then reopen and press again Connect.",
+                        {
+                            modal: false,
+                            fixed: false,
+                            type: 'error'
+                        })
+                    return;
+                }
                 $.getJSON("hikvisionUltimateGetInfoCam?nodeID=" + node.id, (data) => {
                     $("#node-config-input-name").val(data.DeviceInfo.deviceName);
                     $("#node-config-input-deviceinfo").val(JSON.stringify(data));
@@ -25,7 +35,7 @@
                         {
                             modal: false,
                             fixed: false,
-                            type: 'error'
+                            type: 'warn'
                         })
                 });
             });
@@ -94,10 +104,9 @@
         <input type="button" id="getinfocam" class="ui-button ui-corner-all ui-widget" style="background-color:#AEE1FF;width:150px" value="Connect">
     </div>
     <div class="form-row">
-        <img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/info.png' width="80%">
-       
-        <div><p id="labeldeviceinfo"></p></div>
+        <img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/info.png' width="10%">
+        <div><p id="labeldeviceinfo">No Device info present. Please click CONNECT to retrieve the infos.</p></div>
         <input type="hidden" id="node-config-input-deviceinfo" placeholder="">
     </div>
-</div>
+
 </script>
