@@ -168,7 +168,7 @@ The ***Dashboard*** node in this example, contains this code:
 <div ng-bind-html="msg.payload"></div>
 ```
 
-<img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/pictureproperties.png' width="20%">
+<img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/pictureproperties.png' width="30%">
 
 **Flow Messages**
 
