@@ -99,8 +99,7 @@ module.exports = function (RED) {
 						if (node.rotateimage !== 0) image = image.rotate(Number(node.rotateimage));
 						if (node.cropimage !== "") image = image.crop(node.cropimage.x, node.cropimage.y, node.cropimage.w, node.cropimage.h);
 						if (node.heightimage !== "0" && node.widthimage !== "0") image = image.resize(Number(node.widthimage), Number(node.heightimage));
-						//image = image.crop(x, y, w, h);  
-						image = image.quality(Number(node.qualityimage));
+						if (node.qualityimage !== 100) image = image.quality(Number(node.qualityimage));
 						node.pictureLarghezza = image.bitmap.width;
 						node.pictureAltezza = image.bitmap.height;
 						image.getBufferAsync(jimp.MIME_JPEG).then(picture => {
