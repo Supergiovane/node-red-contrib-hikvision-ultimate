@@ -1,7 +1,7 @@
 
 module.exports = function (RED) {
 
-	const sharp = require("sharp"); // Resize
+	const jimp = require("jimp"); // Resize
 
 	function hikvisionUltimatePicture(config) {
 		RED.nodes.createNode(this, config);
@@ -12,6 +12,7 @@ module.exports = function (RED) {
 		node.rotateimage = (config.rotateimage === null || config.rotateimage === undefined) ? "0" : config.rotateimage;
 		node.heightimage = (config.heightimage === null || config.heightimage === undefined || config.heightimage.trim() === "") ? "0" : config.heightimage;
 		node.widthimage = (config.widthimage === null || config.widthimage === undefined || config.rotateimage.trim() === "") ? "0" : config.widthimage;
+		node.qualityimage = (config.qualityimage === null || config.qualityimage === undefined || config.qualityimage.trim() === "") ? "80" : config.qualityimage;
 
 		node.setNodeStatus = ({ fill, shape, text }) => {
 			var dDate = new Date();
@@ -35,26 +36,25 @@ module.exports = function (RED) {
 				}
 			};
 
+
 			try {
-				var msg_payload = sharp(_msg.payload);
-				if (node.rotateimage !== 0) msg_payload = msg_payload.rotate(Number(node.rotateimage));
-				if (node.heightimage !== "0" && node.widthimage !== "0") msg_payload = msg_payload.resize(Number(node.widthimage), Number(node.heightimage));
-				msg_payload.toBuffer().then(picture => {
-					_msg.payload = "data:image/jpg;base64," + picture.toString("base64");
-					node.send(_msg, null);
-					node.setNodeStatus({ fill: "green", shape: "dot", text: "Picture received" });
-				}).catch(err => { });
+				jimp.read(_msg.payload)
+					.then(image => {
+						if (node.rotateimage !== 0) image = image.rotate(Number(node.rotateimage));
+						if (node.heightimage !== "0" && node.widthimage !== "0") image = image.resize(Number(node.widthimage), Number(node.heightimage));
+						image = image.quality(Number(node.qualityimage));
+						image.getBufferAsync(jimp.MIME_JPEG).then(picture => {
+							_msg.payload = "data:image/jpg;base64," + picture.toString("base64");
+							node.send(_msg, null);
+							node.setNodeStatus({ fill: "green", shape: "dot", text: "Picture received" });
+						}).catch(error => {
+							node.setNodeStatus({ fill: "red", shape: "dot", text: "GetBuffer error: " + error.message });
+						});
+					});
+
 			} catch (error) {
+				node.setNodeStatus({ fill: "red", shape: "dot", text: "Image error: " + error.message });
 			}
-
-
-			// sharp(_msg.payload).rotate().resize(4000, 3000).toBuffer().then(picture => {
-			// 	_msg.payload = picture.toString("base64");
-			// 	node.send(_msg, null);
-			// 	node.setNodeStatus({ fill: "green", shape: "dot", text: "Picture received" });
-			// }).catch(err => { });
-
-
 
 		}
 

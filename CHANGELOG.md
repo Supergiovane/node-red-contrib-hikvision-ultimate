@@ -2,6 +2,10 @@
 [![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square)](https://www.paypal.me/techtoday) 
 
 <p>
+<b>Version 1.0.7</b> December 2020<br/>
+- NEW: Picture node, you can now set the output quality, from 10 to 100.<br/>
+</p>
+<p>
 <b>Version 1.0.6</b> December 2020<br/>
 - Increased timeout for situation where the connection is via VPN or very slow. Thanks @Georg for suggesting this thing.<br/>
 </p>
