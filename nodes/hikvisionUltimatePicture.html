@@ -1,4 +1,5 @@
 <script type="text/javascript">
+
 	RED.nodes.registerType('hikvisionUltimatePicture', {
 		category: 'Hikvision Ultimate',
 		color: '#C0C0C0',
@@ -9,7 +10,8 @@
 			rotateimage: { value: "0" },
 			heightimage: { value: "" },
 			widthimage: { value: "" },
-			qualityimage: { value: "80" }
+			qualityimage: { value: "80" },
+			cropimage: { value: "" }
 		},
 		inputs: 1,
 		outputs: 2,
@@ -43,9 +45,82 @@
 			return "Picture";
 		},
 		oneditprepare: function () {
-			$.getJSON('hikvisionUltimateGetPicture', (data) => {
-				$("#picture").html("<img src=\"" + data.picture + "\" width=\"640px\" height=\"480px\" \">");
+			var oNodeServer = RED.nodes.node($("#node-input-server").val()); // Store the config-node
+
+			// Timers
+			var twidthimage = null;
+			var theightimage = null;
+			var tcropimage = null;
+			var bAlreadyIn = false;
+
+			// 19/02/2020 Used to alert the user if the CSV file has not been loaded and to get the server sooner als deploy
+			// ###########################
+			$("#node-input-server").change(function () {
+				try {
+					oNodeServer = RED.nodes.node($(this).val());
+					if (oNodeServer !== null && oNodeServer !== undefined) readPictureFromCamera(oNodeServer);
+				} catch (error) {
+				}
 			});
+			// ###########################
+			function readPictureFromCamera(_oNodeServer) {
+				if (bAlreadyIn) return;
+				bAlreadyIn = true;
+				$("#picture").html("<img src=\"https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/loading.gif\">");
+				// Prepare the manipulation string
+				var sManipulate = $("#node-input-channelID").val();
+				sManipulate += "SEP" + $("#node-input-qualityimage").val();
+				sManipulate += "SEP" + $("#node-input-rotateimage").val();
+				sManipulate += "SEP" + $("#node-input-widthimage").val();
+				sManipulate += "SEP" + $("#node-input-heightimage").val();
+				sManipulate += "SEP" + $("#node-input-cropimage").val().toString().trim().replace(/\s/g, '').replace(/,/g, "-");
+				$.getJSON('hikvisionUltimateGetPicture?serverID=' + _oNodeServer.id + "&manipulate=" + sManipulate, (data) => {
+					$("#picture").html("<img src=\"" + data.picture + "\" style=\"width:320px;height:200px;\" \">");
+					$("#picturedimensions").html("Width:" + data.width + "px" + " Height:" + data.height + "px - Autorefresh after each change");
+					bAlreadyIn = false;
+				}).error(function (jqXHR, textStatus, errorThrown) {
+					bAlreadyIn = false;
+					RED.notify("Problem reading the image from camera: " + jqXHR.responseText);
+				});
+
+			}
+
+			$("#node-input-channelID").change(function () {
+				readPictureFromCamera(oNodeServer);
+			});
+			$("#node-input-qualityimage").change(function () {
+				readPictureFromCamera(oNodeServer);
+			});
+			$("#node-input-rotateimage").change(function () {
+				readPictureFromCamera(oNodeServer);
+			});
+			$("#node-input-widthimage").on("input", function () {
+				if (twidthimage !== null && twidthimage !== undefined) clearTimeout(twidthimage);
+				var twidthimage = setTimeout(() => {
+					if ($("#node-input-widthimage").val().trim() !== "" && $("#node-input-heightimage").val().trim() !== "") readPictureFromCamera(oNodeServer);
+					if ($("#node-input-heightimage").val().trim() === "" && $("#node-input-widthimage").val().trim() === "") readPictureFromCamera(oNodeServer);
+				}, 1500)
+
+			});
+			$("#node-input-heightimage").on("input", function () {
+				if (theightimage !== null && theightimage !== undefined) clearTimeout(theightimage);
+				theightimage = setTimeout(() => {
+					if ($("#node-input-widthimage").val().trim() !== "" && $("#node-input-heightimage").val().trim() !== "") readPictureFromCamera(oNodeServer);
+					if ($("#node-input-heightimage").val().trim() === "" && $("#node-input-widthimage").val().trim() === "") readPictureFromCamera(oNodeServer);
+				}, 1500)
+			});
+			$("#node-input-cropimage").on("input", function () {
+				if ($("#node-input-cropimage").val().split(",").length == 4 || $("#node-input-cropimage").val() === "") {
+					if ($("#node-input-cropimage").val().split(",")[3] !== "") {
+						if (tcropimage !== null && tcropimage !== undefined) clearTimeout(tcropimage);
+						tcropimage = setTimeout(() => {
+							readPictureFromCamera(oNodeServer);
+						}, 1500)
+					}
+				}
+			});
+
+
 		},
 		oneditsave: function () {
 
@@ -85,6 +160,10 @@
         </div>
 	</div>
 	<div class="form-row">
+		<p align="center" id="picture"><img src="https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/loading.gif"></p>
+		<p align="center" id="picturedimensions"></p>
+	</div>
+	<div class="form-row">
         <label for="node-input-qualityimage"><i class="fa fa-tasks"></i> Jpeg Quality</label>
 		<select id="node-input-qualityimage">
 			<option value="100">100</option>
@@ -122,8 +201,13 @@
 		 </div>
 	</div>  
 	<div class="form-row">
-		<div id="picture" <img src="https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/loading.gif"/></div>
+        <label for="node-input-cropimage"><i class="fa fa-tasks"></i> Crop</label>
+		<input type="text" id="node-input-cropimage" placeholder="Leave as is">
+		<div class="form-tips" style="margin-top:11px">
+			Above options: Crop the image (get only a portion of image, for example, to zoom on a door). Accepted string is "x, y, width, height" for example "20,30,200,200". Leave blank to not crop.
+		 </div>
 	</div>
+	
 </script>
 
 <script type="text/x-red" data-help-name="hikvisionUltimatePicture">
