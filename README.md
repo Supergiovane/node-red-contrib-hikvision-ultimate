@@ -168,6 +168,8 @@ The ***Dashboard*** node in this example, contains this code:
 <div ng-bind-html="msg.payload"></div>
 ```
 
+<img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/pictureproperties.png' width="20%">
+
 **Flow Messages**
 
 The node outputs the image in base64 string format, ready for the UI Dashboard, on PIN 1, otherwise an error on PIN 2.</br>
