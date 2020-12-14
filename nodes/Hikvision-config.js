@@ -18,6 +18,7 @@ module.exports = (RED) => {
         node.timerCheckHeartBeat = null;
         node.errorDescription = ""; // Contains the error description in case of connection error.
         node.authentication = config.authentication || "digest";
+        node.deviceinfo = config.deviceinfo || {};
         var controller = null; // AbortController
 
         node.setAllClientsStatus = ({ fill, shape, text }) => {
@@ -28,6 +29,53 @@ module.exports = (RED) => {
         }
 
 
+        // 14/12/2020 Get the infos from the camera
+        RED.httpAdmin.get("/hikvisionUltimateGetInfoCam", RED.auth.needsPermission('Hikvisionconfig.read'), function (req, res) {
+            var _nodeServer = RED.nodes.getNode(req.query.nodeID);// Retrieve node.id of the config node.
+            var clientInfo;
+            if (_nodeServer.authentication === "digest") clientInfo = new DigestFetch(_nodeServer.credentials.user, _nodeServer.credentials.password); // Instantiate the fetch client.
+            if (_nodeServer.authentication === "basic") clientInfo = new DigestFetch(_nodeServer.credentials.user, _nodeServer.credentials.password, { basic: true }); // Instantiate the fetch client.
+
+            var opt = {
+                // These properties are part of the Fetch Standard
+                method: "GET",
+                headers: {},        // request headers. format is the identical to that accepted by the Headers constructor (see below)
+                body: null,         // request body. can be null, a string, a Buffer, a Blob, or a Node.js Readable stream
+                redirect: 'follow', // set to `manual` to extract redirect headers, `error` to reject redirect
+                signal: null,       // pass an instance of AbortSignal to optionally abort requests
+
+                // The following properties are node-fetch extensions
+                follow: 20,         // maximum redirect count. 0 to not follow redirect
+                timeout: 5000,         // req/res timeout in ms, it resets on redirect. 0 to disable (OS limit applies). Signal is recommended instead.
+                compress: false,     // support gzip/deflate content encoding. false to disable
+                size: 0,            // maximum response body size in bytes. 0 to disable
+                agent: null         // http(s).Agent instance or function that returns an instance (see below)
+            };
+            try {
+                (async () => {
+                    try {
+                        const response = await clientInfo.fetch(_nodeServer.protocol + "://" + _nodeServer.host + "/ISAPI/System/deviceInfo", opt);
+                        const body = await response.text();
+                        xml2js(body, function (err, result) {
+                            if (err) {
+                                res.json({});
+                                return;
+                            } else {
+                                res.json(result);
+                                return;
+                            }
+                        });
+                    } catch (error) {
+                        RED.log.error("Errore  hikvisionUltimateGetInfoCam " + error.message);
+                    }
+
+                })();
+
+
+            } catch (err) {
+                res.json({});
+            }
+        });
 
         // This function starts the heartbeat timer, to detect the disconnection from the server
         node.resetHeartBeatTimer = () => {
@@ -55,12 +103,12 @@ module.exports = (RED) => {
             node.resetHeartBeatTimer(); // First thing, start the heartbeat timer.
             node.setAllClientsStatus({ fill: "grey", shape: "ring", text: "Connecting..." });
 
-            var client;
-            if (node.authentication === "digest") client = new DigestFetch(node.credentials.user, node.credentials.password); // Instantiate the fetch client.
-            if (node.authentication === "basic") client = new DigestFetch(node.credentials.user, node.credentials.password, { basic: true }); // Instantiate the fetch client.
+            var clientAlarmStream;
+            if (node.authentication === "digest") clientAlarmStream = new DigestFetch(node.credentials.user, node.credentials.password); // Instantiate the fetch client.
+            if (node.authentication === "basic") clientAlarmStream = new DigestFetch(node.credentials.user, node.credentials.password, { basic: true }); // Instantiate the fetch client.
 
             controller = new AbortController(); // For aborting the stream request
-            var options = {
+            var optionsAlarmStream = {
                 // These properties are part of the Fetch Standard
                 method: 'GET',
                 headers: {},        // request headers. format is the identical to that accepted by the Headers constructor (see below)
@@ -89,8 +137,8 @@ module.exports = (RED) => {
                         let result = ""; // The complete message, as soon as --boudary is received.
                         for await (const chunk of stream) {
                             result += chunk.toString();
-                            if (node.debug)  RED.log.error("BANANA CHUNK: ######################\n" + chunk.toString() + "\n###################### FINE BANANA CHUNK");
-                            if (node.debug)  RED.log.error("BANANA RESULT: \n" + result + "\n###################### FINE BANANA RESULT");
+                            if (node.debug) RED.log.error("BANANA CHUNK: ######################\n" + chunk.toString() + "\n###################### FINE BANANA CHUNK");
+                            if (node.debug) RED.log.error("BANANA RESULT: \n" + result + "\n###################### FINE BANANA RESULT");
                             //  if (node.debug)  RED.log.error("HEADESR " + JSON.stringify(stream))
                             // Gotta --boundary, process the message
                             if (result.indexOf("--boundary") > -1) {
@@ -98,9 +146,9 @@ module.exports = (RED) => {
                                 var aResults = result.split("--boundary");
                                 result = ""; // Reset the result
                                 aResults.forEach(sRet => {
-                                    if (node.debug)  RED.log.error("SPLITTATO RESULT: ######################\n" + sRet + "\n###################### FINE SPLITTATO RESULT");
+                                    if (node.debug) RED.log.error("SPLITTATO RESULT: ######################\n" + sRet + "\n###################### FINE SPLITTATO RESULT");
                                     if (sRet.trim() !== "") {
-                                        if (node.debug)  RED.log.error("BANANA PROCESSING" + sRet);
+                                        if (node.debug) RED.log.error("BANANA PROCESSING" + sRet);
                                         try {
                                             //sRet = sRet.replace(/--boundary/g, '');
                                             var i = sRet.indexOf("<"); // Get only the XML, starting with "<"
@@ -111,7 +159,7 @@ module.exports = (RED) => {
                                                     if (err) {
                                                         sRet = "";
                                                     } else {
-                                                        if (node.debug)  RED.log.error("BANANA SBANANATO XML -> JSON " + JSON.stringify(result));
+                                                        if (node.debug) RED.log.error("BANANA SBANANATO XML -> JSON " + JSON.stringify(result));
                                                         if (result !== null && result !== undefined && result.hasOwnProperty("EventNotificationAlert")) {
                                                             node.nodeClients.forEach(oClient => {
                                                                 if (result !== undefined) oClient.sendPayload({ topic: oClient.topic || "", payload: result.EventNotificationAlert });
@@ -122,7 +170,7 @@ module.exports = (RED) => {
                                             } else {
                                                 i = sRet.indexOf("{") // It's a Json
                                                 if (i > -1) {
-                                                    if (node.debug)  RED.log.error("BANANA SBANANATO JSON " + sRet);
+                                                    if (node.debug) RED.log.error("BANANA SBANANATO JSON " + sRet);
                                                     sRet = sRet.substring(i);
                                                     try {
                                                         sRet = JSON.parse(sRet);
@@ -163,7 +211,7 @@ module.exports = (RED) => {
                 // ###################################
                 //#endregion
 
-                const response = await client.fetch(node.protocol + "://" + node.host + "/ISAPI/Event/notification/alertStream", options);
+                const response = await clientAlarmStream.fetch(node.protocol + "://" + node.host + "/ISAPI/Event/notification/alertStream", optionsAlarmStream);
 
                 if (response.status >= 200 && response.status <= 300) {
                     node.setAllClientsStatus({ fill: "green", shape: "ring", text: "Waiting for Alarm." });
@@ -199,10 +247,10 @@ module.exports = (RED) => {
 
         //#region GENERIC GET OT PUT CALL
         // Function to get or post generic data on camera
-        node.request = async function(_callerNode, _method, _URL, _body) {
-            var client;
-            if (node.authentication === "digest") client = new DigestFetch(node.credentials.user, node.credentials.password); // Instantiate the fetch client.
-            if (node.authentication === "basic") client = new DigestFetch(node.credentials.user, node.credentials.password, { basic: true }); // Instantiate the fetch client.
+        node.request = async function (_callerNode, _method, _URL, _body) {
+            var clientGenericRequest;
+            if (node.authentication === "digest") clientGenericRequest = new DigestFetch(node.credentials.user, node.credentials.password); // Instantiate the fetch client.
+            if (node.authentication === "basic") clientGenericRequest = new DigestFetch(node.credentials.user, node.credentials.password, { basic: true }); // Instantiate the fetch client.
 
             reqController = new AbortController(); // For aborting the stream request
             var options = {
@@ -222,7 +270,7 @@ module.exports = (RED) => {
             };
             try {
                 if (!_URL.startsWith("/")) _URL = "/" + _URL;
-                const response = await client.fetch(node.protocol + "://" + node.host + _URL, options);
+                const response = await clientGenericRequest.fetch(node.protocol + "://" + node.host + _URL, options);
                 if (response.status >= 200 && response.status <= 300) {
                     //node.setAllClientsStatus({ fill: "green", shape: "ring", text: "Connected." });
                 } else {
@@ -235,13 +283,13 @@ module.exports = (RED) => {
                     // Based on URL, will return the appropriate encoded body
                     if (_URL.toLowerCase().includes("/ptzctrl/")) {
                         _callerNode.sendPayload({ topic: _callerNode.topic || "", payload: true });
-                    }else if (_URL.toLowerCase().includes("/streaming/")) {
+                    } else if (_URL.toLowerCase().includes("/streaming/")) {
                         body = await response.buffer(); // "data:image/png;base64," +
                         //_callerNode.sendPayload({ topic: _callerNode.topic || "", payload:  body.toString("base64")});
-                        _callerNode.sendPayload({ topic: _callerNode.topic || "", payload:  body});
+                        _callerNode.sendPayload({ topic: _callerNode.topic || "", payload: body });
                     }
                 }
-                
+
             } catch (err) {
                 //console.log("ORRORE " + err.message);
                 // Main Error

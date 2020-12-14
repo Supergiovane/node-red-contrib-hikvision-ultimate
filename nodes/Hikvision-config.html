@@ -6,13 +6,34 @@
             port: { value: 80, required: true, validate: RED.validators.number() },
             name: { value: "Server" },
             authentication: { value: "digest" },
-            protocol: { value: "http" }
+            protocol: { value: "http" },
+            deviceinfo: { value: {} }
         },
         credentials: {
             user: { type: "text" },
             password: { type: "password" }
         },
         oneditprepare: function () {
+            var node = this;
+            $("#getinfocam").click(function () {
+                $.getJSON("hikvisionUltimateGetInfoCam?nodeID=" + node.id, (data) => {
+                    $("#node-config-input-name").val(data.DeviceInfo.deviceName);
+                    $("#node-config-input-deviceinfo").val(JSON.stringify(data));
+                    $("#labeldeviceinfo").html("<b>DEVICE INFORMATION</b><br/>Name: <b>" + data.DeviceInfo.deviceName + "</b><br/>Model: <b>" + data.DeviceInfo.model + "</b><br/>Firmware: <b>" + data.DeviceInfo.firmwareVersion + "</b>");
+                }).error(function (jqXHR, textStatus, errorThrown) {
+                    RED.notify("Problem reading the informations from camera: " + jqXHR.responseText,
+                        {
+                            modal: false,
+                            fixed: false,
+                            type: 'error'
+                        })
+                });
+            });
+            var dati = JSON.parse(this.deviceinfo);
+            if (dati !== null && dati !== {}) {
+                $("#labeldeviceinfo").html("<b>LAST DEVICE INFORMATION SAVED</b><br/>Name: <b>" + dati.DeviceInfo.deviceName + "</b><br/>Model: <b>" + dati.DeviceInfo.model + "</b><br/>Firmware: <b>" + dati.DeviceInfo.firmwareVersion + "</b>");
+            }
+
         },
         oneditsave: function () {
         },
@@ -27,7 +48,8 @@
         <b>Server config</b>&nbsp&nbsp&nbsp&nbsp<span style="color:red"><i class="fa fa-question-circle"></i>&nbsp<a target="_blank" href="https://github.com/Supergiovane/node-red-contrib-hikvision-ultimate"><u>Help online</u></a></span>
         <br/>
         <br/>
-
+        
+    </div>
     <div class="form-row">
         <label for="node-config-input-name" >
             <i class="fa fa-tag"></i> Name
@@ -67,7 +89,15 @@
         <option value="basic">Basic</option>
         </select>
     </div>
-
-
+    <div class="form-row">
+        <label for="node-config-input-authentication"><i class="fa fa-sign-in"></i> Get info</label>
+        <input type="button" id="getinfocam" class="ui-button ui-corner-all ui-widget" style="background-color:#AEE1FF;width:150px" value="Connect">
+    </div>
+    <div class="form-row">
+        <img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/info.png' width="80%">
+       
+        <div><p id="labeldeviceinfo"></p></div>
+        <input type="hidden" id="node-config-input-deviceinfo" placeholder="">
+    </div>
 </div>
 </script>
