@@ -4,6 +4,10 @@
 [![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square)](https://www.paypal.me/techtoday) 
 
 <p>
+<b>Version 1.0.13</b> December 2020<br/>
+- Picture Node: suppor for NVR with max 32 channels.<br/>
+</p>
+<p>
 <b>Version 1.0.12</b> December 2020<br/>
 - NEW: You can now get info from the camera by pressing CONNECT button in the config window, even if the server node is new and it hasn't been saved.<br/>
 - CHANGE: The Picture Node has now a button to reload the image, so you can view the changes in size etc.. just in time.
