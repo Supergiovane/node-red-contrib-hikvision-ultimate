@@ -1,4 +1,5 @@
 <script type="text/javascript">
+
     RED.nodes.registerType('Hikvision-config', {
         category: 'config',
         defaults: {
@@ -17,28 +18,43 @@
             var node = this;
 
             $("#getinfocam").click(function () {
-                if (node.host == undefined) {
-                    RED.notify("The node is not saved. Please save the node, deploy, then reopen and press again Connect.",
-                        {
-                            modal: false,
-                            fixed: false,
-                            type: 'error'
-                        })
-                    return;
-                }
-                $.getJSON("hikvisionUltimateGetInfoCam?nodeID=" + node.id, (data) => {
+
+                // If the node is newly created, the backend cannot get the infos, so i must pass each parameter back
+                var sQueryString = "";
+                var jManipulate = {};
+                // Read all data needed to backend to call the camera URL
+                jManipulate.host = $("#node-config-input-host").val();
+                jManipulate.port = $("#node-config-input-port").val();
+                jManipulate.protocol = $("#node-config-input-protocol").val();
+                jManipulate.user = $("#node-config-input-user").val();
+                jManipulate.password = $("#node-config-input-password").val();
+                jManipulate.authentication = $("#node-config-input-authentication").val();
+                sQueryString = "?nodeID=" + node.id + "&params=" + encodeURIComponent(JSON.stringify(jManipulate));
+
+                $.getJSON("hikvisionUltimateGetInfoCam" + sQueryString, (data) => {
+                    if (!data.hasOwnProperty("DeviceInfo")) {
+                        RED.notify("Problem reading the informations from camera: " + JSON.stringify(data) + ". Check your credentials and connection properties.",
+                            {
+                                modal: false,
+                                fixed: false,
+                                type: 'warning'
+                            });
+                        return;
+                    }
                     $("#node-config-input-name").val(data.DeviceInfo.deviceName);
                     $("#node-config-input-deviceinfo").val(JSON.stringify(data));
                     $("#labeldeviceinfo").html("<b>DEVICE INFORMATION</b><br/>Name: <b>" + data.DeviceInfo.deviceName + "</b><br/>Model: <b>" + data.DeviceInfo.model + "</b><br/>Firmware: <b>" + data.DeviceInfo.firmwareVersion + "</b>");
+
                 }).error(function (jqXHR, textStatus, errorThrown) {
                     RED.notify("Problem reading the informations from camera: " + jqXHR.responseText,
                         {
                             modal: false,
                             fixed: false,
-                            type: 'warn'
+                            type: 'warning'
                         })
                 });
             });
+
             var dati = JSON.parse(this.deviceinfo);
             if (dati !== null && dati !== {}) {
                 $("#labeldeviceinfo").html("<b>LAST DEVICE INFORMATION SAVED</b><br/>Name: <b>" + dati.DeviceInfo.deviceName + "</b><br/>Model: <b>" + dati.DeviceInfo.model + "</b><br/>Firmware: <b>" + dati.DeviceInfo.firmwareVersion + "</b>");
@@ -46,6 +62,7 @@
 
         },
         oneditsave: function () {
+            //alert(this.host);
         },
         label: function () {
             return typeof this.name === undefined ? (this.host + ":" + this.port) : this.name + " " + (this.host + ":" + this.port);
@@ -100,7 +117,7 @@
         </select>
     </div>
     <div class="form-row">
-        <label for="node-config-input-authentication"><i class="fa fa-sign-in"></i> Get info</label>
+        <label><i class="fa fa-sign-in"></i> Get info</label>
         <input type="button" id="getinfocam" class="ui-button ui-corner-all ui-widget" style="background-color:#AEE1FF;width:150px" value="Connect">
     </div>
     <div class="form-row">

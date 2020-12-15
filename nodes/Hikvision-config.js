@@ -31,11 +31,20 @@ module.exports = (RED) => {
 
         // 14/12/2020 Get the infos from the camera
         RED.httpAdmin.get("/hikvisionUltimateGetInfoCam", RED.auth.needsPermission('Hikvisionconfig.read'), function (req, res) {
-            var _nodeServer = RED.nodes.getNode(req.query.nodeID);// Retrieve node.id of the config node.
+            var jParams = JSON.parse(decodeURIComponent(req.query.params));// Retrieve node.id of the config node.
+            var _nodeServer = null;
             var clientInfo;
-            if (_nodeServer.authentication === "digest") clientInfo = new DigestFetch(_nodeServer.credentials.user, _nodeServer.credentials.password); // Instantiate the fetch client.
-            if (_nodeServer.authentication === "basic") clientInfo = new DigestFetch(_nodeServer.credentials.user, _nodeServer.credentials.password, { basic: true }); // Instantiate the fetch client.
 
+            if (jParams.password === "__PWRD__") {
+                // The password isn't changed or (the server node was already present, it's only updated)
+                _nodeServer = RED.nodes.getNode(req.query.nodeID);// Retrieve node.id of the config node.
+                if (jParams.authentication === "digest") clientInfo = new DigestFetch(jParams.user, _nodeServer.credentials.password); // Instantiate the fetch client.
+                if (jParams.authentication === "basic") clientInfo = new DigestFetch(jParams.user, _nodeServer.credentials.password, { basic: true }); // Instantiate the fetch client.
+            } else {
+                // The node is NEW
+                if (jParams.authentication === "digest") clientInfo = new DigestFetch(jParams.user, jParams.password); // Instantiate the fetch client.
+                if (jParams.authentication === "basic") clientInfo = new DigestFetch(jParams.user, jParams.password, { basic: true }); // Instantiate the fetch client.
+            }
             var opt = {
                 // These properties are part of the Fetch Standard
                 method: "GET",
@@ -54,11 +63,11 @@ module.exports = (RED) => {
             try {
                 (async () => {
                     try {
-                        const response = await clientInfo.fetch(_nodeServer.protocol + "://" + _nodeServer.host + "/ISAPI/System/deviceInfo", opt);
-                        const body = await response.text();
+                        const resInfo = await clientInfo.fetch(jParams.protocol + "://" + jParams.host + "/ISAPI/System/deviceInfo", opt);
+                        const body = await resInfo.text();
                         xml2js(body, function (err, result) {
                             if (err) {
-                                res.json({});
+                                res.json(err);
                                 return;
                             } else {
                                 res.json(result);
@@ -67,13 +76,13 @@ module.exports = (RED) => {
                         });
                     } catch (error) {
                         RED.log.error("Errore  hikvisionUltimateGetInfoCam " + error.message);
+                        res.json(error);
                     }
 
                 })();
 
-
             } catch (err) {
-                res.json({});
+                res.json(err);
             }
         });
 

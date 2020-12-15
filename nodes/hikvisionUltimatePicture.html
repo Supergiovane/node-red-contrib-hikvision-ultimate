@@ -87,60 +87,40 @@
 				});
 
 			}
-
-			$("#node-input-channelID").change(function () {
-				readPictureFromCamera(oNodeServer);
-			});
-			$("#node-input-qualityimage").change(function () {
-				readPictureFromCamera(oNodeServer);
-			});
-			$("#node-input-rotateimage").change(function () {
-				readPictureFromCamera(oNodeServer);
-			});
-			$("#node-input-widthimage").on("input", function () {
-				if (tImage !== null && tImage !== undefined) clearTimeout(tImage);
+			$("#getinfocam").click(function () {
 				if ($("#node-input-widthimage").val() !== "" && Number($("#node-input-widthimage").val()) > 9999) {
-					RED.notify("Max value is 9999",
+					RED.notify("Max value for width is 9999",
                     {
                         modal: false,
                         fixed: false,
-                        type: 'info'
+                        type: 'warning'
 					})
 					return;
 				}
-				tImage = setTimeout(() => {
-					if ($("#node-input-widthimage").val().trim() !== "" && $("#node-input-heightimage").val().trim() !== "") readPictureFromCamera(oNodeServer);
-					if ($("#node-input-heightimage").val().trim() === "" && $("#node-input-widthimage").val().trim() === "") readPictureFromCamera(oNodeServer);
-				}, 1500)
-
-			});
-			$("#node-input-heightimage").on("input", function () {
-				if (tImage !== null && tImage !== undefined) clearTimeout(tImage);
 				if ($("#node-input-heightimage").val() !== "" && Number($("#node-input-heightimage").val()) > 9999) {
-					RED.notify("Max value is 9999",
+					RED.notify("Max value fot height is 9999",
                     {
                         modal: false,
                         fixed: false,
-                        type: 'info'
+                        type: 'warning'
 					})
 					return;
 				}
-				tImage = setTimeout(() => {
-					if ($("#node-input-widthimage").val().trim() !== "" && $("#node-input-heightimage").val().trim() !== "") readPictureFromCamera(oNodeServer);
-					if ($("#node-input-heightimage").val().trim() === "" && $("#node-input-widthimage").val().trim() === "") readPictureFromCamera(oNodeServer);
-				}, 1500)
-			});
-			$("#node-input-cropimage").on("input", function () {
-				if ($("#node-input-cropimage").val().split(",").length == 4 || $("#node-input-cropimage").val() === "") {
-					if ($("#node-input-cropimage").val().split(",")[3] !== "") {
-						if (tImage !== null && tImage !== undefined) clearTimeout(tImage);
-						tImage = setTimeout(() => {
-							readPictureFromCamera(oNodeServer);
-						}, 1500)
-					}
+				if ($("#node-input-cropimage").val().split(",").length !== 4) {
+					if ($("#node-input-cropimage").val() !== undefined && $("#node-input-cropimage").val() !== ""){
+						RED.notify("Check the CROP string. Must be: x,y,width,height",
+                    {
+                        modal: false,
+                        fixed: false,
+                        type: 'warning'
+					})
+					return;
+					}					
 				}
+				readPictureFromCamera(oNodeServer);
 			});
 
+			
 
 		},
 		oneditsave: function () {
@@ -184,6 +164,10 @@
 		<p align="center" id="picture"><img src="https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/loading.gif"></p>
 		<p align="center" id="picturedimensions"></p>
 	</div>
+	<div class="form-row">
+        <label> <i class="fa fa-sign-in"></i> Image</label>
+        <input type="button" id="getinfocam" class="ui-button ui-corner-all ui-widget" style="background-color:#AEE1FF;width:150px" value="Reload">
+    </div>
 	<div class="form-row">
         <label for="node-input-qualityimage"><i class="fa fa-tasks"></i> Jpeg Quality</label>
 		<select id="node-input-qualityimage">
