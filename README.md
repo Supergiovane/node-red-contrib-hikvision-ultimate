@@ -1,4 +1,3 @@
-# node-red-contrib-hikvision-ultimate
 
 <p align="center"><img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/logo.png' width="60%"></p>
 
