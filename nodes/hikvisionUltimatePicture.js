@@ -71,8 +71,8 @@ module.exports = function (RED) {
 						var iTimeout = 0;
 						var CB = () => {
 							iTimeout += 1;
-							if (iTimeout >= 10) {
-								res.json({ picture: "", width: 0, height: 0 });
+							if (iTimeout >= 15) {
+								res.json({ picture: "", width: " !Error getting picture Timeout! ", height: 0 });
 								return;
 							} else {
 								if (node.picture !== null) {
@@ -85,7 +85,7 @@ module.exports = function (RED) {
 						setTimeout(CB, 500);
 
 					}).catch(error => {
-						res.json({ picture: "", width: 0, height: 0 });
+						res.json({ picture: "", width: " !Error getting picture! ", height: " !" + error.message + "! "});
 					});
 				}
 			} else { res.json({ picture: "", width: 0, height: 0 }); }

@@ -74,53 +74,54 @@
 				sManipulate += "SEP" + $("#node-input-cropimage").val().toString().trim().replace(/\s/g, '').replace(/,/g, "-");
 				$.getJSON('hikvisionUltimateGetPicture?serverID=' + _oNodeServer.id + "&manipulate=" + sManipulate, (data) => {
 					$("#picture").html("<img src=\"" + data.picture + "\" style=\"width:320px;height:200px;\" \">");
-					$("#picturedimensions").html("Width:" + data.width + "px" + " Height:" + data.height + "px - Autorefresh after each change");
+					$("#picturedimensions").html("Width:" + data.width + "px" + " Height:" + data.height + "px");
+
 					bAlreadyIn = false;
 				}).error(function (jqXHR, textStatus, errorThrown) {
 					bAlreadyIn = false;
 					RED.notify("Problem reading the image from camera: " + jqXHR.responseText,
-                    {
-                        modal: false,
-                        fixed: false,
-                        type: 'error'
-                    })
+						{
+							modal: false,
+							fixed: false,
+							type: 'error'
+						})
 				});
 
 			}
 			$("#getinfocam").click(function () {
 				if ($("#node-input-widthimage").val() !== "" && Number($("#node-input-widthimage").val()) > 9999) {
 					RED.notify("Max value for width is 9999",
-                    {
-                        modal: false,
-                        fixed: false,
-                        type: 'warning'
-					})
+						{
+							modal: false,
+							fixed: false,
+							type: 'warning'
+						})
 					return;
 				}
 				if ($("#node-input-heightimage").val() !== "" && Number($("#node-input-heightimage").val()) > 9999) {
 					RED.notify("Max value fot height is 9999",
-                    {
-                        modal: false,
-                        fixed: false,
-                        type: 'warning'
-					})
+						{
+							modal: false,
+							fixed: false,
+							type: 'warning'
+						})
 					return;
 				}
 				if ($("#node-input-cropimage").val().split(",").length !== 4) {
-					if ($("#node-input-cropimage").val() !== undefined && $("#node-input-cropimage").val() !== ""){
+					if ($("#node-input-cropimage").val() !== undefined && $("#node-input-cropimage").val() !== "") {
 						RED.notify("Check the CROP string. Must be: x,y,width,height",
-                    {
-                        modal: false,
-                        fixed: false,
-                        type: 'warning'
-					})
-					return;
-					}					
+							{
+								modal: false,
+								fixed: false,
+								type: 'warning'
+							})
+						return;
+					}
 				}
 				readPictureFromCamera(oNodeServer);
 			});
 
-			
+
 
 		},
 		oneditsave: function () {

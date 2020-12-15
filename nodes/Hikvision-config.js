@@ -308,6 +308,7 @@ module.exports = (RED) => {
                 try {
                     if (reqController !== null) reqController.abort().then(ok => { }).catch(err => { });
                 } catch (error) { }
+                throw (err);
             }
         };
         //#endregion
