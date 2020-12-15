@@ -1,6 +1,6 @@
 # node-red-contrib-hikvision-ultimate
 
-<img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/logo.png' width="80%">
+<p align="center"><img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/logo.png' width="60%"></p>
 
 A native set of node for Hikvision Cameras, Alarms, Radars, NVR etc.
 
