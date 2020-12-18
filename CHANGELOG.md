@@ -4,6 +4,10 @@
 [![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square)](https://www.paypal.me/techtoday) 
 
 <p>
+<b>Version 1.0.15</b> December 2020<br/>
+- FIX: getting rid of promise rejection error log in the hikconfig-node, whenever a conneciton error occurs.<br/>
+</p>
+<p>
 <b>Version 1.0.14</b> December 2020<br/>
 - Picture Node: support for NVR with max 32 channels.<br/>
 - Radar Node: support for max 16 alarm zones.<br/>

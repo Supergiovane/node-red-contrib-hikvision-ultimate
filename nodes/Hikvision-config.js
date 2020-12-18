@@ -239,7 +239,12 @@ module.exports = (RED) => {
                         node.errorDescription = ""; // Reset the error
                     }
                     node.isConnected = true;
-                    streamPipeline(response.body, readStream);
+                    try {
+                        await streamPipeline(response.body, readStream);    
+                    } catch (error) {
+                        if (node.debug) RED.log.info("Hikvision-config: streamPipeline: " + (error.message || " unknown error"));
+                    }
+                    
                 }
 
             } catch (error) {
