@@ -4,8 +4,10 @@
 [![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square)](https://www.paypal.me/techtoday) 
 
 <p>
-<b>Version 1.0.13</b> December 2020<br/>
-- Picture Node: suppor for NVR with max 32 channels.<br/>
+<b>Version 1.0.14</b> December 2020<br/>
+- Picture Node: support for NVR with max 32 channels.<br/>
+- Radar Node: support for max 16 alarm zones.<br/>
+- FIX: the "connect" button in the config node doesn't work if this is the first node ever. A message will show, to tell you to save, deploy and re-enter the config node again.<br/>
 </p>
 <p>
 <b>Version 1.0.12</b> December 2020<br/>
