@@ -4,6 +4,11 @@
 [![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square)](https://www.paypal.me/techtoday) 
 
 <p>
+<b>Version 1.0.16</b> December 2020<br/>
+- CHANGE: the node should now work wit node version belos 10.0.0, but it's recommended anyway to update.<br/>
+- FIX: on some setups, the alarm stream wasn't received. Thanks @oliveres for signalling this issue.<br/>
+</p>
+<p>
 <b>Version 1.0.15</b> December 2020<br/>
 - FIX: getting rid of promise rejection error log in the hikconfig-node, whenever a conneciton error occurs.<br/>
 </p>

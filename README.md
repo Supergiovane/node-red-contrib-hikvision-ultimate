@@ -17,7 +17,7 @@ This is a set of nodes to handle ISAPI Hikvision messages. It works exclusively 
 Works with cameras, NVR and also with specialized devices, like Radar (for example DS-PR1-60, DS-PR1-100 and DS-PR1-120).<br/>
 Digest authentication: it should work with all devices.<br/>
 All nodes are capable of auto reconnect if the connection is lost and are able to actively monitor the connection.<br/>
-The node uses pipelines to handle streams, so you need at least **Node V.10.0.0**, or newer, installed. To check Node version, type **node -v** in a command prompt.<br/>
+
 
 ## CHANGELOG
 * See <a href="https://github.com/Supergiovane/node-red-contrib-hikvision-ultimate/blob/master/CHANGELOG.md">here the changelog</a>
