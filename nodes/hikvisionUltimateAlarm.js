@@ -21,7 +21,7 @@ module.exports = function (RED) {
 			var bAlarmStatus = false;
 			if (_msg.hasOwnProperty("payload")) {
 				if (_msg.payload.hasOwnProperty("eventType")) {
-					// Chech if it's only a hearbeat alarm
+					// Check if it's only a hearbeat alarm
 					sAlarmType = _msg.payload.eventType.toString().toLowerCase();
 					if (sAlarmType === "videoloss" && _msg.payload.hasOwnProperty("activePostCount") && _msg.payload.activePostCount == "0") {
 						node.setNodeStatus({ fill: "green", shape: "ring", text: "Received HeartBeat (the device is online)" });

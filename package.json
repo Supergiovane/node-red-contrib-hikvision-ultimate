@@ -8,7 +8,6 @@
         "node-fetch": "2.6.1",
         "digest-fetch": "1.1.5",
         "abort-controller": ">=3.0.0",
-        "util": ">=0.12.3",
         "jimp": "0.16.1"
     },
     "keywords": [
