@@ -1,7 +1,7 @@
 
 <p align="center"><img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/logo.png' width="60%"></p>
 
-A native set of node for Hikvision Cameras, Alarms, Radars, NVR etc.
+A native set of nodes for Hikvision Cameras, Alarms, Radars, NVR etc.
 
 [![NPM version][npm-version-image]][npm-url]
 [![NPM downloads per month][npm-downloads-month-image]][npm-url]
