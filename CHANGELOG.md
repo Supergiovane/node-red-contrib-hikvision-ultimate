@@ -4,6 +4,10 @@
 [![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square)](https://www.paypal.me/techtoday) 
 
 <p>
+<b>Version 1.0.18</b> December 2020<br/>
+- FIX: node topic wasn't retent on all nodes.<br/>
+</p>
+<p>
 <b>Version 1.0.16</b> December 2020<br/>
 - CHANGE: the node should now work with node version below 10.0.0, but it's recommended anyway to update.<br/>
 - FIX: on some setups, the alarm stream wasn't received. Thanks @oliveres for signalling this issue.<br/>
