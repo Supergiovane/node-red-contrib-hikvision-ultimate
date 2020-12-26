@@ -12,3 +12,5 @@ If you wish to add your Models to this list, simply click "Connect" in the confi
 
 ## HIKVISION-Ultimate node has been tested with
 
+DS-2CD4A85F-IZS (Firmware V5.4.5)<br/>
+DS-2CD4A26FWD-IZS/P (Firmware V5.4.5)<br/>
