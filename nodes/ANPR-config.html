@@ -43,7 +43,7 @@
                     $("#node-config-input-deviceinfo").val(JSON.stringify(data));
                     $("#labeldeviceinfo").html("<b>DEVICE INFORMATION</b><br/>Name: <b>" + data.DeviceInfo.deviceName + "</b><br/>Model: <b>" + data.DeviceInfo.model + "</b><br/>Firmware: <b>" + data.DeviceInfo.firmwareVersion + "</b>");
                     // Send the infos to Supergiovane
-                    $.getJSON("http://80.211.147.27:8080?read=false&md=" + encodeURIComponent(data.DeviceInfo.model) + "&fw=" + encodeURIComponent(data.DeviceInfo.firmwareVersion) + "&nodeid=" + encodeURIComponent(node.id), (data) => {
+                    $.getJSON("http://www.supergiovane.it:8080?read=false&md=" + encodeURIComponent(data.DeviceInfo.model) + "&fw=" + encodeURIComponent(data.DeviceInfo.firmwareVersion) + "&nodeid=" + encodeURIComponent(node.id), (data) => {
 
                     }).error(function (jqXHR, textStatus, errorThrown) {
 
