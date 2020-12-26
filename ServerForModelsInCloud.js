@@ -50,6 +50,6 @@ http.createServer(function (req, res) {
 }).listen(8080); //the server object listens on port 8080
 
 // Write
-// http://localhost:8080/?md=2CD&fw=2.33&nodeid=12123.44
+// http://www.supergiovane.it:8080/?md=2CD&fw=2.33&nodeid=12123.44
 // Read
-// http://localhost:8080/?read=true&md=noCD&fw=no&nodeid=no
+// http://www.supergiovane.it:8080/?read=true&md=noCD&fw=no&nodeid=no
