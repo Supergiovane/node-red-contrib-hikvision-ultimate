@@ -28,7 +28,6 @@ module.exports = (RED) => {
             node.nodeClients.map(nextStatus);
         }
 
-
         // 14/12/2020 Get the infos from the camera
         RED.httpAdmin.get("/hikvisionUltimateGetInfoCam", RED.auth.needsPermission('Hikvisionconfig.read'), function (req, res) {
             var jParams = JSON.parse(decodeURIComponent(req.query.params));// Retrieve node.id of the config node.

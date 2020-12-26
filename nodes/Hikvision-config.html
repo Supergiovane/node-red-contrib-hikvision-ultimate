@@ -118,11 +118,17 @@
     </div>
     <div class="form-row">
         <label><i class="fa fa-sign-in"></i> Get info</label>
-        <input type="button" id="getinfocam" class="ui-button ui-corner-all ui-widget" style="background-color:#AEE1FF;width:150px" value="Connect">
+        <input type="button" id="getinfocam" class="ui-button ui-corner-all ui-widget" style="background-color:#AEE1FF;width:150px" value="Connect and Send Infos">
     </div>
     <div class="form-row">
         <img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/info.png' width="10%">
         <div><p id="labeldeviceinfo">No Device info present. Please click CONNECT to retrieve the infos.</p></div>
         <input type="hidden" id="node-config-input-deviceinfo" placeholder="">
     </div>
+    <div class="form-tips" style="margin-top:11px">
+        By clicking "Connect", the node will send<br/>
+        your Hikvision Model, Hikvision Firmware and node ID (only to avoid duplicates) to Supergiovane (the developer)<br/>
+        They'll be collected in a public visible github page (TESTEDWITH.md), containing all hikvision gears certified to work with Hikvision-Ultimate node.<br/>
+        This will help other users. NO OTHER INFOS will be sent.<br/>Infos are ANONYMOUS and collected only if you click "Connect and Send Infos".
+     </div>
 </script>
