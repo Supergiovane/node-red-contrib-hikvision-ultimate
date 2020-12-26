@@ -4,6 +4,10 @@
 [![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square)](https://www.paypal.me/techtoday) 
 
 <p>
+<b>Version 1.0.19</b> December 2020<br/>
+- NEW: you can now share your model and firmware number with other users. Click "Connect and Send" in the config node window. the list will be shown here https://github.com/Supergiovane/node-red-contrib-hikvision-ultimate/blob/master/TESTEDWITH.md<br/>
+</p>
+<p>
 <b>Version 1.0.18</b> December 2020<br/>
 - FIX: node topic wasn't retent on all nodes.<br/>
 </p>
