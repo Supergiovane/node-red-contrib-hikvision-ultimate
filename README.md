@@ -328,6 +328,14 @@ msg = {
 }
 ```
 
+# HIKVISION DEVICES TESTED WITH THE NODE
+This is a list of Hikvision models the users own and decided to share. <br/>
+This is only a partial model list. Hikvision-Ultimate should work with basically all Hikvision devices.<br/>
+[View the list](https://github.com/Supergiovane/node-red-contrib-hikvision-ultimate/blob/master/TESTEDWITH.md)
+
+<br/>
+<br/>
+
 ![Logo](https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/madeinitaly.png)
 
 [license-image]: https://img.shields.io/badge/license-MIT-blue.svg
