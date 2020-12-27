@@ -14,8 +14,10 @@ http.createServer(function (req, res) {
     var shortStartDate = day + "/" + month + "/" + year;
 
     const sFilePath = "c:\\web\\nodejs\\hik.txt";
-    if (!fs.existsSync(sFilePath)) fs.writeFileSync(sFilePath, "NEW LIST CREATED ON " + shortStartDate + "<br/><br/>");
+    const sFilePathPage = "c:\\web\\nodejs\\a.htm";
+    if (!fs.existsSync(sFilePath)) fs.writeFileSync(sFilePath, "");
     var sFileContent = fs.readFileSync(sFilePath, "utf8");
+    var sFileContentPage = fs.readFileSync(sFilePathPage, "utf8");
     var q = url.parse(req.url, true).query;
     console.log(shortStartDate + " Received: " + JSON.stringify(q) + " from: " + req.connection.remoteAddress);
     if (q.md === undefined || q.fw === undefined || q.read === undefined) {
@@ -26,8 +28,13 @@ http.createServer(function (req, res) {
     }
     if (q.read === "true") {
         // Get the file content
-        res.writeHead(200, { 'Content-Type': 'text/html' });
-        res.write(sFileContent);
+        var sHTML = sFileContentPage.replace("##MODELLI##", sFileContent);
+        res.writeHead(200, {
+            'Content-Length': Buffer.byteLength(sHTML, 'utf8'),
+            'Content-Type': 'text/html'
+        });
+        //console.log(sHTML)
+        res.write(sHTML);
         res.end();
         return;
     } else {
@@ -52,4 +59,4 @@ http.createServer(function (req, res) {
 // Write
 // http://www.supergiovane.it:8080/?md=2CD&fw=2.33&nodeid=12123.44
 // Read
-// http://www.supergiovane.it:8080/?read=true&md=noCD&fw=no&nodeid=no
+// http://www.supergiovane.it:8080/?read=true&md=noCD&fw=no

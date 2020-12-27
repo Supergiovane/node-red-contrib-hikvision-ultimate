@@ -5,12 +5,4 @@
 
 <br/>
 
-This file contains a list of hikvision gears that the people are using  withi Hikvision-Ultimate node.<br/>
-If youd Hikvision camera/NVR/thing is not present in this list, don't worry. They'll work for sure!<br/>
-If you wish to add your Models to this list, simply click "Connect and Send" in the config-window.<br/>
-<br/>
-
-## Hikvision models, kindly sent by users
-
-DS-2CD4A85F-IZS (Firmware V5.4.5)<br/>
-DS-2CD4A26FWD-IZS/P (Firmware V5.4.5)<br/>
+[Click HERE to view the list of tested devices](http://www.supergiovane.it:8080/?read=true&md=noCD&fw=no) 
