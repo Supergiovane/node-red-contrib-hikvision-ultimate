@@ -44,12 +44,33 @@
                     $("#node-config-input-name").val(data.DeviceInfo.deviceName);
                     $("#node-config-input-deviceinfo").val(JSON.stringify(data));
                     $("#labeldeviceinfo").html("<b>DEVICE INFORMATION</b><br/>Name: <b>" + data.DeviceInfo.deviceName + "</b><br/>Model: <b>" + data.DeviceInfo.model + "</b><br/>Firmware: <b>" + data.DeviceInfo.firmwareVersion + "</b>");
-                    // Send the infos to Supergiovane
-                    $.getJSON("http://www.supergiovane.it:8080?read=false&md=" + encodeURIComponent(data.DeviceInfo.model) + "&fw=" + encodeURIComponent(data.DeviceInfo.firmwareVersion) + "&nodeid=" + encodeURIComponent(node.id), (data) => {
 
-                    }).error(function (jqXHR, textStatus, errorThrown) {
+                    var myNotification = RED.notify("Can i inform the developer, that the Hikvision " + data.DeviceInfo.model + " works with this node? This will help other users.",
+                        {
+                            modal: true,
+                            fixed: true,
+                            type: 'info',
+                            buttons: [
+                                {
+                                    text: "YES",
+                                    click: function (e) {
+                                        // Send the infos to Supergiovane
+                                        $.getJSON("http://www.supergiovane.it:8080?read=false&md=" + encodeURIComponent(data.DeviceInfo.model) + "&fw=" + encodeURIComponent(data.DeviceInfo.firmwareVersion) + "&nodeid=" + encodeURIComponent(node.id), (data) => {
 
-                    });
+                                        }).error(function (jqXHR, textStatus, errorThrown) {
+
+                                        });
+                                        myNotification.close();
+                                    }
+                                },
+                                {
+                                    text: "NO",
+                                    click: function (e) {
+                                        myNotification.close();
+                                    }
+                                }]
+                        });
+
                 }).error(function (jqXHR, textStatus, errorThrown) {
                     RED.notify("THIS IS YOUR FIRST CAMERA NODE EVER. PLEASE SAVE AND DEPLOY. THEN REOPEN THIS WINDOW AGAIN. Problem reading the informations from camera: " + jqXHR.responseText,
                         {
@@ -123,17 +144,12 @@
     </div>
     <div class="form-row">
         <label><i class="fa fa-sign-in"></i> Get info</label>
-        <input type="button" id="getinfocam" class="ui-button ui-corner-all ui-widget" style="background-color:#AEE1FF;width:150px" value="Connect and Send">
+        <input type="button" id="getinfocam" class="ui-button ui-corner-all ui-widget" style="background-color:#AEE1FF;width:150px" value="Connect">
     </div>
     <div class="form-row">
         <img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/info.png' width="10%">
         <div><p id="labeldeviceinfo">No Device info present. Please click CONNECT to retrieve the infos.</p></div>
         <input type="hidden" id="node-config-input-deviceinfo" placeholder="">
     </div>
-    <div class="form-tips" style="margin-top:11px">
-        By clicking "Connect", the node will send<br/>
-        your Hikvision Model, Hikvision Firmware and node ID (only to avoid duplicates) to Supergiovane (the developer)<br/>
-        They'll be collected in a <a target="_blank" href="https://github.com/Supergiovane/node-red-contrib-hikvision-ultimate/blob/master/TESTEDWITH.md">public visible github page</a>, containing all hikvision gears certified to work with Hikvision-Ultimate node.<br/>
-        This will help other users. NO OTHER INFOS will be sent.<br/>Infos are ANONYMOUS and collected only if you click "Connect and Send".
-     </div>
+   
 </script>
