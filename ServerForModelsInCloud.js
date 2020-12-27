@@ -18,9 +18,9 @@ http.createServer(function (req, res) {
     var sFileContent = fs.readFileSync(sFilePath, "utf8");
     var q = url.parse(req.url, true).query;
     console.log(shortStartDate + " Received: " + JSON.stringify(q) + " from: " + req.connection.remoteAddress);
-    if (q.md === undefined || q.fw === undefined || q.nodeid === undefined || q.read === undefined) {
-        res.writeHead(200, { 'Content-Type': 'text/html' });
-        res.write("<b>Sorry but... who are you? An Hacker i suppose</b>.<br/>There is nothing here for you, so please go away.<br/>I've already called the FBI, CSI, NCIS and my bad friend.");
+    if (q.md === undefined || q.fw === undefined || q.read === undefined) {
+        res.writeHead(404, { 'Content-Type': 'text/html' });
+        res.write("<b>Sorry but... who are you? An Hacker i suppose</b>.<br/>There is nothing here for you, so please go away.");
         res.end();
         return;
     }
@@ -32,17 +32,17 @@ http.createServer(function (req, res) {
         return;
     } else {
         const sModel = decodeURIComponent(q.md);
-        const sFirmware = decodeURIComponent(q.fw);
-        const sNodeId = decodeURIComponent(q.nodeid);
+        //const sFirmware = decodeURIComponent(q.fw);
         // Controllo che non esista già
-        const sArrivato = "<br/>" + sModel + " (Firmware " + sFirmware + ") -- ID: " + sNodeId;
+        //const sArrivato = "<br/>" + sModel + " (Firmware " + sFirmware + ")";
+        const sArrivato = "<br/>" + sModel;
         res.writeHead(200, { 'Content-Type': 'text/html' });
         if (sFileContent.indexOf(sArrivato) === -1) {
-            sFileContent += sArrivato + " -- Sent on " + shortStartDate;
+            sFileContent += sArrivato;
             fs.writeFileSync(sFilePath, sFileContent);
             res.write("<b>You sent</b>" + sArrivato + "<br/>No other data nor personal infos have been sent.<br/>Thank you very much."); //write a response to the client
         } else {
-            res.write("<b>You've already sent</b>" + sArrivato + "<br/>Thank you anyway");
+            res.write("<b>There is already a </b>" + sArrivato + "<br/>Thank you anyway");
         }
         res.end(); //end the response
     }
