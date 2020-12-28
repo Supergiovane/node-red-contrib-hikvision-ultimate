@@ -5,7 +5,7 @@ module.exports = (RED) => {
     const AbortController = require('abort-controller');
     const xml2js = require('xml2js').Parser({ explicitArray: false }).parseString;
     const readableStr = require('stream').Readable;
-   
+
     function Hikvisionconfig(config) {
         RED.nodes.createNode(this, config)
         var node = this
@@ -19,6 +19,8 @@ module.exports = (RED) => {
         node.errorDescription = ""; // Contains the error description in case of connection error.
         node.authentication = config.authentication || "digest";
         node.deviceinfo = config.deviceinfo || {};
+        node.heartBeatTimerDisconnectionCounter = 0;
+        node.heartbeattimerdisconnectionlimit = config.heartbeattimerdisconnectionlimit || 2;
         var controller = null; // AbortController
 
         node.setAllClientsStatus = ({ fill, shape, text }) => {
@@ -90,19 +92,31 @@ module.exports = (RED) => {
             // Reset node.timerCheckHeartBeat
             if (node.timerCheckHeartBeat !== null) clearTimeout(node.timerCheckHeartBeat);
             node.timerCheckHeartBeat = setTimeout(() => {
-                if (node.isConnected) {
-                    if (node.errorDescription === "") node.errorDescription = "Timeout waiting heartbeat"; // In case of timeout of a stream, there is no error throwed.
-                    node.nodeClients.forEach(oClient => {
-                        oClient.sendPayload({ topic: oClient.topic || "", errorDescription: node.errorDescription, payload: true });
-                    });
-                    node.setAllClientsStatus({ fill: "red", shape: "ring", text: "Lost connection...Retry... " + node.errorDescription });
+                node.heartBeatTimerDisconnectionCounter += 1;
+                if (node.heartBeatTimerDisconnectionCounter < node.heartbeattimerdisconnectionlimit) {
+                    // 28/12/2020 Retry again until connection attempt limit reached
+                    node.setAllClientsStatus({ fill: "yellow", shape: "ring", text: "Temporary lost connection. Attempt " + node.heartBeatTimerDisconnectionCounter + " of " + node.heartbeattimerdisconnectionlimit });
+                    try {
+                        if (controller !== null) controller.abort().then(ok => { }).catch(err => { });
+                    } catch (error) { }
+                    setTimeout(startAlarmStream, 10000); // Reconnect
+                } else {
+                    // 28/12/2020 Connection attempt limit reached
+                    node.heartBeatTimerDisconnectionCounter = 0;
+                    if (node.isConnected) {
+                        if (node.errorDescription === "") node.errorDescription = "Timeout waiting heartbeat"; // In case of timeout of a stream, there is no error throwed.
+                        node.nodeClients.forEach(oClient => {
+                            oClient.sendPayload({ topic: oClient.topic || "", errorDescription: node.errorDescription, payload: true });
+                        });
+                        node.setAllClientsStatus({ fill: "red", shape: "ring", text: "Lost connection...Retry... " + node.errorDescription });
+                    }
+                    try {
+                        if (controller !== null) controller.abort().then(ok => { }).catch(err => { });
+                    } catch (error) { }
+                    node.isConnected = false;
+                    setTimeout(startAlarmStream, 5000); // Reconnect
                 }
-                try {
-                    if (controller !== null) controller.abort().then(ok => { }).catch(err => { });
-                } catch (error) { }
-                node.isConnected = false;
-                setTimeout(startAlarmStream, 2000); // Reconnect
-            }, 50000);
+            }, 40000);
         }
 
         //#region ALARMSTREAM

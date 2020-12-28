@@ -4,6 +4,10 @@
 [![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square)](https://www.paypal.me/techtoday) 
 
 <p>
+<b>Version 1.0.21</b> December 2020<br/>
+- NEW: you can now choose how much times the node server should try to reconnect to the Hik device, before emitting the connection error on PIN 2. This is useful in case of problematic LANs, like VPN or very slow Wireless 3G connections.<br/>
+</p>
+<p>
 <b>Version 1.0.20</b> December 2020<br/>
 - NEW: you can now choose to tell Supergiovane (the developer) that your camera model works with the node. You'll help other users. The list will be shown here https://github.com/Supergiovane/node-red-contrib-hikvision-ultimate/blob/master/TESTEDWITH.md<br/>
 </p>

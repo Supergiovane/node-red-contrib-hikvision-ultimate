@@ -8,6 +8,7 @@
             name: { value: "Server" },
             authentication: { value: "digest" },
             protocol: { value: "http" },
+            heartbeattimerdisconnectionlimit: { value: 1 },            
             deviceinfo: { value: {} }
         },
         credentials: {
@@ -143,12 +144,24 @@
         </select>
     </div>
     <div class="form-row">
+        <label for="node-config-input-heartbeattimerdisconnectionlimit"><i class="fa fa-exclamation-triangle"></i> Emit error</label>
+        <select type="text" id="node-config-input-heartbeattimerdisconnectionlimit">
+        <option value=1>after 1 failed reconnection attempt (not recommended)</option>
+        <option value=2>after 2 failed reconnection attempts (Default)</option>
+        <option value=3>after 3 failed reconnection attempts</option>
+        <option value=4>after 4 failed reconnection attempts</option>
+        </select>
+    </div>
+    <div class="form-tips" style="margin-top:11px">
+        Above option: after connection error, the node try to reconnect for the number of times selected, then emits a connection error on PIN 2. Increase this number for slow LANs, like VPN
+     </div>
+    <div class="form-row">
         <label><i class="fa fa-sign-in"></i> Get info</label>
         <input type="button" id="getinfocam" class="ui-button ui-corner-all ui-widget" style="background-color:#AEE1FF;width:150px" value="Connect">
     </div>
     <div class="form-row">
         <img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/info.png' width="10%">
-        <div><p id="labeldeviceinfo">No Device info present. Please click CONNECT to retrieve the infos.</p></div>
+        <div><p id="labeldeviceinfo">No Device info present.<br/>Please click CONNECT to retrieve the infos.</p></div>
         <input type="hidden" id="node-config-input-deviceinfo" placeholder="">
     </div>
    
