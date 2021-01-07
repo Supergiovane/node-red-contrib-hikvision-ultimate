@@ -17,6 +17,7 @@ This is a set of nodes to handle ISAPI Hikvision messages. It works exclusively 
 Works with cameras, NVR and also with specialized devices, like Radar (for example DS-PR1-60, DS-PR1-100 and DS-PR1-120).<br/>
 Digest authentication: it should work with all devices.<br/>
 All nodes are capable of auto reconnect if the connection is lost and are able to actively monitor the connection.<br/>
+Be sure to have installed Node.js v12.3.0 or newer (issue a node -v command in a console, to check it out).
 
 
 ## CHANGELOG

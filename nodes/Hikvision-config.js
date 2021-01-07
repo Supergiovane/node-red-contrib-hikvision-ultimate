@@ -265,7 +265,7 @@ module.exports = (RED) => {
 
                         //await streamPipeline(response.body, readStream);
                     } catch (error) {
-                        if (node.debug) RED.log.error("Hikvision-config: streamPipeline: " + (error.message || " unknown error"));
+                        if (node.debug) RED.log.error("Hikvision-config: streamPipeline: Please be sure to have the latest Node.JS version installed: " + (error.message || " unknown error"));
                     }
 
                 }
