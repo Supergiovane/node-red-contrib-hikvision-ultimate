@@ -131,12 +131,16 @@
 			<option value=13>more than 13 Seconds</option>
 			<option value=14>more than 14 Seconds</option>
 			<option value=15>more than 15 Seconds</option>
+			<option value=16>more than 16 Seconds</option
+			<option value=17>more than 17 Seconds</option>
+			<option value=18>more than 18 Seconds</option>
+			<option value=19>more than 19 Seconds</option>
+			<option value=20>more than 20 Seconds</option>
 		</select>
 	</div>
 	<div class="form-row" id="ui_alarmfilterperiod">
 		<label for="node-input-alarmfilterperiod"><i class="fa fa-tasks"></i> Evaluation period</label>
 		<select id="node-input-alarmfilterperiod">
-			<option value=0>No wait. Immediate alarm.</option>
 			<option value=1>1 Second</option>
 			<option value=2>2 Seconds</option>
 			<option value=3>3 Seconds</option>
@@ -152,10 +156,25 @@
 			<option value=13>13 Seconds</option>
 			<option value=14>14 Seconds</option>
 			<option value=15>15 Seconds</option>
+			<option value=16>16 Seconds</option
+			<option value=17>17 Seconds</option>
+			<option value=18>18 Seconds</option>
+			<option value=19>19 Seconds</option>
+			<option value=20>20 Seconds</option>
+			<option value=21>21 Seconds</option>
+			<option value=22>22 Seconds</option>
+			<option value=23>23 Seconds</option>
+			<option value=24>24 Seconds</option>
+			<option value=25>25 Seconds</option>
+			<option value=26>26 Seconds</option>
+			<option value=27>27 Seconds</option>
+			<option value=28>28 Seconds</option>
+			<option value=29>29 Seconds</option>
+			<option value=30>30 Seconds</option>
 		</select>
 		<div class="form-tips" style="margin-top:11px">
-			Above options: the node will emit an alarm msg only if the alarm persists or repeats for the time specified in "Alarm duration", during the "Evaluation period".
-		 </div>
+		Above options: the node will emit an alarm msg only if the alarm persists (remains TRUE) or repeats (in this case, the persisting time of each TRUE value is evaluated) for the time specified in "Alarm duration", during the "Evaluation period".
+		</div>
 	</div>
 
 </script>

@@ -216,6 +216,7 @@ The node outputs a message whenever an alarm starts or ends. It uses CID codes t
 The payload is TRUE whenever alarm occurs, otherwise FALSE whenever alarm ends.</br>
 The complete alarm event is stored in the "alarm" property of the payload.</br>
 In an **unknown CID event** arrives from the Radar, the node will output a message containing the CID code, the full alarm and a null payload.</br>
+The radar node can filter improper/false alams.</br>
 
 **Output PIN 1**
 ```javascript
