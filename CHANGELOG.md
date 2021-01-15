@@ -4,7 +4,7 @@
 [![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square)](https://www.paypal.me/techtoday) 
 
 <p>
-<b>Version 1.0.23</b> January 2021<br/>
+<b>Version 1.0.24</b> January 2021<br/>
 - FIX: all nodes won't emit a topic property. Has been fixed.<br/>
 - NEW: you can now filter false alarms in the radar node.<br/>
 </p>
