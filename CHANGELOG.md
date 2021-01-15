@@ -4,6 +4,11 @@
 [![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square)](https://www.paypal.me/techtoday) 
 
 <p>
+<b>Version 1.0.23</b> January 2021<br/>
+- FIX: all nodes won't emit a topic property. Has been fixed.
+- NEW: you can now filter false alarms in the radar node.<br/>
+</p>
+<p>
 <b>Version 1.0.22</b> December 2020<br/>
 - NEW: you can now choose how much times the node server should try to reconnect to the Hik device, before emitting the connection error on PIN 2. This is useful in case of problematic LANs, like VPN or very slow Wireless 3G connections.<br/>
 </p>

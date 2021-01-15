@@ -2,6 +2,7 @@ module.exports = function (RED) {
 	function hikvisionUltimatePTZ(config) {
 		RED.nodes.createNode(this, config);
 		var node = this;
+		node.topic = config.topic || node.name;
 		node.server = RED.nodes.getNode(config.server)
 		node.PTZPreset = (config.PTZPreset === null || config.PTZPreset === undefined) ? "1" : config.PTZPreset;
 		node.channelID = (config.channelID === null || config.channelID === undefined) ? "1" : config.channelID;
@@ -14,6 +15,7 @@ module.exports = function (RED) {
 		// Called from config node, to send output to the flow
 		node.sendPayload = (_msg) => {
 			if (_msg === null || _msg === undefined) return;
+			_msg.topic = node.topic;
 			if (_msg.hasOwnProperty("errorDescription")) { node.send([null, _msg]); return; }; // It's a connection error/restore comunication.
 			if (_msg.hasOwnProperty("payload")) {
 				if (_msg.payload.hasOwnProperty("eventType")) {

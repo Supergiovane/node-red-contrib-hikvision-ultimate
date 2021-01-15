@@ -4,6 +4,7 @@ module.exports = function (RED) {
 	function hikvisionUltimateANPR(config) {
 		RED.nodes.createNode(this, config);
 		var node = this;
+		node.topic = config.topic || config.name;
 		node.server = RED.nodes.getNode(config.server)
 		node.avoidsameplatetime = config.avoidsameplatetime || 20; // Doesn't send the same plate in this timeframe, in seconds.
 		node.currentPlate = ""; // Stores the current plate (for the avoidsameplatetime function)
@@ -18,7 +19,8 @@ module.exports = function (RED) {
 		// Called from config node, to send output to the flow
 		node.sendPayload = (_msg) => {
 			if (_msg === null || _msg === undefined) return;
-			if (_msg.hasOwnProperty("errorDescription")) { node.send([null,_msg]); return; }; // It's a connection error/restore comunication.
+			_msg.topic = node.topic;
+			if (_msg.hasOwnProperty("errorDescription")) { node.send([null, _msg]); return; }; // It's a connection error/restore comunication.
 			if (_msg.payload === null || _msg.payload === undefined) return;
 
 			if (node.currentPlate === _msg.payload) {
@@ -38,7 +40,7 @@ module.exports = function (RED) {
 			// ##########################
 
 			node.currentPlate = _msg.payload;
-			node.send([_msg,null]);
+			node.send([_msg, null]);
 			try {
 				node.setNodeStatus({ fill: "green", shape: "dot", text: "Plate " + _msg.payload });
 			} catch (error) { }
@@ -51,7 +53,7 @@ module.exports = function (RED) {
 		}
 
 		this.on('input', function (msg) {
-			
+
 		});
 
 		node.on("close", function (done) {

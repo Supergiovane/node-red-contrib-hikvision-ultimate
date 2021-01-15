@@ -4,6 +4,7 @@ module.exports = function (RED) {
 	function hikvisionUltimateAlarm(config) {
 		RED.nodes.createNode(this, config);
 		var node = this;
+		node.topic = config.topic || config.name;
 		node.server = RED.nodes.getNode(config.server)
 		node.reactto = (config.reactto === null || config.reactto === undefined) ? "vmd" : config.reactto.toLowerCase();// Rect to alarm coming from...
 
@@ -15,6 +16,7 @@ module.exports = function (RED) {
 		// Called from config node, to send output to the flow
 		node.sendPayload = (_msg) => {
 			if (_msg === null || _msg === undefined) return;
+			_msg.topic = node.topic;
 			if (_msg.hasOwnProperty("errorDescription")) { node.send([null, _msg]); return; }; // It's a connection error/restore comunication.
 
 			var sAlarmType = "";
@@ -43,14 +45,15 @@ module.exports = function (RED) {
 					if (element !== null && element !== undefined && element.trim() !== "" && sAlarmType === element) {
 						var oRetMsg = {}; // Return message
 						oRetMsg.payload = bAlarmStatus;
+						oRetMsg.topic = _msg.topic;
 						oRetMsg.channelid = (_msg.payload.hasOwnProperty("channelID") ? _msg.payload.channelID : "0");
 						oRetMsg.description = (_msg.payload.hasOwnProperty("eventDescription") ? _msg.payload.eventDescription : "");
 						node.send([oRetMsg, null]);
 						node.setNodeStatus({ fill: "green", shape: "dot", text: "Alarm " + (bAlarmStatus === true ? "start" : "end") });
 						return; // Find first occurrence, exit.
-	
+
 					}
-				}				
+				}
 			}
 		}
 

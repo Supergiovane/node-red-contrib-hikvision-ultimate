@@ -6,9 +6,11 @@
 			name: { value: "" },
 			topic: { value: "" },
 			server: { type: "Hikvision-config", required: true },
-			filterzone: { value: "0" }			
+			filterzone: { value: "0" },
+			alarmfilterduration: { value: 0 },
+			alarmfilterperiod: { value: 0 }
 		},
-		inputs: 0,
+		inputs: 1,
 		outputs: 2,
 		outputLabels: function (i) {
 			var ret = "";
@@ -41,6 +43,23 @@
 		},
 		oneditprepare: function () {
 
+			var node = this;
+
+			// 15/01/2021 Hide parts of the ui
+			// ##########################################################
+			if (node.alarmfilterduration === 0) {
+				$("#ui_alarmfilterperiod").hide();
+			} else {
+				$("#ui_alarmfilterperiod").show();
+			}
+			$("#node-input-alarmfilterduration").change(function (e) {
+				if ($("#node-input-alarmfilterduration").val() == 0) {
+					$("#ui_alarmfilterperiod").hide();
+				} else {
+					$("#ui_alarmfilterperiod").show();
+				}
+			});
+			// ##########################################################
 
 		},
 		oneditsave: function () {
@@ -89,11 +108,56 @@
 			<option value="15">Zone 15</option>
 			<option value="16">Zone 16</option>
 		</select>
-		<div class="form-tips" style="margin-top:11px">
-           The above option allow the node to react to alarms coming from all zones or from a specified one.
-        </div>
 	</div>
-  
+	<br/>
+	<div class="form-row">
+		<i class="fa fa-filter"></i>&nbsp&nbsp<b>False alarms filtering options</b>
+		<br/>	<br/>
+        <label for="node-input-alarmfilterduration"><i class="fa fa-tasks"></i> Alarm duration</label>
+		<select id="node-input-alarmfilterduration">
+			<option value=0>No wait. Immediate alarm.</option>
+			<option value=1>more than 1 Second</option>
+			<option value=2>more than 2 Seconds</option>
+			<option value=3>more than 3 Seconds</option>
+			<option value=4>more than 4 Seconds</option>
+			<option value=5>more than 5 Seconds</option>
+			<option value=6>more than 6 Seconds</option>
+			<option value=7>more than 7 Seconds</option>
+			<option value=8>more than 8 Seconds</option>
+			<option value=9>more than 9 Seconds</option>
+			<option value=10>more than 10 Seconds</option>
+			<option value=11>more than 11 Seconds</option>
+			<option value=12>more than 12 Seconds</option>
+			<option value=13>more than 13 Seconds</option>
+			<option value=14>more than 14 Seconds</option>
+			<option value=15>more than 15 Seconds</option>
+		</select>
+	</div>
+	<div class="form-row" id="ui_alarmfilterperiod">
+		<label for="node-input-alarmfilterperiod"><i class="fa fa-tasks"></i> Evaluation period</label>
+		<select id="node-input-alarmfilterperiod">
+			<option value=0>No wait. Immediate alarm.</option>
+			<option value=1>1 Second</option>
+			<option value=2>2 Seconds</option>
+			<option value=3>3 Seconds</option>
+			<option value=4>4 Seconds</option>
+			<option value=5>5 Seconds</option>
+			<option value=6>6 Seconds</option>
+			<option value=7>7 Seconds</option>
+			<option value=8>8 Seconds</option>
+			<option value=9>9 Seconds</option>
+			<option value=10>10 Seconds</option>
+			<option value=11>11 Seconds</option>
+			<option value=12>12 Seconds</option>
+			<option value=13>13 Seconds</option>
+			<option value=14>14 Seconds</option>
+			<option value=15>15 Seconds</option>
+		</select>
+		<div class="form-tips" style="margin-top:11px">
+			Above options: the node will emit an alarm msg only if the alarm persists or repeats for the time specified in "Alarm duration", during the "Evaluation period".
+		 </div>
+	</div>
+
 </script>
 
 <script type="text/x-red" data-help-name="hikvisionUltimateRadar">
