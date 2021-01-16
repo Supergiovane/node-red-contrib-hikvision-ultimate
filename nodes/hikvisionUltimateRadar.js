@@ -21,28 +21,30 @@ module.exports = function (RED) {
 
 		// 15/01/2021 start the timer that counts the time the alarm has been true
 		// ###################################
-		node.timer_alarmfilterduration = setInterval(() => {
-			if (node.currentAlarmMSG.hasOwnProperty("payload")) {
-				if (node.currentAlarmMSG.payload === true) {
-					node.total_alarmfilterduration += 1;
-					if (node.isRunningTimerFilterPeriod) node.setNodeStatus({ fill: "red", shape: "ring", text: "Zone " + node.currentAlarmMSG.zone + " pre alert count " + node.total_alarmfilterduration });
-					if (node.total_alarmfilterduration >= node.alarmfilterduration) {
-						if (!node.isNodeInAlarm) {
-							// Emit alarm
-							if (node.timer_alarmfilterperiod !== null) clearTimeout(node.timer_alarmfilterperiod);
-							//node.setNodeStatus({ fill: "yellow", shape: "ring", text: "STOP TimerFilterPeriod" });
-							node.isRunningTimerFilterPeriod = false;
-							node.isNodeInAlarm = true;
-							node.total_alarmfilterduration = 0;
-							node.setNodeStatus({ fill: "red", shape: "dot", text: "Zone " + node.currentAlarmMSG.zone + " alarm" });
-							node.send([node.currentAlarmMSG, null]);
-						} else { node.total_alarmfilterduration = 0; }
+		startTimerAlarmFilterDuration = () => {
+			node.timer_alarmfilterduration = setInterval(() => {
+				if (node.currentAlarmMSG.hasOwnProperty("payload")) {
+					if (node.currentAlarmMSG.payload === true) {
+						node.total_alarmfilterduration += 1;
+						if (node.isRunningTimerFilterPeriod) node.setNodeStatus({ fill: "red", shape: "ring", text: "Zone " + node.currentAlarmMSG.zone + " pre alert count " + node.total_alarmfilterduration });
+						if (node.total_alarmfilterduration >= node.alarmfilterduration) {
+							if (!node.isNodeInAlarm) {
+								// Emit alarm
+								if (node.timer_alarmfilterperiod !== null) clearTimeout(node.timer_alarmfilterperiod);
+								//node.setNodeStatus({ fill: "yellow", shape: "ring", text: "STOP TimerFilterPeriod" });
+								node.isRunningTimerFilterPeriod = false;
+								node.isNodeInAlarm = true;
+								node.total_alarmfilterduration = 0;
+								node.setNodeStatus({ fill: "red", shape: "dot", text: "Zone " + node.currentAlarmMSG.zone + " alarm" });
+								node.send([node.currentAlarmMSG, null]);
+							} else { node.total_alarmfilterduration = 0; }
+						}
 					}
 				}
-			}
-		}, 1000);
+			}, 1000);
+		}
 		// This timer resets the node.total_alarmfilterduration
-		startTimerFilterPeriod = () => {
+		startTimerAlarmFilterPeriod = () => {
 			//node.setNodeStatus({ fill: "yellow", shape: "ring", text: "START TimerFilterPeriod" });
 			node.isRunningTimerFilterPeriod = true;
 			node.total_alarmfilterduration = 0;
@@ -52,6 +54,7 @@ module.exports = function (RED) {
 				node.isRunningTimerFilterPeriod = false;
 			}, node.alarmfilterperiod * 1000);
 		}
+		if (node.alarmfilterduration !== 0) startTimerAlarmFilterDuration(); // If filter is enabled, start timer
 		// ###################################
 
 
@@ -121,17 +124,24 @@ module.exports = function (RED) {
 							node.setNodeStatus({ fill: "grey", shape: "ring", text: "Zone " + oRetMsg.zone + " unknowk CID code " + _msg.payload.CIDEvent.code });
 							return; // Unknown state
 					}
-					node.currentAlarmMSG = oRetMsg;
-					// Sends the false only in case the isNodeInAlarm is true.
-					if (oRetMsg.payload === false && node.isNodeInAlarm) {
+
+					// 16/01/2020 check wether the filter is enabled or not
+					if (node.alarmfilterduration === 0) {
 						node.send([oRetMsg, null]);
-						node.currentAlarmMSG = {};
-						node.isNodeInAlarm = false;
-					} else if (oRetMsg.payload === true && !node.isNodeInAlarm) {
-						if (!node.isRunningTimerFilterPeriod) {
-							startTimerFilterPeriod();
+					} else {
+						// Sends the false only in case the isNodeInAlarm is true.
+						node.currentAlarmMSG = oRetMsg;
+						if (oRetMsg.payload === false && node.isNodeInAlarm) {
+							node.send([oRetMsg, null]);
+							node.currentAlarmMSG = {};
+							node.isNodeInAlarm = false;
+						} else if (oRetMsg.payload === true && !node.isNodeInAlarm) {
+							if (!node.isRunningTimerFilterPeriod) {
+								startTimerAlarmFilterPeriod();
+							}
 						}
 					}
+
 				}
 			}
 		}
