@@ -28,7 +28,7 @@ Be sure to have installed **Node.js v12.3.0** or newer (issue a node -v command 
 ---
 
 ## ALARM NODE
-The alarm node connects to ***NVR, Camera, Alarm system, Radars etc...*** and outputs true/false whenever an alarm occurs. <br/>
+The alarm node connects to ***NVR, Camera, Alarm system*** and outputs true/false whenever an alarm occurs. <br/>
 
 <img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/GenericAlarm.png' width="80%">
 
