@@ -108,19 +108,35 @@ module.exports = function (RED) {
 				if (Number(node.filterzone) === 0 || Number(node.filterzone) === Number(oRetMsg.zone)) { // Filter only selcted zones
 					// Get the Hikvision alarm codes, that differs from standard SIA codes.
 					switch (_msg.payload.CIDEvent.code.toString().toLowerCase()) {
+						// Standard SIA Code is _msg.payload.CIDEvent.standardCIDcode
 						case "1103":
-							// Start alarm. Standard SIA Code is _msg.payload.CIDEvent.standardCIDcode: 1130
+							// Bulgary alarm
 							oRetMsg.payload = true;
 							node.setNodeStatus({ fill: "red", shape: "ring", text: "Zone " + oRetMsg.zone + "  pre alert" });
 							break;
 						case "3103":
-							// End alarm. Standard SIA Code is _msg.payload.CIDEvent.standardCIDcode: 3130
+							// End Bulgary alarm.
 							oRetMsg.payload = false;
 							node.setNodeStatus({ fill: "green", shape: "dot", text: "Zone " + oRetMsg.zone + " normal" });
 							break;
+						case "1148":
+							// Motion Alarm start (The radar has been moved). 
+							node.setNodeStatus({ fill: "red", shape: "dot", text: "Device motion alarm" });
+							break;
+						case "3148":
+							// Motion Alarm end. 
+							node.setNodeStatus({ fill: "green", shape: "dot", text: "Device motion restored" });
+							break;
+						case "3148":
+							// Radar armed. 
+							node.setNodeStatus({ fill: "green", shape: "dot", text: "Radar armed" });
+							break;
+						case "1401":
+							// Radar armed. 
+							node.setNodeStatus({ fill: "red", shape: "dot", text: "Radar disarmed" });
+							break;
 						default:
 							// Unknown CID code.
-							oRetMsg.payload = null;
 							node.setNodeStatus({ fill: "grey", shape: "ring", text: "Zone " + oRetMsg.zone + " unknowk CID code " + _msg.payload.CIDEvent.code });
 							return; // Unknown state
 					}
