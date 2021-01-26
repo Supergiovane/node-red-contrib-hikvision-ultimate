@@ -228,7 +228,7 @@ module.exports = (RED) => {
                 const response = await clientAlarmStream.fetch(node.protocol + "://" + node.host + "/ISAPI/Event/notification/alertStream", optionsAlarmStream);
 
                 if (response.status >= 200 && response.status <= 300) {
-                    node.setAllClientsStatus({ fill: "green", shape: "ring", text: "Waiting for Alarm." });
+                    node.setAllClientsStatus({ fill: "green", shape: "ring", text: "Waiting for event." });
                 } else {
                     node.setAllClientsStatus({ fill: "red", shape: "ring", text: response.statusText || " unknown response code" });
                     //  if (node.debug)  RED.log.error("BANANA Error response " + response.statusText);
@@ -321,7 +321,7 @@ module.exports = (RED) => {
                     if (_URL.toLowerCase().includes("/ptzctrl/")) {
                         _callerNode.sendPayload({ topic: _callerNode.topic || "", payload: true });
                     } else if (_URL.toLowerCase().includes("/streaming/")) {
-                        body = await response.buffer(); // "data:image/png;base64," +
+                        body = await response.buffer(); // "data:image/png;base64," +    
                         //_callerNode.sendPayload({ topic: _callerNode.topic || "", payload:  body.toString("base64")});
                         _callerNode.sendPayload({ topic: _callerNode.topic || "", payload: body });
                     }
@@ -332,11 +332,14 @@ module.exports = (RED) => {
                 // Main Error
                 _callerNode.setNodeStatus({ fill: "grey", shape: "ring", text: "Horror: " + err.message });
                 _callerNode.sendPayload({ topic: _callerNode.topic || "", errorDescription: err.message, payload: true });
+                if (node.debug) RED.log.error("Hikvision-config: Horror " + err.message);
                 // Abort request
-                try {
-                    if (reqController !== null) reqController.abort().then(ok => { }).catch(err => { });
-                } catch (error) { }
-                throw (err);
+                if (reqController !== null) {
+                    try {
+                        //if (reqController !== null) reqController.abort().then(ok => { }).catch(err => { });
+                        reqController.abort();
+                    } catch (error) { }
+                }
             }
         };
         //#endregion
