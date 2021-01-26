@@ -330,9 +330,9 @@ module.exports = (RED) => {
             } catch (err) {
                 //console.log("ORRORE " + err.message);
                 // Main Error
-                _callerNode.setNodeStatus({ fill: "grey", shape: "ring", text: "Horror: " + err.message });
+                _callerNode.setNodeStatus({ fill: "grey", shape: "ring", text: "clientGenericRequest.fetch error: " + err.message });
                 _callerNode.sendPayload({ topic: _callerNode.topic || "", errorDescription: err.message, payload: true });
-                if (node.debug) RED.log.error("Hikvision-config: Horror " + err.message);
+                if (node.debug) RED.log.error("Hikvision-config: clientGenericRequest.fetch error " + err.message);
                 // Abort request
                 if (reqController !== null) {
                     try {
