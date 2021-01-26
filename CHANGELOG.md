@@ -4,6 +4,10 @@
 [![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square)](https://www.paypal.me/techtoday) 
 
 <p>
+<b>Version 1.0.26</b> January 2021<br/>
+- Fixed an unwanted LOG in case you have a picture node asking for an image to an unconnected camera.<br/>
+</p>
+<p>
 <b>Version 1.0.25</b> January 2021<br/>
 - Minor fixes in alarm filter.<br/>
 </p>
