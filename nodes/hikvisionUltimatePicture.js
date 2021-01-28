@@ -12,6 +12,7 @@ module.exports = function (RED) {
 		node.picture; // Stores the cam image
 		node.pictureLarghezza = 0;
 		node.pictureAltezza = 0;
+		node.textoverlay = (config.textoverlay === null || config.textoverlay === undefined || config.textoverlay.trim() === "") ? "" : config.textoverlay;
 
 		node.setNodeStatus = ({ fill, shape, text }) => {
 			var dDate = new Date();
@@ -26,6 +27,12 @@ module.exports = function (RED) {
 			node.widthimage = (_config.widthimage === null || _config.widthimage === undefined || _config.widthimage.trim() === "") ? "0" : _config.widthimage;
 			node.heightimage = (_config.heightimage === null || _config.heightimage === undefined || _config.heightimage.trim() === "") ? "0" : _config.heightimage;
 			node.cropimage = (_config.cropimage === null || _config.cropimage === undefined || _config.cropimage.trim() === "") ? "" : _config.cropimage;
+			// 27/01/2021 Fonts
+			//node.textoverlay = (_config.textoverlay === null || _config.textoverlay === undefined || _config.textoverlay.trim() === "") ? "" : _config.textoverlay;
+			node.textoverlayXY = (_config.textoverlayXY === null || _config.textoverlayXY === undefined || _config.textoverlayXY.trim() === "") ? "0,0" : _config.textoverlayXY;
+			node.textoverlayWH = (_config.textoverlayWH === null || _config.textoverlayWH === undefined || _config.textoverlayWH.trim() === "") ? "" : _config.textoverlayWH;
+			node.textoverlayFont = (_config.textoverlayFont === null || _config.textoverlayFont === undefined || _config.textoverlayFont.trim() === "") ? "FONT_SANS_32_WHITE" : _config.textoverlayFont;
+
 			if (node.cropimage !== "" && node.cropimage.split(",").length === 4) {
 				node.cropimage = {
 					x: Number(node.cropimage.split(",")[0].trim()),
@@ -35,6 +42,24 @@ module.exports = function (RED) {
 				}
 			} else {
 				node.cropimage = "";
+			}
+
+			if (node.textoverlayXY !== "" && node.textoverlayXY.split(",").length === 2) {
+				node.textoverlayXY = {
+					x: Number(node.textoverlayXY.split(",")[0].trim()),
+					y: Number(node.textoverlayXY.split(",")[1].trim())
+				}
+			} else {
+				node.textoverlayXY = "";
+			}
+
+			if (node.textoverlayWH !== "" && node.textoverlayWH.split(",").length === 2) {
+				node.textoverlayWH = {
+					w: Number(node.textoverlayWH.split(",")[0].trim()),
+					h: Number(node.textoverlayWH.split(",")[1].trim())
+				}
+			} else {
+				node.textoverlayWH = "";
 			}
 		}
 		node.variabilizeManipulation(config);
@@ -46,18 +71,27 @@ module.exports = function (RED) {
 				// Create the config object
 				//#region CREATING CONFIG
 				// var sManipulate = $("#node-input-channelID").val();
-				// sManipulate += "SEP" + $("#node-input-qualityimage").val();
-				// sManipulate += "SEP" + $("#node-input-rotateimage").val();
-				// sManipulate += "SEP" + $("#node-input-widthimage").val();
-				// sManipulate += "SEP" + $("#node-input-heightimage").val();
-				// sManipulate += "SEP" + $("#node-input-cropimage").val().toString().trim().replace(/\s/g, '').replace(/,/g,"-");
+				// sManipulate += "-SEP-" + $("#node-input-qualityimage").val();
+				// sManipulate += "-SEP-" + $("#node-input-rotateimage").val();
+				// sManipulate += "-SEP-" + $("#node-input-widthimage").val();
+				// sManipulate += "-SEP-" + $("#node-input-heightimage").val();
+				// sManipulate += "S-SEP-EP" + $("#node-input-cropimage").val().toString().trim().replace(/\s/g, '').replace(/,/g, "-");
+				// sManipulate += "-SEP-" + $("#node-input-textoverlay").val();
+				// sManipulate += "-SEP-" + $("#node-input-textoverlayXY").val().toString().trim().replace(/\s/g, '').replace(/,/g, "-");
+				// sManipulate += "-SEP-" + $("#node-input-textoverlayWH").val().toString().trim().replace(/\s/g, '').replace(/,/g, "-");
+				// sManipulate += "-SEP-" + $("#node-input-textoverlayFont").val();
 				var sManipulate = req.query.manipulate;
-				var oConfig = { channelID: sManipulate.split("SEP")[0].toString().trim() };
-				oConfig.qualityimage = sManipulate.split("SEP")[1].toString().trim();
-				oConfig.rotateimage = sManipulate.split("SEP")[2].toString().trim();
-				oConfig.widthimage = sManipulate.split("SEP")[3].toString().trim();
-				oConfig.heightimage = sManipulate.split("SEP")[4].toString().trim();
-				oConfig.cropimage = sManipulate.split("SEP")[5].toString().trim().replace(/-/g, ",");
+				var oConfig = { channelID: sManipulate.split("-SEP-")[0].toString().trim() };
+				oConfig.qualityimage = sManipulate.split("-SEP-")[1].toString().trim();
+				oConfig.rotateimage = sManipulate.split("-SEP-")[2].toString().trim();
+				oConfig.widthimage = sManipulate.split("-SEP-")[3].toString().trim();
+				oConfig.heightimage = sManipulate.split("-SEP-")[4].toString().trim();
+				oConfig.cropimage = sManipulate.split("-SEP-")[5].toString().trim().replace(/-/g, ",");
+				oConfig.textoverlay = sManipulate.split("-SEP-")[6].toString().trim();
+				oConfig.textoverlayXY = sManipulate.split("-SEP-")[7].toString().trim().replace(/-/g, ",");
+				oConfig.textoverlayWH = sManipulate.split("-SEP-")[8].toString().trim().replace(/-/g, ",");
+				oConfig.textoverlayFont = sManipulate.split("-SEP-")[9].toString().trim();
+
 				node.variabilizeManipulation(oConfig);
 				//#endregion
 				//console.log("MAN " + JSON.stringify(oConfig))
@@ -93,27 +127,70 @@ module.exports = function (RED) {
 		});
 
 		// Get picture 
-		node.getPicture = (_picBase64) => new Promise(function (resolve, reject) {
+		// node.getPicture = (_picBase64) => new Promise(function (resolve, reject) {
+		// 	try {
+		// 		jimp.read(_picBase64)
+		// 			.then(image => {
+		// 				if (node.rotateimage !== 0) image = image.rotate(Number(node.rotateimage));
+		// 				if (node.cropimage !== "") image = image.crop(node.cropimage.x, node.cropimage.y, node.cropimage.w, node.cropimage.h);
+		// 				if (node.heightimage !== "0" && node.widthimage !== "0") image = image.resize(Number(node.widthimage), Number(node.heightimage));
+		// 				if (node.qualityimage !== 100) image = image.quality(Number(node.qualityimage));
+		// 				node.pictureLarghezza = image.bitmap.width;
+		// 				node.pictureAltezza = image.bitmap.height;
+
+		// 				jimp.loadFont(jimp.FONT_SANS_32_WHITE).then(font => {
+		// 					image = image.print(font, 10, 10, 'Hello World!');
+		// 				}).catch(err => { });
+
+		// 				image.getBufferAsync(jimp.MIME_JPEG).then(picture => {
+		// 					node.picture = "data:image/jpg;base64," + picture.toString("base64");
+		// 					resolve(node.picture);
+		// 				}).catch(error => {
+		// 					reject(error);
+		// 				});
+		// 			});
+		// 	} catch (error) {
+		// 		reject(error);
+		// 	}
+		// });
+
+		// Get picture 
+		async function getPicture(_picBase64) {
 			try {
-				jimp.read(_picBase64)
-					.then(image => {
-						if (node.rotateimage !== 0) image = image.rotate(Number(node.rotateimage));
-						if (node.cropimage !== "") image = image.crop(node.cropimage.x, node.cropimage.y, node.cropimage.w, node.cropimage.h);
-						if (node.heightimage !== "0" && node.widthimage !== "0") image = image.resize(Number(node.widthimage), Number(node.heightimage));
-						if (node.qualityimage !== 100) image = image.quality(Number(node.qualityimage));
-						node.pictureLarghezza = image.bitmap.width;
-						node.pictureAltezza = image.bitmap.height;
-						image.getBufferAsync(jimp.MIME_JPEG).then(picture => {
-							node.picture = "data:image/jpg;base64," + picture.toString("base64");
-							resolve(node.picture);
-						}).catch(error => {
-							reject(error);
+				image = await jimp.read(_picBase64);
+				if (node.rotateimage !== 0) image = await image.rotate(Number(node.rotateimage));
+				if (node.cropimage !== "") image = await image.crop(node.cropimage.x, node.cropimage.y, node.cropimage.w, node.cropimage.h);
+				if (node.heightimage !== "0" && node.widthimage !== "0") image = await image.resize(Number(node.widthimage), Number(node.heightimage));
+				if (node.qualityimage !== 100) image = await image.quality(Number(node.qualityimage));
+				node.pictureLarghezza = image.bitmap.width;
+				node.pictureAltezza = image.bitmap.height;
+
+				// 27/01/2021 FONTS
+				if (node.textoverlay !== "") {
+					const oFont = jimp[node.textoverlayFont];
+					const font = await jimp.loadFont(oFont);
+					if (node.textoverlayWH === "") {
+						image = await image.print(font, node.textoverlayXY.x, node.textoverlayXY.y, {
+							text: node.textoverlay,
+							alignmentX: jimp.HORIZONTAL_ALIGN_LEFT,
+							alignmentY: jimp.VERTICAL_ALIGN_TOP
 						});
-					});
+					} else {
+						image = await image.print(font, node.textoverlayXY.x, node.textoverlayXY.y, {
+							text: node.textoverlay,
+							alignmentX: jimp.HORIZONTAL_ALIGN_LEFT,
+							alignmentY: jimp.VERTICAL_ALIGN_TOP
+						}, node.textoverlayWH.w, node.textoverlayWH.h);
+					}
+				}
+
+				let picture = await image.getBufferAsync(jimp.MIME_JPEG);
+				node.picture = "data:image/jpg;base64," + picture.toString("base64");
+				return (node.picture);
 			} catch (error) {
-				reject(error);
+				return (error);
 			}
-		});
+		};
 
 
 		// Called from config node, to send output to the flow
@@ -134,7 +211,7 @@ module.exports = function (RED) {
 				}
 			};
 
-			node.getPicture(_msg.payload).then(data => {
+			getPicture(_msg.payload).then(data => {
 				_msg.payload = data;
 				node.send(_msg, null);
 				node.setNodeStatus({ fill: "green", shape: "dot", text: "Picture received" });
@@ -153,10 +230,10 @@ module.exports = function (RED) {
 
 		this.on('input', function (msg) {
 			if (msg === null || msg === undefined) return;
+			if (msg.hasOwnProperty("textoverlay")) node.textoverlay = msg.textoverlay;
+
 			if (msg.hasOwnProperty("payload") && msg.hasOwnProperty("payload") !== null && msg.hasOwnProperty("payload") !== undefined) {
 				if (msg.payload === true) {
-					// Recall PTZ Preset
-					// Params: _callerNode, _method, _URL, _body
 					try {
 						// Call the request, that then sends the result via node.sendPayload function
 						node.server.request(node, "GET", "/ISAPI/Streaming/channels/" + node.channelID + "01/picture", null);

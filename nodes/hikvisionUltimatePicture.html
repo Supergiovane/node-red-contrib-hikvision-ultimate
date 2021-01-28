@@ -12,7 +12,11 @@
 			heightimage: { value: "" },
 			widthimage: { value: "" },
 			qualityimage: { value: "100" },
-			cropimage: { value: "" }
+			cropimage: { value: "" },
+			textoverlay:{ value: "" },
+			textoverlayXY:{ value: "0,0" },
+			textoverlayWH:{ value: "0,0" },
+			textoverlayFont:{ value: "FONT_SANS_32_WHITE" }
 		},
 		inputs: 1,
 		outputs: 2,
@@ -68,11 +72,15 @@
 				$("#picture").html("<img src=\"https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/loading.gif\">");
 				// Prepare the manipulation string
 				var sManipulate = $("#node-input-channelID").val();
-				sManipulate += "SEP" + $("#node-input-qualityimage").val();
-				sManipulate += "SEP" + $("#node-input-rotateimage").val();
-				sManipulate += "SEP" + $("#node-input-widthimage").val();
-				sManipulate += "SEP" + $("#node-input-heightimage").val();
-				sManipulate += "SEP" + $("#node-input-cropimage").val().toString().trim().replace(/\s/g, '').replace(/,/g, "-");
+				sManipulate += "-SEP-" + $("#node-input-qualityimage").val();
+				sManipulate += "-SEP-" + $("#node-input-rotateimage").val();
+				sManipulate += "-SEP-" + $("#node-input-widthimage").val();
+				sManipulate += "-SEP-" + $("#node-input-heightimage").val();
+				sManipulate += "-SEP-" + $("#node-input-cropimage").val().toString().trim().replace(/\s/g, '').replace(/,/g, "-");
+				sManipulate += "-SEP-" + $("#node-input-textoverlay").val();
+				sManipulate += "-SEP-" + $("#node-input-textoverlayXY").val().toString().trim().replace(/\s/g, '').replace(/,/g, "-");
+				sManipulate += "-SEP-" + $("#node-input-textoverlayWH").val().toString().trim().replace(/\s/g, '').replace(/,/g, "-");
+				sManipulate += "-SEP-" + $("#node-input-textoverlayFont").val();
 				$.getJSON('hikvisionUltimateGetPicture?serverID=' + _oNodeServer.id + "&manipulate=" + sManipulate, (data) => {
 					$("#picture").html("<img src=\"" + data.picture + "\" style=\"width:320px;height:200px;\" \">");
 					$("#picturedimensions").html("Width:" + data.width + "px" + " Height:" + data.height + "px");
@@ -242,7 +250,39 @@
 			Above options: Crop the image (get only a portion of image, for example, to zoom on a door). Accepted string is "x, y, width, height" for example "20,30,200,200". Leave blank not to crop.
 		 </div>
 	</div>
-	
+	<div class="form-row">
+        <label for="node-input-textoverlay"><i class="fa fa-tasks"></i> Text Overlay</label>
+		<input type="text" id="node-input-textoverlay" placeholder="No text">
+	</div>
+	<div class="form-row">
+        <label for="node-input-textoverlayXY"><i class="fa fa-tasks"></i> Position (X,Y)</label>
+		<input type="text" id="node-input-textoverlayXY" placeholder="Example 10,10">
+	</div>
+	<div class="form-row">
+        <label for="node-input-textoverlayWH"><i class="fa fa-tasks"></i> Max boundary (Width,Height)</label>
+		<input type="text" id="node-input-textoverlayWH" placeholder="Example 200,100">
+	</div>
+	<div class="form-row">
+        <label for="node-input-textoverlayFont"><i class="fa fa-tasks"></i> Font</label>
+		<select id="node-input-textoverlayFont">
+			<option value="FONT_SANS_8_BLACK">FONT_SANS_8_BLACK</option>
+			<option value="FONT_SANS_10_BLACK">FONT_SANS_10_BLACK</option>
+			<option value="FONT_SANS_12_BLACK">FONT_SANS_12_BLACK</option>
+			<option value="FONT_SANS_14_BLACK">FONT_SANS_14_BLACK</option>
+			<option value="FONT_SANS_16_BLACK">FONT_SANS_16_BLACK</option>
+			<option value="FONT_SANS_32_BLACK">FONT_SANS_32_BLACK</option>
+			<option value="FONT_SANS_64_BLACK">FONT_SANS_64_BLACK</option>
+			<option value="FONT_SANS_128_BLACK">FONT_SANS_128_BLACK</option>
+			<option value="FONT_SANS_8_WHITE">FONT_SANS_8_WHITE</option>
+			<option value="FONT_SANS_16_WHITE">FONT_SANS_16_WHITE</option>
+			<option value="FONT_SANS_32_WHITE">FONT_SANS_32_WHITE</option>
+			<option value="FONT_SANS_64_WHITE">FONT_SANS_64_WHITE</option>
+			<option value="FONT_SANS_128_WHITE">FONT_SANS_128_WHITE</option>
+		</select>
+		<div class="form-tips" style="margin-top:11px">
+			Above options: overlay a text over the image. You can set the X position from TOP and the Y position from LEFT, as well as the fonts. You can only choose between the list of avaiable fonts. You cannot currently add more than a row. You can override the overlayed text, by msg.textoverlay
+		 </div>
+	</div>
 </script>
 
 <script type="text/x-red" data-help-name="hikvisionUltimatePicture">

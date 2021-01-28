@@ -166,7 +166,7 @@ The ***Template*** node in this example, contains this code:
 ```javascript
 <img src="{{payload}}"/>
 ```
-The ***Dashboard*** node in this example, contains this code:
+The ***Dashboard*** node in this example, is a **UI_TEMPLATE** and contains this code:
 ```javascript
 <div ng-bind-html="msg.payload"></div>
 ```
@@ -179,8 +179,16 @@ The node outputs the image in base64 string format, ready for the UI Dashboard, 
 
 **Input**
 ```javascript
-msg.payload = true; // To get the image
+// To get the image
+msg.payload = true; 
 ```
+
+```javascript
+// Dinamically set the overlay text
+node.textoverlay = "Hello new overlay";
+msg.payload = true; 
+```
+
 
 **Output PIN 1**
 ```javascript

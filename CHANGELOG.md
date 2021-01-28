@@ -4,6 +4,10 @@
 [![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square)](https://www.paypal.me/techtoday) 
 
 <p>
+<b>Version 1.0.27</b> January 2021<br/>
+- NEW: Text overlay in the picture node. You can also set the position and font. The text can be set with msg.textoverlay as well.<br/>
+</p>
+<p>
 <b>Version 1.0.26</b> January 2021<br/>
 - Fixed an unwanted LOG in case you have a picture node asking for an image to an unconnected camera.<br/>
 </p>
