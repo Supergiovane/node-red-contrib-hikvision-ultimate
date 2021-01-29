@@ -295,10 +295,10 @@ return msg;
 // You can use from row1 to row4 to set the text
 // and from row1XY to row4XY to set the position in the format x,y (for example: 100,200)
 // Row 1
-msg.row1="Temperature: " + msg.payload; 
-msg.row1XY="100,200";
+msg.row1 = "Temperature: " + msg.payload; 
+msg.row1XY = "100,200";
 // Row 2 (here we leave the position previosly set via the camera menu)
-msg.row2="Sun"; 
+msg.row2 = "Sun"; 
 return msg;
 ```
 
