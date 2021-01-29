@@ -14,13 +14,13 @@ A native set of nodes for Hikvision Cameras, Alarms, Radars, NVR etc.
 
 ## DESCRIPTION
 This is a set of nodes to handle ISAPI Hikvision messages. It works exclusively with ***HIKVISION*** devices.<br/>
-Works with cameras, NVR and also with specialized devices, like Radar (for example DS-PR1-60, DS-PR1-100 and DS-PR1-120).<br/>
+Works with cameras, NVR, Security Systems and also with specialized devices, like Radar (for example DS-PR1-60, DS-PR1-100 and DS-PR1-120).<br/>
 Digest authentication: it should work with all devices.<br/>
 All nodes are capable of auto reconnect if the connection is lost and are able to actively monitor the connection.<br/>
 Be sure to have installed **Node.js v12.3.0** or newer (issue a node -v command in a console, to check it out).<br/>
 
 **Note:** for NVR/DVR, pleas remember to select "Notify Alarm Center" in the event window, otherwise the NVR won't emit any alarm event.<br/>
-<img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/NotifyCenter.png' width="20%">
+<img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/NotifyCenter.png' width="30%">
 
 ## CHANGELOG
 * See <a href="https://github.com/Supergiovane/node-red-contrib-hikvision-ultimate/blob/master/CHANGELOG.md">here the changelog</a>
@@ -30,11 +30,12 @@ Be sure to have installed **Node.js v12.3.0** or newer (issue a node -v command 
 ---
 
 ## ALARM NODE
-The alarm node connects to ***NVR, Camera, Alarm system, Radars, etc..*** and outputs true/false whenever an alarm occurs. <br/>
+The alarm node connects to ***NVR, Camera, Alarm system, Radars, etc..*** and outputs true/false in case of an alarm. <br/>
 The node can be configured as **Camera/NVR** (with standard and smart events) or as **Security System** and **Radar** (with specific CID events, designed for these type of security devices)<br/>
-Some alarm events supports the alarm start and end events, while others, only the alarm start event. CID alarms ALWAYS support start/end events.<br/>
-You can filter for CHANNEL, EVENT and ZONE. For NVR, the ***Channel*** represents the CAMERA number, while for Cameras, represents the sensor number (by default 1, if the camera has only one image sensor). The ***zone*** represents the alarm zone for RADARS AND SECURITY SYSTEM, otherwise the region (for example the intrusion alert region number).<br/>
-The RADAR and SECURITY SYSTEM device types, can filter improper/false alams.<br/>
+You can optionally filter the alarms by CHANNEL, EVENT and ZONE. <br/>
+For NVR/DVR, the ***Channel*** property is the CAMERA number, while for Cameras, is the image sensor number (normally 1).<br/>
+The ***Zone*** property is the alarm zone (RADARS AND SECURITY SYSTEM), or the alert region number (CAMERAS AND NVR/DVR).<br/>
+For RADAR and SECURITY SYSTEM device types, you can filter improper/false alams as well.<br/>
 
 <img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/GenericAlarm.png' width="80%">
 
@@ -49,7 +50,7 @@ You can choose from many different alarms, including: <br/>
 
 **Flow Messages**
 
-The node outputs a payload on **PIN 1**, true if alarm starts, false when alarm ended. Some alarm type doesn't support the alarm end event, so the node sends only a true payload when alarm occurs.</br>
+The node outputs a payload on **PIN 1** (***TRUE*** on alarm start, ***FALSE*** on alarm end). Some alarm types only support the alarm start event.</br>
 The node outputs a payload on **PIN 2**, representing a connection error. ***TRUE*** if error, otherwise ***FALSE***</br>
 This below is an example of msg output:</br>
 
@@ -128,7 +129,7 @@ This node works with Hikvision ANPR cameras.<br/>
 
 **Flow Messages**
 
-The payload contains the license plate number and the property "plate" contains other useful informations.</br>
+The payload contains the license plate number and the property *plate* contains other useful informations.</br>
 
 **Output PIN 1**
 ```javascript
@@ -162,6 +163,7 @@ msg = {
 ---
 
 ## PTZ NODE
+Recalls a PTZ pre-recorded preset.<br/>
 Just select the preset in the configuration window and recall it by passing ***true*** as payload.<br/>
 
 <img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/PTZ.png' width="80%">
@@ -200,8 +202,9 @@ msg = {
 
 
 ## PICTURE NODE
-This node gets a picture from camera, ready to be shown in the dashboard UI.<br/>
-The image can be rotated and resized as well.<br/>
+This node gets a picture from the camera/NVR, ready to be shown in the dashboard UI.<br/>
+You can rotate, resize, crop, overlay with text, zoom the image.<br/>
+The ***overlay text*** is applied directly after the picture's manipulation. This behaves differently than the **text overlay node** (that uses the overlay functionality onboard the camera).<br/> 
 Pass **true** as payload to obtain the image.<br/>
 You can, for example, link the ***Alarm node*** to the ***Picture node*** to get an image whenever an alarm occurs.<br/>
 **CAUTION**: image handling is a very CPU/GPU consuming job. Use only if you have enough computational resources.<br/>
@@ -227,22 +230,25 @@ The node outputs the image in base64 string format, ready for the UI Dashboard, 
 ```javascript
 // To get the image
 msg.payload = true; 
+return msg;
 ```
 
 ```javascript
 // Dinamically set the overlay text
 node.textoverlay = "Hello new overlay";
 msg.payload = true; 
+return msg;
 ```
 
 
 **Output PIN 1**
 ```javascript
-msg.payload = {
+msg = {
 {
     "payload": image in base64 format, // Ready for the Dashboard UI
     "_msgid": "b07e50f6.86a72"
 }
+return msg;
 ```
 
 **Output PIN 2 (connection error)**
@@ -253,6 +259,7 @@ msg = {
     "payload": false, // Or TRUE if error
     "_msgid": "dd5b3622.884a78"
 }
+return msg;
 ```
 <br/>
 <br/>
@@ -260,7 +267,7 @@ msg = {
 ---
 
 ## TEXT OVERLAY NODE
-You can set the camera's text overlay.<br/>
+You can set the camera's text overlay. This node uses the camera's onboard text overlaying capabilities.<br/>
 There are 4 rows avaiable, to be set from the configuration window or dinamically via msg input from flow.<br/>
 
 <img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/Text.png' width="80%">
@@ -280,8 +287,8 @@ There are 4 rows avaiable, to be set from the configuration window or dinamicall
 
 **Flow Messages**
 
-The node accepts only an input. Pass anything you like to set the text overlay.</br>
-You can override the texts by passing some msg inputs. See the sample below</br>
+Pass anything you like as input msg, to set the text overlay.</br>
+You can override texts by passing some msg inputs. See samples below</br>
 
 **Input**
 ```javascript
@@ -318,7 +325,7 @@ return msg;
 ---
 
 ## RAW ALARM NODE
-The RAW alarm node reacts to every message sent. You can use this node when the other nodes doesn't fit your needs. It connects to ***NVR, Camera, Alarm system, Radars etc...*** and outputs the alarm received. <br/>
+The RAW alarm node reacts to every message sent by the device. You can use this node when the other nodes doesn't fit your needs. It connects to ***NVR, Camera, Alarm system, Radars etc...*** and outputs the alarm received. <br/>
 
 <img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/RawAlarm.png' width="80%">
 
