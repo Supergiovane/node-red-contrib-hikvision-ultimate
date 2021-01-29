@@ -4,6 +4,11 @@
 [![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square)](https://www.paypal.me/techtoday) 
 
 <p>
+<b>Version 1.0.28</b> January 2021<br/>
+- BREAKING CHANGE: the Radar node is now part of the Alarm node. The Radar node has been deleted.<br/>
+- NEW: the Alarm node can now filter for channels and zones as well.<br/>
+</p>
+<p>
 <b>Version 1.0.27</b> January 2021<br/>
 - NEW: Text overlay in the picture node. You can also set the position and font. The text can be set with msg.textoverlay as well.<br/>
 </p>
