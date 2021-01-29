@@ -20,7 +20,7 @@ All nodes are capable of auto reconnect if the connection is lost and are able t
 Be sure to have installed **Node.js v12.3.0** or newer (issue a node -v command in a console, to check it out).<br/>
 
 **Note:** for NVR/DVR, pleas remember to select "Notify Alarm Center" in the event window, otherwise the NVR won't emit any alarm event.<br/>
-<img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/NotifyAlarm.png' width="50%">
+<img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/NotifyCenter.png' width="20%">
 
 ## CHANGELOG
 * See <a href="https://github.com/Supergiovane/node-red-contrib-hikvision-ultimate/blob/master/CHANGELOG.md">here the changelog</a>
