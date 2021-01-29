@@ -302,6 +302,14 @@ msg.row2="Sun";
 return msg;
 ```
 
+```javascript
+// Delete all 4 rows
+msg.row1 = "";
+msg.row2 = "";
+msg.row3 = "";
+msg.row4 = "";
+return msg;
+```
 
 
 <br/>
