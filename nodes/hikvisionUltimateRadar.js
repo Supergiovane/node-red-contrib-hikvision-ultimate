@@ -102,7 +102,6 @@ module.exports = function (RED) {
 				&& _msg.payload.CIDEvent.hasOwnProperty("zone")) {
 				let oRetMsg = {}; // Return message
 				oRetMsg.topic = _msg.topic;
-				oRetMsg.connected = _msg.connected;
 				oRetMsg.alarm = _msg.payload; // Put the full alarm description here.
 				oRetMsg.zone = _msg.payload.CIDEvent.zone + 1; // The zone on device's ISAPI is base 0, while the zone on UI is base 1.
 				if (Number(node.filterzone) === 0 || Number(node.filterzone) === Number(oRetMsg.zone)) { // Filter only selcted zones
@@ -126,14 +125,6 @@ module.exports = function (RED) {
 						case "3148":
 							// Motion Alarm end. 
 							node.setNodeStatus({ fill: "green", shape: "dot", text: "Device motion restored" });
-							break;
-						case "3148":
-							// Radar armed. 
-							node.setNodeStatus({ fill: "green", shape: "dot", text: "Radar armed" });
-							break;
-						case "1401":
-							// Radar armed. 
-							node.setNodeStatus({ fill: "red", shape: "dot", text: "Radar disarmed" });
 							break;
 						default:
 							// Unknown CID code.

@@ -28,19 +28,21 @@ Be sure to have installed **Node.js v12.3.0** or newer (issue a node -v command 
 ---
 
 ## ALARM NODE
-The alarm node connects to ***NVR, Camera, Alarm system*** and outputs true/false whenever an alarm occurs. <br/>
+The alarm node connects to ***NVR, Camera, Alarm system, Radars, etc..*** and outputs true/false whenever an alarm occurs. <br/>
+The node can be configured as **Camera/NVR** (with standard and smart events) or as **Security System** and **Radar** (with specific CID events, designed for these type of security devices)<br/>
+Some alarm events supports the alarm start and end events, while others, only the alarm start event. CID alarms ALWAYS support start/end events.<br/>
+You can filter for CHANNEL, EVENT and ZONE. For NVR, the ***Channel*** represents the CAMERA number, while for Cameras, represents the sensor number (by default 1, if the camera has only one image sensor). The ***zone*** represents the alarm zone for RADARS AND SECURITY SYSTEM, otherwise the region (for example the intrusion alert region number).<br/>
+The RADAR and SECURITY SYSTEM device types, can filter improper/false alams.<br/>
 
 <img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/GenericAlarm.png' width="80%">
 
-You can choose from different alarms, for example: <br/>
+You can choose from many different alarms, including: <br/>
 - Video Motion Alarm (When motion is detected)
 - Local alarm input (it's the device's IO pigtail connector)
 - Line crossing (when someone crosses a line)
-- Video loss (when the camera loses the video signal)
-- Video blind (when you put something in front of the camera to block image)
+- CID alarms
 - Many more.....
 
-For other advanced alarms, not present in this node, use the ***RAW Alarm*** node instead.		
 
 
 **Flow Messages**
@@ -52,11 +54,54 @@ This below is an example of msg output:</br>
 
 **Output PIN 1**
 ```javascript
-msg = {
-    "payload":true, // True if alarm starts, false if ends.
-    "channelid":"1", // If you have many video channels on your camera, this represents the channel number.
-    "description":"Motion alarm", // Type of alarm
-    "_msgid":"28f2b9e6.7c74f6"
+// Example of an event from NVR/Camera
+msg.payload = {
+  "payload": true,
+  "topic": "",
+  "channelid": "13", // This is the camera number for NVR, or the channel ID for cameras
+  "zone": 0, // Zone or Region, see above, the explained difference
+  "description": "Motion alarm",
+  "_msgid": "386a613.89f259e"
+}
+```
+
+```javascript
+// Example of an event from Security System or Radar
+msg.payload = {
+{
+    "zone": 1, // This is the zone number that fired the alarm
+    "payload": true, // true if alarm, otherwise false if alarm ended.
+    "alarm": {
+        "ipAddress": "192.168.1.25",
+        "ipv6Address": "",
+        "portNo": 80,
+        "protocol": "HTTP",
+        "macAddress": "BananaRama",
+        "channelID": 1,
+        "dateTime": "2012-01-13T03:58:19+01:00",
+        "activePostCount": 1,
+        "eventType": "cidEvent",
+        "eventState": "active",
+        "eventDescription": "CID event",
+        "CIDEvent": {
+            "code": 3103,
+            "standardCIDcode": 3130,
+            "type": "zoneAlarm",
+            "trigger": "2012-01-13T03:58:19+01:00",
+            "upload": "2012-01-13T03:58:19+01:00",
+            "CameraList": [],
+            "NVRList": [
+                {
+                    "id": 1,
+                    "ip": "192.168.1.32",
+                    "port": 8000,
+                    "channel": 1
+                }
+            ],
+            "zone": 1
+        }
+    }
+    "_msgid": "b07e50f6.86a72"
 }
 ```
 
@@ -213,72 +258,6 @@ msg = {
 
 ---
 
-## RADAR ALARM NODE
-This node works with Hikvision Radars.<br/>
-
-<img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/Radar.png' width="80%">
-
-**Flow Messages**
-
-The node outputs a message whenever an alarm starts or ends. It uses CID codes to identify the alarm type.</br>
-The payload is TRUE whenever alarm occurs, otherwise FALSE whenever alarm ends.</br>
-The complete alarm event is stored in the "alarm" property of the payload.</br>
-In an **unknown CID event** arrives from the Radar, the node will output a message containing the CID code, the full alarm and a null payload.</br>
-The radar node can filter improper/false alams.</br>
-
-**Output PIN 1**
-```javascript
-msg.payload = {
-{
-    "zone": 1, // This is the zone number that fired the alarm
-    "payload": true, // true if alarm, otherwise false if alarm ended.
-    "alarm": {
-        "ipAddress": "192.168.1.25",
-        "ipv6Address": "",
-        "portNo": 80,
-        "protocol": "HTTP",
-        "macAddress": "9banana",
-        "channelID": 1,
-        "dateTime": "2012-01-13T03:58:19+01:00",
-        "activePostCount": 1,
-        "eventType": "cidEvent",
-        "eventState": "active",
-        "eventDescription": "CID event",
-        "CIDEvent": {
-            "code": 3103,
-            "standardCIDcode": 3130,
-            "type": "zoneAlarm",
-            "trigger": "2012-01-13T03:58:19+01:00",
-            "upload": "2012-01-13T03:58:19+01:00",
-            "CameraList": [],
-            "NVRList": [
-                {
-                    "id": 1,
-                    "ip": "192.168.1.32",
-                    "port": 8000,
-                    "channel": 1
-                }
-            ],
-            "zone": 1
-        }
-    }
-    "_msgid": "b07e50f6.86a72"
-}
-```
-
-**Output PIN 2 (connection error)**
-```javascript
-msg = {
-    "topic": "",
-    "errorDescription": "", // This will contain the error rescription, in case of errors.
-    "payload": false, // Or TRUE if error
-    "_msgid": "dd5b3622.884a78"
-}
-```
-<br/>
-<br/>
-
----
 
 ## RAW ALARM NODE
 The RAW alarm node reacts to every message sent. You can use this node when the other nodes doesn't fit your needs. It connects to ***NVR, Camera, Alarm system, Radars etc...*** and outputs the alarm received. <br/>

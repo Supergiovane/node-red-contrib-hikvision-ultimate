@@ -7,21 +7,180 @@ module.exports = function (RED) {
 		node.topic = config.topic || config.name;
 		node.server = RED.nodes.getNode(config.server)
 		node.reactto = (config.reactto === null || config.reactto === undefined) ? "vmd" : config.reactto.toLowerCase();// Rect to alarm coming from...
+		node.filterzone = config.filterzone || "0";// Rect to alarm coming from zone...
+		node.channelID = config.channelID || "0";// Rect to alarm coming from channelID...
+		node.currentAlarmMSG = {}; // Stores the current alarm object
+		node.total_alarmfilterduration = 0; // stores the total time an alarm has been true in the alarmfilterperiod time.
+		node.isNodeInAlarm = false; // Stores the current state of the filtered alarm.
+		node.isRunningTimerFilterPeriod = false; // Indicates wether the period timer is running;
+		node.alarmfilterduration = config.alarmfilterduration !== undefined ? config.alarmfilterduration : 0;
+		node.alarmfilterperiod = config.alarmfilterperiod !== undefined ? config.alarmfilterperiod : 0;
+		node.devicetype = config.devicetype !== undefined ? config.devicetype : 0;
+		if (node.devicetype == 0) node.alarmfilterduration = 0; // Normal events, set it to zero
 
 		node.setNodeStatus = ({ fill, shape, text }) => {
 			var dDate = new Date();
 			node.status({ fill: fill, shape: shape, text: text + " (" + dDate.getDate() + ", " + dDate.toLocaleTimeString() + ")" })
 		}
 
+		// 29/01/2021 start the timer that counts the time the alarm has been true
+		// ###################################
+		startTimerAlarmFilterDuration = () => {
+			node.timer_alarmfilterduration = setInterval(() => {
+				if (node.currentAlarmMSG.hasOwnProperty("payload")) {
+					if (node.currentAlarmMSG.payload === true) {
+						node.total_alarmfilterduration += 1;
+						if (node.isRunningTimerFilterPeriod) node.setNodeStatus({ fill: "red", shape: "ring", text: "Zone " + node.currentAlarmMSG.zone + " pre alert count " + node.total_alarmfilterduration });
+						if (node.total_alarmfilterduration >= node.alarmfilterduration) {
+							if (!node.isNodeInAlarm) {
+								// Emit alarm
+								if (node.timer_alarmfilterperiod !== null) clearTimeout(node.timer_alarmfilterperiod);
+								//node.setNodeStatus({ fill: "yellow", shape: "ring", text: "STOP TimerFilterPeriod" });
+								node.isRunningTimerFilterPeriod = false;
+								node.isNodeInAlarm = true;
+								node.total_alarmfilterduration = 0;
+								node.setNodeStatus({ fill: "red", shape: "dot", text: "Zone " + node.currentAlarmMSG.zone + " alarm" });
+								node.send([node.currentAlarmMSG, null]);
+							} else { node.total_alarmfilterduration = 0; }
+						}
+					}
+				}
+			}, 1000);
+		}
+		// 29/01/2021 This timer resets the node.total_alarmfilterduration
+		startTimerAlarmFilterPeriod = () => {
+			//node.setNodeStatus({ fill: "yellow", shape: "ring", text: "START TimerFilterPeriod" });
+			node.isRunningTimerFilterPeriod = true;
+			node.total_alarmfilterduration = 0;
+			node.timer_alarmfilterperiod = setTimeout(() => {
+				node.total_alarmfilterduration = 0;
+				//node.setNodeStatus({ fill: "yellow", shape: "ring", text: "ELAPSED TimerFilterPeriod" });
+				node.isRunningTimerFilterPeriod = false;
+			}, node.alarmfilterperiod * 1000);
+		}
+		if (node.alarmfilterduration !== 0) startTimerAlarmFilterDuration(); // If filter is enabled, start timer
+		// ###################################
+
+
+
 		// Called from config node, to send output to the flow
 		node.sendPayload = (_msg) => {
 			if (_msg === null || _msg === undefined) return;
 			_msg.topic = node.topic;
 			if (_msg.hasOwnProperty("errorDescription")) { node.send([null, _msg]); return; }; // It's a connection error/restore comunication.
+			if (!_msg.hasOwnProperty("payload")) return;
 
-			var sAlarmType = "";
-			var bAlarmStatus = false;
-			if (_msg.hasOwnProperty("payload")) {
+			var oRetMsg = {}; // Return message
+
+			// Check what alarm type must i search for.
+			// Security devices issue a CID alarm
+			//#region "CID"
+			// #################################
+			if ((node.devicetype == 1 || node.devicetype == 2)
+				&& _msg.payload.hasOwnProperty("CIDEvent")
+				&& _msg.payload.CIDEvent.type.toString().toLowerCase() === "zonealarm"
+				&& _msg.payload.CIDEvent.hasOwnProperty("zone")) {
+				oRetMsg.topic = _msg.topic;
+				oRetMsg.alarm = _msg.payload; // Put the full alarm description here.
+				oRetMsg.zone = _msg.payload.CIDEvent.zone + 1; // The zone on device's ISAPI is base 0, while the zone on UI is base 1.
+
+				// CID Alarm (node.reactto is CID:startAlarmCode-endAlarmCode)
+				let sAlarmCodeStart = node.reactto.split(":")[1].split("-")[0];
+				let sAlarmCodeEnd = node.reactto.split(":")[1].split("-")[1];
+
+				if (Number(node.filterzone) === 0 || Number(node.filterzone) === Number(oRetMsg.zone)) { // Filter only selcted zones
+					// Get the Hikvision alarm codes, that differs from standard SIA codes.
+					switch (_msg.payload.CIDEvent.code.toString().toLowerCase()) {
+						// Standard SIA Code is _msg.payload.CIDEvent.standardCIDcode
+						case sAlarmCodeStart:
+							// Starts alarm
+							oRetMsg.payload = true;
+							node.setNodeStatus({ fill: "red", shape: "ring", text: "Zone " + oRetMsg.zone + "  pre alert" });
+							break;
+						case sAlarmCodeEnd:
+							// End alarm.
+							oRetMsg.payload = false;
+							node.setNodeStatus({ fill: "green", shape: "dot", text: "Zone " + oRetMsg.zone + " normal" });
+							break;
+						default:
+							// Unknown CID code.
+							node.setNodeStatus({ fill: "grey", shape: "ring", text: "Zone " + oRetMsg.zone + " unknowk CID code " + _msg.payload.CIDEvent.code });
+							return; // Unknown state
+					}
+				}
+			}
+			// #################################
+			//#endregion
+
+
+			// Camera/NVR, no CID codes, just standard hikvision strings
+			//#region "STANDARD"
+			// #################################
+
+			// STANDARD MOTION EVENT
+			// {
+			// 	"topic": "",
+			// 	"payload": {
+			// 	  "$": {
+			// 		"version": "2.0",
+			// 		"xmlns": "http://www.isapi.org/ver20/XMLSchema"
+			// 	  },
+			// 	  "ipAddress": "192.168.1.32",
+			// 	  "portNo": "80",
+			// 	  "protocolType": "HTTP",
+			// 	  "macAddress": "58:03:fb:dc:94:d6",
+			// 	  "dynChannelID": "13",
+			// 	  "channelID": "13",
+			// 	  "dateTime": "2021-01-29T09:58:05+01:00",
+			// 	  "activePostCount": "38",
+			// 	  "eventType": "VMD",
+			// 	  "eventState": "active",
+			// 	  "eventDescription": "Motion alarm",
+			// 	  "channelName": "Viessmann"
+			// 	},
+			// 	"_msgid": "913ac479.52e768"
+			//   }
+
+			// SMART EVENT
+			// {
+			// 	"topic": "",
+			// 	"payload": {
+			// 	  "$": {
+			// 		"version": "2.0",
+			// 		"xmlns": "http://www.isapi.org/ver20/XMLSchema"
+			// 	  },
+			// 	  "ipAddress": "192.168.1.32",
+			// 	  "portNo": "80",
+			// 	  "protocolType": "HTTP",
+			// 	  "macAddress": "58:03:fb:dc:94:d6",
+			// 	  "dynChannelID": "13",
+			// 	  "channelID": "13",
+			// 	  "dateTime": "2021-01-29T10:26:44+01:00",
+			// 	  "activePostCount": "1",
+			// 	  "eventType": "fielddetection",
+			// 	  "eventState": "active",
+			// 	  "eventDescription": "fielddetection alarm",
+			// 	  "channelName": "Viessmann",
+			// 	  "DetectionRegionList": {
+			// 		"DetectionRegionEntry": {
+			// 		  "regionID": "0",
+			// 		  "RegionCoordinatesList": "\n",
+			// 		  "TargetRect": {
+			// 			"X": "0.000000",
+			// 			"Y": "0.000000",
+			// 			"width": "0.000000",
+			// 			"height": "0.000000"
+			// 		  }
+			// 		}
+			// 	  }
+			// 	},
+			// 	"_msgid": "853ba286.3a708"
+			//   }
+			
+			if (node.devicetype == 0) {
+				var sAlarmType = "";
+				var bAlarmStatus = false;
+
 				if (_msg.payload.hasOwnProperty("eventType")) {
 					// Check if it's only a hearbeat alarm
 					sAlarmType = _msg.payload.eventType.toString().toLowerCase();
@@ -30,31 +189,65 @@ module.exports = function (RED) {
 						return; // It's a Heartbeat
 					}
 				}
-				if (_msg.payload.hasOwnProperty("eventState")) {
-					bAlarmStatus = (_msg.payload.eventState.toString().toLowerCase() === "active" ? true : false);
-				} else {
-					// Mmmm.... no event state?
-					node.setNodeStatus({ fill: "red", shape: "ring", text: "Received alarm but no state!" });
-					return;
-				}
-				//console.log ("BANANA " + _msg.payload.eventState.toString().toLowerCase())
-				// check alarm filter
-				var aReactTo = node.reactto.split(","); // node.reactto can contain multiple names for the same event, depending from firmware
-				for (let index = 0; index < aReactTo.length; index++) {
-					const element = aReactTo[index];
-					if (element !== null && element !== undefined && element.trim() !== "" && sAlarmType === element) {
-						var oRetMsg = {}; // Return message
-						oRetMsg.payload = bAlarmStatus;
-						oRetMsg.topic = _msg.topic;
-						oRetMsg.channelid = (_msg.payload.hasOwnProperty("channelID") ? _msg.payload.channelID : "0");
-						oRetMsg.description = (_msg.payload.hasOwnProperty("eventDescription") ? _msg.payload.eventDescription : "");
-						node.send([oRetMsg, null]);
-						node.setNodeStatus({ fill: "green", shape: "dot", text: "Alarm " + (bAlarmStatus === true ? "start" : "end") });
-						return; // Find first occurrence, exit.
 
+				// Filter channel
+				let sChannelID = (_msg.payload.hasOwnProperty("channelID") ? _msg.payload.channelID : "0")
+
+				// Filter regionID (Zone)
+				let iRegionID = 0;
+				if (_msg.payload.hasOwnProperty("DetectionRegionList") && _msg.payload.DetectionRegionList.hasOwnProperty("DetectionRegionEntry") && _msg.payload.DetectionRegionList.DetectionRegionEntry.hasOwnProperty("regionID")) iRegionID = Number(_msg.payload.DetectionRegionList.DetectionRegionEntry.regionID) + 1;
+
+				if (Number(node.channelID) === 0 || Number(node.channelID) === Number(sChannelID)) {  // Filter only selcted channel
+
+					if (Number(node.filterzone) === 0 || Number(node.filterzone) === iRegionID) {  // Filter only selcted regionID (zone)
+
+						if (_msg.payload.hasOwnProperty("eventState")) {
+							bAlarmStatus = (_msg.payload.eventState.toString().toLowerCase() === "active" ? true : false);
+						} else {
+							// Mmmm.... no event state?
+							node.setNodeStatus({ fill: "red", shape: "ring", text: "Received alarm but no state!" });
+							return;
+						}
+
+						// check alarm filter
+						var aReactTo = node.reactto.split(","); // node.reactto can contain multiple names for the same event, depending from firmware
+						for (let index = 0; index < aReactTo.length; index++) {
+							const element = aReactTo[index];
+							if (element !== null && element !== undefined && element.trim() !== "" && sAlarmType === element) {
+								oRetMsg.payload = bAlarmStatus;
+								oRetMsg.topic = _msg.topic;
+								oRetMsg.channelid = sChannelID; // Channel ID (in case of NVR)
+								oRetMsg.zone = iRegionID; // Zone
+								oRetMsg.description = (_msg.payload.hasOwnProperty("eventDescription") ? _msg.payload.eventDescription : "");
+								break; // Find first occurrence, exit.
+							}
+						}
 					}
 				}
 			}
+			// #################################
+			//#endregion
+
+			// 29/01/2020 check wether the filter is enabled or not
+			if (oRetMsg.hasOwnProperty("payload")) {
+				if (node.alarmfilterduration == 0) {
+					node.send([oRetMsg, null]);
+				} else {
+					// Sends the false only in case the isNodeInAlarm is true.
+					node.currentAlarmMSG = oRetMsg;
+					if (oRetMsg.payload === false && node.isNodeInAlarm) {
+						node.send([oRetMsg, null]);
+						node.currentAlarmMSG = {};
+						node.isNodeInAlarm = false;
+					} else if (oRetMsg.payload === true && !node.isNodeInAlarm) {
+						if (!node.isRunningTimerFilterPeriod) {
+							startTimerAlarmFilterPeriod();
+						}
+					}
+				}
+			}
+
+
 		}
 
 		// On each deploy, unsubscribe+resubscribe
@@ -68,6 +261,11 @@ module.exports = function (RED) {
 		});
 
 		node.on("close", function (done) {
+			if (node.server) {
+				node.server.removeClient(node);
+			}
+			if (node.timer_alarmfilterduration !== null) clearInterval(node.timer_alarmfilterduration);
+			if (node.timer_alarmfilterperiod !== null) clearTimeout(node.timer_alarmfilterperiod);
 			if (node.server) {
 				node.server.removeClient(node);
 			}
