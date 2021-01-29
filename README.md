@@ -162,7 +162,6 @@ msg = {
 ---
 
 ## PTZ NODE
-This node works with Hikvision PTZ cameras.<br/>
 Just select the preset in the configuration window and recall it by passing ***true*** as payload.<br/>
 
 <img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/PTZ.png' width="80%">
@@ -260,6 +259,38 @@ msg = {
 
 ---
 
+## TEXT OVERLAY NODE
+You can set the camera's text overlay.<br/>
+There are 4 rows avaiable, to be set from the configuration window or dinamically via msg input from flow.<br/>
+
+<img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/Text.png' width="80%">
+
+**Flow Messages**
+
+The node accepts only an input. Pass anything you like to set the text overlay.</br>
+You can override the texts by passing some msg inputs. See the sample below</br>
+
+**Input**
+```javascript
+// Override one or more rows
+// You can use from row1 to row4 to set the text
+// and from row1XY to row4XY to set the position in the format x,y (for example: 100,200)
+
+// Row 1
+msg.row1="Temperature: " + msg.payload;
+msg.row1XY="100,200";
+
+// Row 2 (here we leave the position previosly set via the camera menu)
+msg.row2="Sun";
+
+return msg;
+```
+
+
+<br/>
+<br/>
+
+---
 
 ## RAW ALARM NODE
 The RAW alarm node reacts to every message sent. You can use this node when the other nodes doesn't fit your needs. It connects to ***NVR, Camera, Alarm system, Radars etc...*** and outputs the alarm received. <br/>

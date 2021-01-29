@@ -31,7 +31,7 @@
         "nodes": {
             "Hikvision-config": "nodes/Hikvision-config.js",
             "ANPR-config": "nodes/ANPR-config.js",
-            "hikvisionUltimateRadar": "nodes/hikvisionUltimateRadar.js",
+            "hikvisionUltimateText": "nodes/hikvisionUltimateText.js",
             "hikvisionUltimateAlarm": "nodes/hikvisionUltimateAlarm.js",
             "hikvisionUltimateAlarmRaw": "nodes/hikvisionUltimateAlarmRaw.js",
             "hikvisionUltimateANPR": "nodes/hikvisionUltimateANPR.js",

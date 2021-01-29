@@ -6,7 +6,7 @@
 <p>
 <b>Version 1.0.28</b> January 2021<br/>
 - BREAKING CHANGE: the Radar node is now part of the Alarm node. The Radar node has been deleted.<br/>
-- NEW: the Alarm node can now filter for channels and zones as well.<br/>
+- NEW: the Alarm node can now filter for channels and zones as well. SOME ADJUSTMENT TO YOUR FLOW MAY BE NEEDED.<br/>
 </p>
 <p>
 <b>Version 1.0.27</b> January 2021<br/>

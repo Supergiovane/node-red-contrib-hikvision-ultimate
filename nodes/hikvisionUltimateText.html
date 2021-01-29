@@ -1,0 +1,106 @@
+<script type="text/javascript">
+	RED.nodes.registerType('hikvisionUltimateText', {
+		category: 'Hikvision Ultimate',
+		color: '#C0C0C0',
+		defaults: {
+			name: { value: "" },
+			server: { type: "Hikvision-config", required: true },
+			row1: { value: "" },
+			row1XY: { value: "" },
+			row2: { value: "" },
+			row2XY: { value: "" },
+			row3: { value: "" },
+			row3XY: { value: "" },
+			row4: { value: "" },
+			row5XY: { value: "" }
+			
+		},
+		inputs: 1,
+		outputs: 0,
+		outputLabels: function (i) {
+			var ret = "";
+			switch (i) {
+				case 0:
+					return "Payload";
+					break;
+				case 1:
+					return "Error";
+					break;
+				default:
+					break;
+			}
+		},
+		icon: "font-awesome/fa-pencil-square-o",
+		label:
+			function () {
+				var label = "hikvisionUltimateText"
+				if (this.name !== undefined && this.name.length > 0) {
+					label = this.name;
+				}
+				return label;
+			},
+		paletteLabel: function () {
+			return "Text";
+		},
+		oneditprepare: function () {
+
+			var node = this;
+		},
+		oneditsave: function () {
+
+		}
+	});
+
+
+</script>
+
+<script type="text/x-red" data-template-name="hikvisionUltimateText">
+	<div class="form-row">
+		<b>Text overlay node</b>&nbsp&nbsp&nbsp&nbsp<span style="color:red"><i class="fa fa-question-circle"></i>&nbsp<a target="_blank" href="https://github.com/Supergiovane/node-red-contrib-hikvision-ultimate"><u>Help online</u></a></span>
+        <br/>
+		<br/>
+
+		<label for="node-input-server">Camera</label>
+		<input type="text" id="node-input-server" />
+	</div>
+	<div class="form-row">
+        <label for="node-input-name"><i class="icon-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+	<div class="form-row">
+        <label for="node-input-row1"><i class="fa fa-tasks"></i> Row 1</label>
+        <input type="text" id="node-input-row1" placeholder="No text" style="width:260px">
+		<input type="text" id="node-input-row1XY" placeholder="X,Y" style="width:80px">
+	</div>
+	<div class="form-row">
+        <label for="node-input-row2"><i class="fa fa-tasks"></i> Row 2</label>
+        <input type="text" id="node-input-row2" placeholder="No text" style="width:260px">
+		<input type="text" id="node-input-row2XY" placeholder="X,Y" style="width:80px">
+	</div>
+	<div class="form-row">
+        <label for="node-input-row3"><i class="fa fa-tasks"></i> Row 3</label>
+        <input type="text" id="node-input-row3" placeholder="No text" style="width:260px">
+		<input type="text" id="node-input-row3XY" placeholder="X,Y" style="width:80px">
+	</div>
+	<div class="form-row">
+        <label for="node-input-row4"><i class="fa fa-tasks"></i> Row 4</label>
+        <input type="text" id="node-input-row4" placeholder="No text" style="width:260px">
+		<input type="text" id="node-input-row4XY" placeholder="X,Y" style="width:80px">
+	</div>
+	<div class="form-tips" style="margin-top:11px">
+		Above options: Set the text (you have 4 rows). You can specify position using the textbox near the text, as x,y (for example: 100,200)
+	</div>	
+
+
+</script>
+
+<script type="text/x-red" data-help-name="hikvisionUltimateText">
+	<p>
+        <a href="https://www.paypal.me/techtoday" target="_blank"><img src='https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square' width='30%'></a>
+        
+	</p>
+	<p>
+		The node sets a text overlay. You can override those text by msg input from flow. See the README on gitHub.
+	</p>
+	
+</script>
