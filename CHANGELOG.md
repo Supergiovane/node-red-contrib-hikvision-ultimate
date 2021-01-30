@@ -4,6 +4,10 @@
 [![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square)](https://www.paypal.me/techtoday) 
 
 <p>
+<b>Version 1.0.29</b> January 2021<br/>
+- Text overlay node: you can now use it with NVR. Channel selection is also avaiable now.<br/>
+</p>
+<p>
 <b>Version 1.0.28</b> January 2021<br/>
 - BREAKING CHANGE: the Radar node is now part of the Alarm node. The Radar node has been deleted.<br/>
 - NEW: the Alarm node can now filter for channels and zones as well. SOME ADJUSTMENT TO YOUR FLOW MAY BE NEEDED.<br/>

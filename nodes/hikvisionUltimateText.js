@@ -13,6 +13,7 @@ module.exports = function (RED) {
 		node.row3XY = config.row3XY === undefined ? "" : config.row3XY;
 		node.row4 = config.row4 === undefined ? "" : config.row4;
 		node.row4XY = config.row4XY === undefined ? "" : config.row4XY;
+		node.channelID = config.channelID === undefined ? "1" : config.channelID;
 
 
 		node.setNodeStatus = ({ fill, shape, text }) => {
@@ -33,12 +34,10 @@ module.exports = function (RED) {
 			if (msg.hasOwnProperty("row3XY")) node.row3XY = msg.row3XY;
 			if (msg.hasOwnProperty("row4")) node.row4 = msg.row4;
 			if (msg.hasOwnProperty("row4XY")) node.row4XY = msg.row4XY;
-
+			if (msg.hasOwnProperty("channelid")) node.channelID = msg.channelid;
 
 			let sRows = `<?xml version="1.0" encoding="UTF-8" ?>
-<VideoOverlay version="1.0" xmlns="http://www.hikvision.com/ver20/XMLSchema">
-<fontSize>1</fontSize>
-<TextOverlayList size="6">
+<TextOverlayList version="2.0" xmlns="http://www.isapi.org/ver20/XMLSchema">
 
 <TextOverlay version="1.0" xmlns="http://www.hikvision.com/ver20/XMLSchema">
 <id>1</id>
@@ -72,24 +71,26 @@ module.exports = function (RED) {
 <displayText>` + node.row4 + `</displayText>
 </TextOverlay>
 
-</TextOverlayList>
-</VideoOverlay>`;
+</TextOverlayList>`;
 
 
 
 			node.setNodeStatus({ fill: "green", shape: "ring", text: "OK" });
 			try {
 				// Params: _callerNode, _method, _URL, _body
-				node.server.request(node, "PUT", "/ISAPI/System/Video/inputs/channels/1/overlays/text", sRows);
+				node.server.request(node, "PUT", "/ISAPI/System/Video/inputs/channels/" + node.channelID + "/overlays/text", sRows);
 			} catch (error) {
-
+				// Try this, maybe the device is an old Turbo DVR
+				try {
+					node.server.request(node, "PUT", "/ISAPI/System/Video/inputs/channels/" + node.channelID + "/overlays", sRows);
+				} catch (error) { }
 			}
 
 		});
 
 		// Called from config node, to send output to the flow
 		node.sendPayload = (_msg) => {
-
+			
 		};
 
 
