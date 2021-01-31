@@ -47,6 +47,7 @@ module.exports = (RED) => {
 
         // Function to get the plate list from the camera
         async function getPlates(_lastPicName) {
+           
             if (_lastPicName == undefined || _lastPicName == null || _lastPicName == "") return null;
 
             var client;
@@ -171,49 +172,92 @@ module.exports = (RED) => {
 
         };
 
+        // 30/01/2021 From a list of plates, returns the most recent picname
+        async function returnMostRecentPicnameFromList(_PlatesObject) {
+
+            // Sets the default to be returned in case of error
+            let d = new Date();
+            let sRet = (d.getFullYear() + ("0" + (d.getMonth() + 1)).slice(-2) + ("0" + d.getDate()).slice(-2) + ("0" + d.getHours()).slice(-2) + ("0" + d.getMinutes()).slice(-2) + ("0" + d.getSeconds()).slice(-2) + "0000").toString();
+
+            // Is there plates? 
+            if (!_PlatesObject.Plates.hasOwnProperty("Plate")) {
+                // No plate list
+                // No previously plates found, set a default datetime
+                node.setAllClientsStatus({ fill: "grey", shape: "ring", text: "No previously plates found." });
+                return sRet;
+            };
+
+            if (Array.isArray(_PlatesObject.Plates.Plate) && _PlatesObject.Plates.Plate.length > 0) {
+
+                // 31/01/2021 reliability check: oggi ho scoperto che al passaggio di una macchina, la telecamera la registrato
+                // il passaggio e mi ha aggiunto come ultimo item, anche il primo item della sua lista (quindi duplicandolo, uguale uguale), quindi
+                // con stessa targa, stesso orario vecchio, ecc..
+                // Ovviamente il picname è diventato quello vecchio lì, quindi, visto che appena 2 targhe prima c'era la mia, mi ha aperto il cancello
+                // Pick up the last plate by the most recent datetime instead of by the last item in the list (format 202001010101010000)
+                node.setAllClientsStatus({ fill: "grey", shape: "ring", text: "Found " + _PlatesObject.Plates.Plate.length + " old plates." });
+                  
+                try {
+                    let nMostRecent = 0;
+                    let nCurPicName = 0;
+                    for (let index = 0; index < _PlatesObject.Plates.Plate.length; index++) {
+                        const element = _PlatesObject.Plates.Plate[index];
+                        if (node.debug) RED.log.info("BANANA nMostRecent:" + nMostRecent + " nCurPicName:" + nCurPicName);
+                        try {
+                            nCurPicName = Number(element.picName);
+                            if (nCurPicName > nMostRecent) nMostRecent = nCurPicName;
+                        } catch (error) {
+                        }
+                    }
+                    sRet = nMostRecent.toString();
+                } catch (error) {
+                    // Error, return default current datetime
+                    sRet = (d.getFullYear() + ("0" + (d.getMonth() + 1)).slice(-2) + ("0" + d.getDate()).slice(-2) + ("0" + d.getHours()).slice(-2) + ("0" + d.getMinutes()).slice(-2) + ("0" + d.getSeconds()).slice(-2) + "0000").toString();
+                }
+            } else {
+                // It's a single plate
+                try {
+                    sRet = _PlatesObject.Plates.Plate.picName;
+                    node.setAllClientsStatus({ fill: "grey", shape: "ring", text: "Found 1 ignored plates. It's " + sRet });
+                } catch (error) {
+                    // Some sort of error, set the lastpicname with the current dateteim
+                    sRet = (d.getFullYear() + ("0" + (d.getMonth() + 1)).slice(-2) + ("0" + d.getDate()).slice(-2) + ("0" + d.getHours()).slice(-2) + ("0" + d.getMinutes()).slice(-2) + ("0" + d.getSeconds()).slice(-2) + "0000").toString();
+                    node.setAllClientsStatus({ fill: "red", shape: "ring", text: "Error in initplates. Set lastPicName to " + sRet });
+                    RED.log.error("Hikvision-Ultimate: ANPR-config: initPlateReader: Error in initplates. Set lastPicName to " + sRet + ". " + error.message);
+                }
+            }
+            return sRet;
+        }
 
         // At start, reads the last recognized plate and starts listening from the time last plate was recognized.
         // This avoid output all the previoulsy plate list, stored by the camera.
         node.initPlateReader = () => {
 
-            // console.log("BANANA INITPLATEREADER");
-            //node.setAllClientsStatus({ fill: "grey", shape: "ring", text: "Getting prev list to be ignored..." });
             (async () => {
-                var oPlates = await getPlates("202001010101010000");
+
+                var oPlates = null;
+                try {
+                    // Get current time in format 202101301301320000
+                    oPlates = await getPlates("202001301301320000");
+                } catch (error) {
+                    oPlates = null;
+                }
+                
                 if (oPlates === null) {
                     setTimeout(node.initPlateReader, 10000); // Restart initPlateReader
                 } else {
                     // console.log("BANANA STRIGONE " + JSON.stringify(oPlates))
-                    if (oPlates.Plates.hasOwnProperty("Plate")) {
-                        // Check wether is an array of plates or a single plate
-                        if (Array.isArray(oPlates.Plates.Plate) && oPlates.Plates.Plate.length > 0) {
-                            try {
-                                node.lastPicName = oPlates.Plates.Plate[oPlates.Plates.Plate.length - 1].picName;
-                                // console.log("BANANA PLATES IGNORATE MULTIPLE: " + oPlates.Plates.Plate.length + " ignored plates. Last was " + node.lastPicName);
-                                node.setAllClientsStatus({ fill: "grey", shape: "ring", text: "Found " + oPlates.Plates.Plate.length + " ignored plates. Last was " + node.lastPicName });
-                            } catch (error) {
-                                // console.log("BANANA Error oPlates.Plates.Plate[oPlates.Plates.Plate.length - 1]: " + error);
-                                setTimeout(node.initPlateReader, 10000); // Restart initPlateReader
-                                return;
-                            }
-                        } else {
-                            // It's a single plate
-                            node.lastPicName = oPlates.Plates.Plate.picName;
-                            //console.log("BANANA SINGOLA PLATE IGNORATA: it's " + node.lastPicName);
-                            node.setAllClientsStatus({ fill: "grey", shape: "ring", text: "Found 1 ignored plates. It's " + node.lastPicName });
-                        }
-                    } else {
-                        // No previously plates found, set a default datetime
-                        node.setAllClientsStatus({ fill: "grey", shape: "ring", text: "No previously plates found." });
-                        node.lastPicName = "202001010101010000";
+                    try {
+                        node.lastPicName = await returnMostRecentPicnameFromList(oPlates);
+                        //console.log("lastPicName:" + node.lastPicName);
+                    } catch (error) {
+                        setTimeout(node.initPlateReader, 10000); // Restart initPlateReader
+                        return;
                     }
                     setTimeout(() => node.setAllClientsStatus({ fill: "green", shape: "ring", text: "Waiting for vehicle..." }), 2000);
                     setTimeout(node.queryForPlates, 2000); // Start main polling thread
                 }
             })();
         };
-
-
 
         node.queryForPlates = () => {
             // console.log("BANANA queryForPlates");
@@ -229,7 +273,13 @@ module.exports = (RED) => {
                 setTimeout(node.initPlateReader, 10000); // Restart whole process.
             } else {
                 (async () => {
-                    var oPlates = await getPlates(node.lastPicName);
+                    var oPlates = null;
+                    try {
+                        oPlates = await getPlates(node.lastPicName);
+                    } catch (error) {
+                        oPlates = null;
+                    }
+
                     if (oPlates === null) {
                         // An error was occurred.
                         setTimeout(node.initPlateReader, 10000); // Restart initPlateReader from scratch
@@ -243,15 +293,23 @@ module.exports = (RED) => {
                                         oClient.sendPayload({ topic: oClient.topic || "", plate: oPlate, payload: oPlate.plateNumber, connected: true });
                                     })
                                 })
-                                // Set the last plate found, to avoid repeating.
-                                node.lastPicName = oPlates.Plates.Plate[oPlates.Plates.Plate.length - 1].picName;
+                                // Set the picname of the most recent plate in this filtered list
+                                node.lastPicName = await returnMostRecentPicnameFromList(oPlates);
                             } else {
                                 // It's a single plate
-                                node.lastPicName = oPlates.Plates.Plate.picName;
-                                var oPlate = oPlates.Plates.Plate;
-                                node.nodeClients.forEach(oClient => {
-                                    oClient.sendPayload({ topic: oClient.topic || "", plate: oPlate, payload: oPlate.plateNumber, connected: true });
-                                })
+                                try {
+                                    node.lastPicName = oPlates.Plates.Plate.picName;
+                                    var oPlate = oPlates.Plates.Plate;
+                                    node.nodeClients.forEach(oClient => {
+                                        oClient.sendPayload({ topic: oClient.topic || "", plate: oPlate, payload: oPlate.plateNumber, connected: true });
+                                    })
+                                } catch (error) {
+                                    let d = new Date();
+                                    let sRet = (d.getFullYear() + ("0" + (d.getMonth() + 1)).slice(-2) + ("0" + d.getDate()).slice(-2) + ("0" + d.getHours()).slice(-2) + ("0" + d.getMinutes()).slice(-2) + ("0" + d.getSeconds()).slice(-2) + "0000").toString();
+                                    node.lastPicName = sRet;
+                                    RED.log.error("Hikvision-Ultimate: ANPR-config: queryForPlates: Error in It's a single plate. Set lastPicName to " + node.lastPicName + ". " + error.message);
+                                }
+
                                 //console.log("BANANA SINGOLA PLATE: " + oPlate.plateNumber);
                             }
                         } else {

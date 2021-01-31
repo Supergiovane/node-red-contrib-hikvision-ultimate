@@ -331,6 +331,48 @@ return msg;
 
 ---
 
+## XML NODE
+This node allow you to send any XML you want to your devices.<br/>
+Every device has own firmware, capabilities etc. so i decided to allow you to cover all your needs by adding this universal node.<br/>
+Please read the ISAPI Hikvision documentation or dig into the Internet to learn what XML you can send. The limit is only your fantasy.<br/>
+
+<img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/XML.png' width="80%">
+
+**Copy this code and paste it into your flow**
+
+<details><summary>View code</summary>
+
+> Adjust the nodes according to your setup
+
+<code>
+[{"id":"3aa8a40f.9a0964","type":"inject","z":"3f22f0c6.ff1328","name":"Go","props":[{"p":"payload"},{"p":"topic","vt":"str"}],"repeat":"","crontab":"","once":false,"onceDelay":0.1,"topic":"","payload":"","payloadType":"date","x":170,"y":120,"wires":[["49fbbee3.1cc7e"]]},{"id":"2b4d9297.75ee46","type":"comment","z":"3f22f0c6.ff1328","name":"Send your own XML","info":"","x":190,"y":80,"wires":[]},{"id":"49fbbee3.1cc7e","type":"hikvisionUltimateXML","z":"3f22f0c6.ff1328","name":"XML","server":"fb0c2de0.8a3da","XML":"<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<VideoOverlay version=\"1.0\" xmlns=\"http://www.hikvision.com/ver20/XMLSchema\">\n<fontSize>1</fontSize>\n<TextOverlayList size=\"6\">\n\n<TextOverlay version=\"1.0\" xmlns=\"http://www.hikvision.com/ver20/XMLSchema\">\n<id>1</id>\n<enabled>true</enabled>\n<positionX>464</positionX>\n<positionY>96</positionY>\n<displayText>HELLO WORLD</displayText>\n</TextOverlay>\n\n\n\n</TextOverlayList>\n</VideoOverlay>","path":"/ISAPI/System/Video/inputs/channels/1/overlays/text","method":"PUT","x":470,"y":120,"wires":[]},{"id":"fb0c2de0.8a3da","type":"Hikvision-config","host":"192.168.1.25","port":"80","name":"Radar Est","authentication":"digest","protocol":"http","heartbeattimerdisconnectionlimit":"1","deviceinfo":"{\"DeviceInfo\":{\"$\":{\"version\":\"1.0\",\"xmlns\":\"http://www.hikvision.com/ver20/XMLSchema\"},\"deviceName\":\"Net Module\",\"deviceID\":\"48443138-3031-3233-3932-988b0a858e51\",\"model\":\"DS-PR1-60\",\"serialNumber\":\"DS-PR1-6020190509AARRD18012392\",\"macAddress\":\"98:8b:0a:85:8e:51\",\"firmwareVersion\":\"V1.0.2\",\"firmwareReleasedDate\":\"build 191222\",\"hardwareVersion\":\"0x1001\",\"encoderVersion\":\"V5.0\",\"encoderReleasedDate\":\"build 000000\",\"deviceType\":\"Radar\",\"telecontrolID\":\"255\",\"localZoneNum\":\"8\",\"alarmOutNum\":\"4\",\"distanceResolution\":\"5.00\",\"detectDistance\":\"60.00\"}}"}]
+</code>
+</details>
+<br/>
+<br/>
+
+**Flow Messages**
+
+You can override all properties configured in the node, by passing some msg inputs. See samples below</br>
+
+**Input**
+```javascript
+// Send your own XML to the device
+// You can override the default config, with all these optional properties
+// msg.method must be PUT, POST or GET (all uppercase)
+
+msg.XML = ``; // Here goes your XML. These strange chars after the = allow you to do multiline text
+msg.path = ""; // For example /ISAPI/System/Video/inputs/channels/1/overlays
+msg.method = "PUT"; // This must be PUT, POST or GET (uppercase)
+
+return msg;
+```
+
+<br/>
+<br/>
+
+---
+
 ## RAW ALARM NODE
 The RAW alarm node reacts to every message sent by the device. You can use this node when the other nodes doesn't fit your needs. It connects to ***NVR, Camera, Alarm system, Radars etc...*** and outputs the alarm received. <br/>
 

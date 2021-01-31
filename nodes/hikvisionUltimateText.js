@@ -74,7 +74,6 @@ module.exports = function (RED) {
 </TextOverlayList>`;
 
 
-
 			node.setNodeStatus({ fill: "green", shape: "ring", text: "OK" });
 			try {
 				// Params: _callerNode, _method, _URL, _body

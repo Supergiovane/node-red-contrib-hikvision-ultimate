@@ -1,0 +1,108 @@
+<script type="text/javascript">
+	RED.nodes.registerType('hikvisionUltimateXML', {
+		category: 'Hikvision Ultimate',
+		color: '#C0C0C0',
+		defaults: {
+			name: { value: "" },
+			server: { type: "Hikvision-config", required: true },
+			XML: { value: "" },
+			path: { value: "" },
+			method: { value: "PUT" }
+		},
+		inputs: 1,
+		outputs: 0,
+		outputLabels: function (i) {
+			var ret = "";
+			switch (i) {
+				case 0:
+					return "Payload";
+					break;
+				case 1:
+					return "Error";
+					break;
+				default:
+					break;
+			}
+		},
+		icon: "function.svg",
+		label:
+			function () {
+				var label = "hikvisionUltimateXML"
+				if (this.name !== undefined && this.name.length > 0) {
+					label = this.name;
+				}
+				return label;
+			},
+		paletteLabel: function () {
+			return "XML";
+		},
+		oneditprepare: function () {
+			var node = this;
+			node.editor = RED.editor.createEditor({
+				id: 'node-input-XML',
+				mode: 'ace/mode/xml',
+				value: node.XML
+			});
+		},
+		oneditsave: function () {
+			var node = this;
+			node.XML = node.editor.getValue();
+			node.editor.destroy();
+			delete node.editor;
+		},
+		oneditcancel: function () {
+			var node = this;
+			node.editor.destroy();
+			delete node.editor;
+		},
+	});
+
+
+</script>
+
+<script type="text/x-red" data-template-name="hikvisionUltimateXML">
+	<div class="form-row">
+		<b>XML node</b>&nbsp&nbsp&nbsp&nbsp<span style="color:red"><i class="fa fa-question-circle"></i>&nbsp<a target="_blank" href="https://github.com/Supergiovane/node-red-contrib-hikvision-ultimate"><u>Help online</u></a></span>
+        <br/>
+		<br/>
+
+		<label for="node-input-server">Server</label>
+		<input type="text" id="node-input-server" />
+	</div>
+	<div class="form-row">
+        <label for="node-input-name"><i class="icon-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+	<div class="form-row">
+        <label for="node-input-method"><i class="fa fa-tasks"></i> Channel</label>
+		<select id="node-input-method">
+			<option value="PUT">PUT (Default)</option>
+			<option value="POST">POST</option>
+			<option value="GET">GET</option>
+		</select>
+	</div>
+	<div class="form-row">
+        <label for="node-input-path"><i class="fa fa-tasks"></i> Path</label>
+        <input type="text" id="node-input-path" placeholder="Sample: /ISAPI/System/Video/inputs/channels/1/overlays/text">
+	</div>
+	<div class="form-row">
+        <label for="node-input-XML"><i class="fa fa-tasks"></i> XML</label>
+        <div style="height: 250px; min-height:150px;" class="node-text-editor" id="node-input-XML"></div>
+	</div>
+	<div class="form-tips" style="margin-top:11px">
+		Above options: you can send RAW XML text to a device. Please read the ISAPI Hikvision documentation or search in the Internet, to learn what to write with these fields.
+	</div>	
+
+
+</script>
+
+<script type="text/x-red" data-help-name="hikvisionUltimateXML">
+	<p>
+        <a href="https://www.paypal.me/techtoday" target="_blank"><img src='https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square' width='30%'></a>
+        
+	</p>
+	<p>
+		The node sets a text overlay. You can override those text by msg input from flow. See the README on gitHub.
+	</p>
+	
+</script>
