@@ -6,6 +6,7 @@
 <p>
 <b>Version 1.0.30</b> January 2021<br/>
 - Nasty ANPR camera fix: it has happened to me, that the cam's plate list had some odd item order. This caused me some problem. The ANPR node has been changed to overcome any sort of oddness in the camera plate list returnet by the camera itself.<br/>
+- NEW: XML Node. You can now send what you want to your device. See the README in gitHub.<br/>
 </p>
 <p>
 <b>Version 1.0.29</b> January 2021<br/>
