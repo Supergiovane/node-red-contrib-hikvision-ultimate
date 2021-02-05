@@ -12,7 +12,7 @@ module.exports = function (RED) {
 		node.picture; // Stores the cam image
 		node.pictureLarghezza = 0;
 		node.pictureAltezza = 0;
-		node.textoverlay = (config.textoverlay === null || config.textoverlay === undefined || config.textoverlay.trim() === "") ? "" : config.textoverlay;
+		//node.textoverlay = config.textoverlay === undefined  ? "" : config.textoverlay;
 
 		node.setNodeStatus = ({ fill, shape, text }) => {
 			var dDate = new Date();
@@ -28,7 +28,7 @@ module.exports = function (RED) {
 			node.heightimage = (_config.heightimage === null || _config.heightimage === undefined || _config.heightimage.trim() === "") ? "0" : _config.heightimage;
 			node.cropimage = (_config.cropimage === null || _config.cropimage === undefined || _config.cropimage.trim() === "") ? "" : _config.cropimage;
 			// 27/01/2021 Fonts
-			//node.textoverlay = (_config.textoverlay === null || _config.textoverlay === undefined || _config.textoverlay.trim() === "") ? "" : _config.textoverlay;
+			node.textoverlay = (_config.textoverlay === null || _config.textoverlay === undefined || _config.textoverlay.trim() === "") ? "" : _config.textoverlay;
 			node.textoverlayXY = (_config.textoverlayXY === null || _config.textoverlayXY === undefined || _config.textoverlayXY.trim() === "") ? "0,0" : _config.textoverlayXY;
 			node.textoverlayWH = (_config.textoverlayWH === null || _config.textoverlayWH === undefined || _config.textoverlayWH.trim() === "") ? "" : _config.textoverlayWH;
 			node.textoverlayFont = (_config.textoverlayFont === null || _config.textoverlayFont === undefined || _config.textoverlayFont.trim() === "") ? "FONT_SANS_32_WHITE" : _config.textoverlayFont;
@@ -168,25 +168,35 @@ module.exports = function (RED) {
 				// 27/01/2021 FONTS
 				if (node.textoverlay !== "") {
 					const oFont = jimp[node.textoverlayFont];
-					const font = await jimp.loadFont(oFont);
-					if (node.textoverlayWH === "") {
-						image = await image.print(font, node.textoverlayXY.x, node.textoverlayXY.y, {
-							text: node.textoverlay,
-							alignmentX: jimp.HORIZONTAL_ALIGN_LEFT,
-							alignmentY: jimp.VERTICAL_ALIGN_TOP
-						});
-					} else {
-						image = await image.print(font, node.textoverlayXY.x, node.textoverlayXY.y, {
-							text: node.textoverlay,
-							alignmentX: jimp.HORIZONTAL_ALIGN_LEFT,
-							alignmentY: jimp.VERTICAL_ALIGN_TOP
-						}, node.textoverlayWH.w, node.textoverlayWH.h);
+					try {
+						const font = await jimp.loadFont(oFont);
+						if (node.textoverlayWH === "") {
+							image = await image.print(font, node.textoverlayXY.x, node.textoverlayXY.y, {
+								text: node.textoverlay,
+								alignmentX: jimp.HORIZONTAL_ALIGN_LEFT,
+								alignmentY: jimp.VERTICAL_ALIGN_TOP
+							});
+						} else {
+							image = await image.print(font, node.textoverlayXY.x, node.textoverlayXY.y, {
+								text: node.textoverlay,
+								alignmentX: jimp.HORIZONTAL_ALIGN_LEFT,
+								alignmentY: jimp.VERTICAL_ALIGN_TOP
+							}, node.textoverlayWH.w, node.textoverlayWH.h);
+						}
+					} catch (error) {
+
 					}
+
 				}
 
 				let picture = await image.getBufferAsync(jimp.MIME_JPEG);
-				node.picture = "data:image/jpg;base64," + picture.toString("base64");
-				return (node.picture);
+				let b64 = picture.toString("base64");
+				node.picture = "data:image/jpg;base64," + b64;
+				// Return various type of picture formats
+				return ({
+					forUI: node.picture, forEmail: picture, base64: b64
+				});
+
 			} catch (error) {
 				return (error);
 			}
@@ -212,7 +222,9 @@ module.exports = function (RED) {
 			};
 
 			getPicture(_msg.payload).then(data => {
-				_msg.payload = data;
+				_msg.payload = data.forUI;
+				_msg.forEmail = data.forEmail;
+				_msg.base64 = data.base64;
 				node.send(_msg, null);
 				node.setNodeStatus({ fill: "green", shape: "dot", text: "Picture received" });
 			}).catch(error => {

@@ -211,20 +211,33 @@ You can, for example, link the ***Alarm node*** to the ***Picture node*** to get
 
 <img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/picture.png' width="80%">
 
-The ***Template*** node in this example, contains this code:
-```javascript
-<img src="{{payload}}"/>
-```
-The ***Dashboard*** node in this example, is a **UI_TEMPLATE** and contains this code:
-```javascript
-<div ng-bind-html="msg.payload"></div>
-```
+<br/>
+<br/>
 
-<img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/pictureproperties.png' width="40%">
+**Copy this code and paste it into your flow**
+
+<details><summary>View code</summary>
+
+> Adjust the nodes according to your setup
+
+<code>
+[{"id":"604a8eaf.6d4ac","type":"change","z":"d61f370f.0413c","name":"Setup msg","rules":[{"t":"set","p":"cid","pt":"msg","to":"","tot":"date"},{"t":"set","p":"attachments","pt":"msg","to":"[{\t    \"filename\": 'image_' & $replace($now(),\":\",\"_\") & '.jpg', \t    \"content\": $$.forEmail,\t    \"cid\": \"\" & cid & \"\"\t}]","tot":"jsonata"},{"t":"set","p":"topic","pt":"msg","to":"See attached image","tot":"str"},{"t":"set","p":"payload","pt":"msg","to":"'<img src=\"cid:' & cid & '\"/>'","tot":"jsonata"},{"t":"set","p":"from","pt":"msg","to":"info@mysupersmarthome.it","tot":"str"}],"action":"","property":"","from":"","to":"","reg":false,"x":430,"y":120,"wires":[["aad931f8.dc90c8"]]},{"id":"aad931f8.dc90c8","type":"e-mail","z":"d61f370f.0413c","server":"mymta.myserver.com","port":"25","secure":false,"tls":false,"name":"info@mysupersmarthome.it","dname":"Email","x":570,"y":120,"wires":[]},{"id":"8e957d25.a94278","type":"hikvisionUltimatePicture","z":"d61f370f.0413c","name":"Ovest","topic":"","server":"eb73371b.af5208","channelID":"7","rotateimage":"0","heightimage":"","widthimage":"","qualityimage":"100","cropimage":"","textoverlay":"","textoverlayXY":"","textoverlayWH":"","textoverlayFont":"FONT_SANS_64_WHITE","x":250,"y":120,"wires":[["604a8eaf.6d4ac","a7680ffd.f99168"],[]]},{"id":"59408c5e.127414","type":"inject","z":"d61f370f.0413c","name":"","props":[{"p":"payload"},{"p":"topic","vt":"str"}],"repeat":"","crontab":"","once":false,"onceDelay":0.1,"topic":"","payload":"true","payloadType":"bool","x":130,"y":120,"wires":[["8e957d25.a94278"]]},{"id":"a7680ffd.f99168","type":"template","z":"d61f370f.0413c","name":"","field":"payload","fieldType":"msg","format":"handlebars","syntax":"mustache","template":"<img src=\"{{payload}}\"/>","output":"str","x":420,"y":180,"wires":[["32fa81d7.a2ada6"]]},{"id":"32fa81d7.a2ada6","type":"ui_template","z":"d61f370f.0413c","group":"c1bf19aa.fe7fb8","name":"","order":0,"width":"9","height":"7","format":"<div ng-bind-html=\"msg.payload\"></div>","storeOutMessages":true,"fwdInMessages":true,"resendOnRefresh":true,"templateScope":"local","x":580,"y":180,"wires":[[]]},{"id":"e3fdf8b2.9fbc48","type":"comment","z":"d61f370f.0413c","name":"Send an Email with image attachment and show it in the web UI","info":"","x":310,"y":80,"wires":[]},{"id":"eb73371b.af5208","type":"Hikvision-config","host":"192.168.1.32","port":"80","name":"NVR","authentication":"digest","protocol":"http","heartbeattimerdisconnectionlimit":"1","deviceinfo":"[object Object]"},{"id":"c1bf19aa.fe7fb8","type":"ui_group","name":"Frame Grab","tab":"e0f42233.22428","order":1,"disp":true,"width":"9","collapse":false},{"id":"e0f42233.22428","type":"ui_tab","name":"NVR","icon":"dashboard","order":13}]
+</code>
+</details>
+
+<br/>
+<br/>
+
+**PROPERTY WINDOW**
+
+<img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/pictureproperties.png' width="30%">
 
 **Flow Messages**
 
-The node outputs the image in base64 string format, ready for the UI Dashboard, on PIN 1, otherwise an error on PIN 2.</br>
+The node outputs the image in in mamy formats  on PIN 1, otherwise an error on PIN 2. On PIN 1 you'll have:<br/>
+*base64 JPG string format*, ready for the UI Dashboard.</br>
+*JPG Buffer*, ready to be sent as email attachment.</br>
+*pure base64 format*, for many other uses.</br>
 
 **Input**
 ```javascript
@@ -245,7 +258,9 @@ return msg;
 ```javascript
 msg = {
 {
-    "payload": image in base64 format, // Ready for the Dashboard UI
+    "payload": "data:image/jpg;base64,/9j/4AAQSk...", // FOR THE DASHBOARD UI: Image as string in base64 format with JPG DATA header already there.
+    "forEmail": "<buffer>", // FOR EMAIL: Image as buffer format, ready to be attached to an email as JPG attachment.
+    "base64": "/9j/4AAQSk...", // FOR FURTHER MANIPULATION: Image as pure base64 string.
     "_msgid": "b07e50f6.86a72"
 }
 return msg;
