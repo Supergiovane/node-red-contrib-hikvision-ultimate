@@ -221,6 +221,8 @@ You can, for example, link the ***Alarm node*** to the ***Picture node*** to get
 > Adjust the nodes according to your setup
 
 <code>
+
+```javascript
 [
   {
     "id": "604a8eaf.6d4ac",
@@ -433,6 +435,9 @@ You can, for example, link the ***Alarm node*** to the ***Picture node*** to get
     "order": 13
   }
 ]
+
+```
+
 </code>
 </details>
 
