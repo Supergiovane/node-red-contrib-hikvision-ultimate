@@ -435,7 +435,6 @@ You can, for example, link the ***Alarm node*** to the ***Picture node*** to get
     "order": 13
   }
 ]
-
 ```
 
 </code>
@@ -511,7 +510,11 @@ Please note that not all cameras nor NVR/DVR (especially with old firmware) supp
 > Adjust the nodes according to your setup
 
 <code>
+
+```javascript
 [{"id":"7e79800b.afb8a8","type":"hikvisionUltimateText","z":"3f22f0c6.ff1328","name":"Overlay Text","server":"eb73371b.af5208","row1":"","row1XY":"","row2":"","row2XY":"","row3":"","row3XY":"","row4":"","row5XY":"","channelID":"1","x":510,"y":120,"wires":[]},{"id":"3aa8a40f.9a0964","type":"inject","z":"3f22f0c6.ff1328","name":"Go","props":[{"p":"payload"},{"p":"topic","vt":"str"}],"repeat":"","crontab":"","once":false,"onceDelay":0.1,"topic":"","payload":"","payloadType":"date","x":170,"y":120,"wires":[["7e79800b.afb8a8"]]},{"id":"2b4d9297.75ee46","type":"comment","z":"3f22f0c6.ff1328","name":"Set the overlay text","info":"","x":190,"y":80,"wires":[]},{"id":"22dc37f9.b3b86","type":"function","z":"3f22f0c6.ff1328","name":"MSG Override","func":"// Override one or more rows\n// You can use from row1 to row4 to set the text\n// and from row1XY to row4XY to set the position in the format x,y (for example: 100,200)\n\n// Optionally set the channel. On NVR, this indicates the camera number\nmsg.channelid = 1;\n\n// Row 1\nmsg.row1 = \"Temperature: \" + msg.payload;\nmsg.row1XY = \"100,200\"; // Optionallly set the position\n\n// Row 2 (here we leave the position previosly set via the camera menu)\nmsg.row2 = \"Sun\";\n\nreturn msg;","outputs":1,"noerr":0,"initialize":"","finalize":"","x":320,"y":180,"wires":[["7e79800b.afb8a8"]]},{"id":"a91e43a0.ccbb2","type":"inject","z":"3f22f0c6.ff1328","name":"Go","props":[{"p":"payload"},{"p":"topic","vt":"str"}],"repeat":"","crontab":"","once":false,"onceDelay":0.1,"topic":"","payload":"22°c","payloadType":"str","x":170,"y":180,"wires":[["22dc37f9.b3b86"]]},{"id":"eb73371b.af5208","type":"Hikvision-config","host":"192.168.1.32","port":"80","name":"Server","authentication":"digest","protocol":"http","heartbeattimerdisconnectionlimit":"1","deviceinfo":"[object Object]"}]
+```
+
 </code>
 </details>
 <br/>
@@ -576,7 +579,11 @@ Please read the ISAPI Hikvision documentation or dig into the Internet to learn 
 > Adjust the nodes according to your setup
 
 <code>
+
+```javascript
 [{"id":"3aa8a40f.9a0964","type":"inject","z":"3f22f0c6.ff1328","name":"Go","props":[{"p":"payload"},{"p":"topic","vt":"str"}],"repeat":"","crontab":"","once":false,"onceDelay":0.1,"topic":"","payload":"","payloadType":"date","x":170,"y":120,"wires":[["49fbbee3.1cc7e"]]},{"id":"2b4d9297.75ee46","type":"comment","z":"3f22f0c6.ff1328","name":"Send your own XML","info":"","x":190,"y":80,"wires":[]},{"id":"49fbbee3.1cc7e","type":"hikvisionUltimateXML","z":"3f22f0c6.ff1328","name":"XML","server":"fb0c2de0.8a3da","XML":"<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<VideoOverlay version=\"1.0\" xmlns=\"http://www.hikvision.com/ver20/XMLSchema\">\n<fontSize>1</fontSize>\n<TextOverlayList size=\"6\">\n\n<TextOverlay version=\"1.0\" xmlns=\"http://www.hikvision.com/ver20/XMLSchema\">\n<id>1</id>\n<enabled>true</enabled>\n<positionX>464</positionX>\n<positionY>96</positionY>\n<displayText>HELLO WORLD</displayText>\n</TextOverlay>\n\n\n\n</TextOverlayList>\n</VideoOverlay>","path":"/ISAPI/System/Video/inputs/channels/1/overlays/text","method":"PUT","x":470,"y":120,"wires":[]},{"id":"fb0c2de0.8a3da","type":"Hikvision-config","host":"192.168.1.25","port":"80","name":"Radar Est","authentication":"digest","protocol":"http","heartbeattimerdisconnectionlimit":"1","deviceinfo":"{\"DeviceInfo\":{\"$\":{\"version\":\"1.0\",\"xmlns\":\"http://www.hikvision.com/ver20/XMLSchema\"},\"deviceName\":\"Net Module\",\"deviceID\":\"48443138-3031-3233-3932-988b0a858e51\",\"model\":\"CAM\",\"serialNumber\":\"20190509AARRD18012392\",\"macAddress\":\"BANANARAMA\",\"firmwareVersion\":\"V1.0.2\",\"firmwareReleasedDate\":\"build 191222\",\"hardwareVersion\":\"0x1001\",\"encoderVersion\":\"V5.0\",\"encoderReleasedDate\":\"build 000000\",\"deviceType\":\"Radar\",\"telecontrolID\":\"255\",\"localZoneNum\":\"8\",\"alarmOutNum\":\"4\",\"distanceResolution\":\"5.00\",\"detectDistance\":\"60.00\"}}"}]
+```
+
 </code>
 </details>
 <br/>
