@@ -4,6 +4,9 @@
 [![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square)](https://www.paypal.me/techtoday) 
 
 <p>
+<b>Version 1.0.32</b> February 2021<br/>
+- Filter null payloads in picture node, in case the device you're connecting to, is an hybrid DVR/NVR.<br/>
+<p>
 <b>Version 1.0.31</b> February 2021<br/>
 - FIX: sometime, the IMAGE node fails to show the text overlay.<br/>
 - NEW: the IMAGE outputs a pure base64 image format as well as image buffer ready to be attached to an email.<br/>

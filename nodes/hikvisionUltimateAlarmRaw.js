@@ -17,6 +17,7 @@ module.exports = function (RED) {
 			if (_msg === null || _msg === undefined) return;
 			_msg.topic = node.topic;
 			if (_msg.hasOwnProperty("errorDescription")) { node.send([null, _msg]); return; }; // It's a connection error/restore comunication.
+			if (!_msg.hasOwnProperty("payload") || (_msg.hasOwnProperty("payload") && _msg.payload === undefined)) return;
 
 			if (_msg.hasOwnProperty("payload")
 				&& _msg.payload.hasOwnProperty("eventType")
