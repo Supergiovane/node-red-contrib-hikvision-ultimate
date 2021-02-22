@@ -4,8 +4,9 @@
 [![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square)](https://www.paypal.me/techtoday) 
 
 <p>
-<b>Version 1.0.32</b> February 2021<br/>
+<b>Version 1.0.33</b> February 2021<br/>
 - Filter null payloads in picture node, in case the device you're connecting to, is an hybrid DVR/NVR.<br/>
+- Fixed some glitches it the sample code on the README page.<br/>
 <p>
 <b>Version 1.0.31</b> February 2021<br/>
 - FIX: sometime, the IMAGE node fails to show the text overlay.<br/>
