@@ -128,7 +128,7 @@ module.exports = function (RED) {
 			// 	  "ipAddress": "192.168.1.32",
 			// 	  "portNo": "80",
 			// 	  "protocolType": "HTTP",
-			// 	  "macAddress": "58:03:fb:dc:94:d6",
+			// 	  "macAddress": "xxx",
 			// 	  "dynChannelID": "13",
 			// 	  "channelID": "13",
 			// 	  "dateTime": "2021-01-29T09:58:05+01:00",
@@ -141,6 +141,7 @@ module.exports = function (RED) {
 			// 	"_msgid": "913ac479.52e768"
 			//   }
 
+
 			// SMART EVENT
 			// {
 			// 	"topic": "",
@@ -152,7 +153,7 @@ module.exports = function (RED) {
 			// 	  "ipAddress": "192.168.1.32",
 			// 	  "portNo": "80",
 			// 	  "protocolType": "HTTP",
-			// 	  "macAddress": "58:03:fb:dc:94:d6",
+			// 	  "macAddress": "xxx",
 			// 	  "dynChannelID": "13",
 			// 	  "channelID": "13",
 			// 	  "dateTime": "2021-01-29T10:26:44+01:00",
