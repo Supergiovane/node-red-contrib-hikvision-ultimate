@@ -4,9 +4,15 @@
 [![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square)](https://www.paypal.me/techtoday) 
 
 <p>
+<b>Version 1.0.34</b> April 2021<br/>
+- PICTURE node is now compatible with hybrid NVR both for analog and for IP cameras. Thanks to smcgann99 for raising the issue.<br/>
+
+</p>
+<p>
 <b>Version 1.0.33</b> February 2021<br/>
 - Filter null payloads in picture node, in case the device you're connecting to, is an hybrid DVR/NVR.<br/>
 - Fixed some glitches it the sample code on the README page.<br/>
+</p>
 <p>
 <b>Version 1.0.31</b> February 2021<br/>
 - FIX: sometime, the IMAGE node fails to show the text overlay.<br/>

@@ -212,6 +212,11 @@ You can, for example, link the ***Alarm node*** to the ***Picture node*** to get
 <img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/picture.png' width="80%">
 
 <br/>
+For the picture to show up directly into the flow, you can use this node developed by @riku 
+
+[node-red-contrib-image-output](https://flows.nodered.org/node/node-red-contrib-image-output) 
+
+<br/>
 <br/>
 
 **Copy this code and paste it into your flow**
