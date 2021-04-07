@@ -64,7 +64,7 @@ module.exports = function (RED) {
 			}
 		}
 		node.variabilizeManipulation(config);
-		node.urlImage = ["/ISAPI/ContentMgmt/StreamingProxy/channels/" + node.channelID + "01/picture", "/ISAPI/Streaming/channels/" + node.channelID + "01/picture"]; // Stores all URLS the node will try to get images from
+		node.urlImage = ["/ISAPI/Streaming/channels/" + node.channelID + "01/picture", "/ISAPI/ContentMgmt/StreamingProxy/channels/" + node.channelID + "01/picture"]; // Stores all URLS the node will try to get images from
 		node.urlImageCurrentIndex = 0; // Stores the valid URL
 
 

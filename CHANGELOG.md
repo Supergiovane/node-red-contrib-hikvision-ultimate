@@ -4,9 +4,8 @@
 [![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square)](https://www.paypal.me/techtoday) 
 
 <p>
-<b>Version 1.0.34</b> April 2021<br/>
+<b>Version 1.0.35</b> April 2021<br/>
 - PICTURE node is now compatible with hybrid NVR both for analog and for IP cameras. Thanks to smcgann99 for raising the issue.<br/>
-
 </p>
 <p>
 <b>Version 1.0.33</b> February 2021<br/>
