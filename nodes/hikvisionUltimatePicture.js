@@ -12,6 +12,7 @@ module.exports = function (RED) {
 		node.picture; // Stores the cam image
 		node.pictureLarghezza = 0;
 		node.pictureAltezza = 0;
+
 		//node.textoverlay = config.textoverlay === undefined  ? "" : config.textoverlay;
 
 		node.setNodeStatus = ({ fill, shape, text }) => {
@@ -63,6 +64,9 @@ module.exports = function (RED) {
 			}
 		}
 		node.variabilizeManipulation(config);
+		node.urlImage = ["/ISAPI/ContentMgmt/StreamingProxy/channels/" + node.channelID + "01/picture", "/ISAPI/Streaming/channels/" + node.channelID + "01/picture"]; // Stores all URLS the node will try to get images from
+		node.urlImageCurrentIndex = 0; // Stores the valid URL
+
 
 		// 14/12/2020 Get the picture image from camera
 		RED.httpAdmin.get("/hikvisionUltimateGetPicture", RED.auth.needsPermission('hikvisionUltimatePicture.read'), function (req, res) {
@@ -101,7 +105,7 @@ module.exports = function (RED) {
 					node.picture = null;
 					node.server = _nodeServer;
 					// Call the request, that then sends the result via node.sendPayload function
-					node.server.request(node, "GET", "/ISAPI/Streaming/channels/" + node.channelID + "01/picture", null).then(success => {
+					node.server.request(node, "GET", node.urlImage[node.urlImageCurrentIndex], null).then(success => {
 						// Wait until the server has called node.sendPayload and node.sendPayload has populated the node.picture variable
 						var iTimeout = 0;
 						var CB = () => {
@@ -209,19 +213,38 @@ module.exports = function (RED) {
 			_msg.topic = node.topic;
 			if (_msg.hasOwnProperty("errorDescription")) { node.send([null, _msg]); return; }; // It's a connection error/restore comunication.
 			if (!_msg.hasOwnProperty("payload") || (_msg.hasOwnProperty("payload") && _msg.payload === undefined)) return;
-			
-			if (_msg.hasOwnProperty("payload")) {
-				if (_msg.payload.hasOwnProperty("eventType")) {
-					// Chech if it's only a hearbeat alarm
-					try {
-						var sAlarmType = _msg.payload.eventType.toString().toLowerCase();
-						if (sAlarmType === "videoloss" && _msg.payload.hasOwnProperty("activePostCount") && _msg.payload.activePostCount == "0") {
-							node.setNodeStatus({ fill: "green", shape: "ring", text: "Received HeartBeat (the device is online)" });
-							return; // It's a Heartbeat
-						}
-					} catch (error) { }
+			// 07/04/2021 The server has got a wrong response from camera/NVR
+			if (_msg.hasOwnProperty("wrongResponse")) {
+				// Maybe the URL was not working because the NVR is old or requires another URL
+				// Try with another URL
+				node.setNodeStatus({ fill: "yellow", shape: "ring", text: "Got wrong response. Trying wit another URL." });
+				// Call the request, that then sends the result via node.sendPayload function
+				//console.log("BANANA FIGA NON VA CON", node.urlImage[node.urlImageCurrentIndex]);
+				if (node.server.debug) RED.log.info("BANANA IT DOES NOT WORK GETTING IMAGE WITH WITH", node.urlImage[node.urlImageCurrentIndex]);
+				node.urlImageCurrentIndex += 1;
+				if (node.urlImage.length - 1 >= node.urlImageCurrentIndex) {
+					if (node.server.debug) RED.log.info("BANANA TRYING GETTING IMAGE WITH", node.urlImage[node.urlImageCurrentIndex]);
+					//console.log("BANANA PROVA CON", node.urlImage[node.urlImageCurrentIndex]);
+					node.server.request(node, "GET", node.urlImage[node.urlImageCurrentIndex], null); // Hybrid NVR get image from an IP camera
+				} else {
+					// No more url to try
+					node.urlImageCurrentIndex = 0;
+					node.setNodeStatus({ fill: "red", shape: "ring", text: "Unable to get image. Tried all URLs!" });
 				}
-			};
+				return;
+			}
+
+			if (_msg.payload.hasOwnProperty("eventType")) {
+				// Chech if it's only a hearbeat alarm
+				try {
+					var sAlarmType = _msg.payload.eventType.toString().toLowerCase();
+					if (sAlarmType === "videoloss" && _msg.payload.hasOwnProperty("activePostCount") && _msg.payload.activePostCount == "0") {
+						node.setNodeStatus({ fill: "green", shape: "ring", text: "Received HeartBeat (the device is online)" });
+						return; // It's a Heartbeat
+					}
+				} catch (error) { }
+			}
+
 
 			getPicture(_msg.payload).then(data => {
 				_msg.payload = data.forUI;
@@ -250,7 +273,7 @@ module.exports = function (RED) {
 				if (msg.payload === true) {
 					try {
 						// Call the request, that then sends the result via node.sendPayload function
-						node.server.request(node, "GET", "/ISAPI/Streaming/channels/" + node.channelID + "01/picture", null);
+						node.server.request(node, "GET", node.urlImage[node.urlImageCurrentIndex], null);
 					} catch (error) {
 
 					}

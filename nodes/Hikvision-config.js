@@ -308,11 +308,13 @@ module.exports = (RED) => {
             try {
                 if (!_URL.startsWith("/")) _URL = "/" + _URL;
                 const response = await clientGenericRequest.fetch(node.protocol + "://" + node.host + _URL, options);
-                if (response.status >= 200 && response.status <= 300) {
+                if (response.status >= 200 && response.status < 300) {
                     //node.setAllClientsStatus({ fill: "green", shape: "ring", text: "Connected." });
+                } else if (response.status >= 400 && response.status < 500) {
+                    // 07/04/2021 Wrong URL
+                    _callerNode.sendPayload({ topic: _callerNode.topic || "", payload: false, wrongResponse: response.status });
                 } else {
                     _callerNode.setNodeStatus({ fill: "red", shape: "ring", text: response.statusText || " unknown response code" });
-                    //console.log("BANANA Error response " + response.statusText);
                     throw new Error("Error response: " + response.statusText || " unknown response code");
                 }
                 if (response.ok) {
