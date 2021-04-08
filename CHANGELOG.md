@@ -4,6 +4,10 @@
 [![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square)](https://www.paypal.me/techtoday) 
 
 <p>
+<b>Version 1.0.36</b> April 2021<br/>
+- Fidex an issue in the new function of picture node.<br/>
+</p>
+<p>
 <b>Version 1.0.35</b> April 2021<br/>
 - PICTURE node is now compatible with hybrid NVR both for analog and for IP cameras. Thanks to smcgann99 for raising the issue.<br/>
 </p>
