@@ -12,6 +12,8 @@ module.exports = function (RED) {
 		node.picture; // Stores the cam image
 		node.pictureLarghezza = 0;
 		node.pictureAltezza = 0;
+		node.urlImageCurrentIndex = 0; // Stores the valid URL
+
 
 		//node.textoverlay = config.textoverlay === undefined  ? "" : config.textoverlay;
 
@@ -33,7 +35,8 @@ module.exports = function (RED) {
 			node.textoverlayXY = (_config.textoverlayXY === null || _config.textoverlayXY === undefined || _config.textoverlayXY.trim() === "") ? "0,0" : _config.textoverlayXY;
 			node.textoverlayWH = (_config.textoverlayWH === null || _config.textoverlayWH === undefined || _config.textoverlayWH.trim() === "") ? "" : _config.textoverlayWH;
 			node.textoverlayFont = (_config.textoverlayFont === null || _config.textoverlayFont === undefined || _config.textoverlayFont.trim() === "") ? "FONT_SANS_32_WHITE" : _config.textoverlayFont;
-
+			node.urlImage = ["/ISAPI/Streaming/channels/" + node.channelID + "01/picture", "/ISAPI/ContentMgmt/StreamingProxy/channels/" + node.channelID + "01/picture"]; // Stores all URLS the node will try to get images from
+			
 			if (node.cropimage !== "" && node.cropimage.split(",").length === 4) {
 				node.cropimage = {
 					x: Number(node.cropimage.split(",")[0].trim()),
@@ -64,8 +67,7 @@ module.exports = function (RED) {
 			}
 		}
 		node.variabilizeManipulation(config);
-		node.urlImage = ["/ISAPI/Streaming/channels/" + node.channelID + "01/picture", "/ISAPI/ContentMgmt/StreamingProxy/channels/" + node.channelID + "01/picture"]; // Stores all URLS the node will try to get images from
-		node.urlImageCurrentIndex = 0; // Stores the valid URL
+		
 
 
 		// 14/12/2020 Get the picture image from camera
