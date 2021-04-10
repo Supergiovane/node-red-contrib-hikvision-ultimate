@@ -9,8 +9,8 @@ module.exports = (RED) => {
     function Hikvisionconfig(config) {
         RED.nodes.createNode(this, config)
         var node = this
-        node.debug = config.host.indexOf("banana") > -1;
-        node.host = config.host.replace("banana", "");
+        node.debug = config.host.toString().toLowerCase().indexOf("banana") > -1;
+        node.host = config.host.toString().toLowerCase().replace("banana", "");
         node.port = config.port;
         node.protocol = config.protocol || "http";
         node.nodeClients = []; // Stores the registered clients
@@ -310,23 +310,33 @@ module.exports = (RED) => {
                 const response = await clientGenericRequest.fetch(node.protocol + "://" + node.host + _URL, options);
                 if (response.status >= 200 && response.status < 300) {
                     //node.setAllClientsStatus({ fill: "green", shape: "ring", text: "Connected." });
-                } else if (response.status >= 400 && response.status < 500) {
-                    // 07/04/2021 Wrong URL
-                    _callerNode.sendPayload({ topic: _callerNode.topic || "", payload: false, wrongResponse: response.status });
                 } else {
-                    _callerNode.setNodeStatus({ fill: "red", shape: "ring", text: response.statusText || " unknown response code" });
-                    throw new Error("Error response: " + response.statusText || " unknown response code");
+                    // _callerNode.setNodeStatus({ fill: "red", shape: "ring", text: response.statusText || " unknown response code" });
+                    // // 07/04/2021 Wrong URL? Send this and is captured by picture node to try another url
+                    //  _callerNode.sendPayload({ topic: _callerNode.topic || "", payload: false, wrongResponse: response.status });
+                    // throw new Error("Error response: " + response.statusText || " unknown response code");
                 }
                 if (response.ok) {
                     var body = "";
                     // Based on URL, will return the appropriate encoded body
                     if (_URL.toLowerCase().includes("/ptzctrl/")) {
                         _callerNode.sendPayload({ topic: _callerNode.topic || "", payload: true });
-                    } else if (_URL.toLowerCase().includes("/streaming/")) {
+                    } else if (_URL.toLowerCase().includes("/streaming")) {
                         body = await response.buffer(); // "data:image/png;base64," +    
                         //_callerNode.sendPayload({ topic: _callerNode.topic || "", payload:  body.toString("base64")});
                         _callerNode.sendPayload({ topic: _callerNode.topic || "", payload: body });
                     }
+                } else {
+
+                    if (_URL.toLowerCase().includes("/ptzctrl/")) {
+
+                    } else if (_URL.toLowerCase().includes("/streaming")) {
+                        _callerNode.setNodeStatus({ fill: "red", shape: "ring", text: response.statusText || " unknown response code" });
+                        // 07/04/2021 Wrong URL? Send this and is captured by picture node to try another url
+                        _callerNode.sendPayload({ topic: _callerNode.topic || "", payload: false, wrongResponse: response.status });
+                    }
+                    throw new Error("Error response: " + response.statusText || " unknown response code");
+
                 }
 
             } catch (err) {

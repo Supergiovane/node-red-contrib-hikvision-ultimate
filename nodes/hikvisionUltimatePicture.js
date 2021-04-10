@@ -36,6 +36,7 @@ module.exports = function (RED) {
 			node.textoverlayWH = (_config.textoverlayWH === null || _config.textoverlayWH === undefined || _config.textoverlayWH.trim() === "") ? "" : _config.textoverlayWH;
 			node.textoverlayFont = (_config.textoverlayFont === null || _config.textoverlayFont === undefined || _config.textoverlayFont.trim() === "") ? "FONT_SANS_32_WHITE" : _config.textoverlayFont;
 			node.urlImage = ["/ISAPI/Streaming/channels/" + node.channelID + "01/picture", "/ISAPI/ContentMgmt/StreamingProxy/channels/" + node.channelID + "01/picture"]; // Stores all URLS the node will try to get images from
+			//node.urlImage = [ "/ISAPI/ContentMgmt/StreamingProxy/channels/" + node.channelID + "01/picture","/ISAPI/Streaming/channels/" + node.channelID + "01/picture"]; // Stores all URLS the node will try to get images from
 			
 			if (node.cropimage !== "" && node.cropimage.split(",").length === 4) {
 				node.cropimage = {
