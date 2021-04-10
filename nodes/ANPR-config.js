@@ -9,8 +9,8 @@ module.exports = (RED) => {
     function ANPRconfig(config) {
         RED.nodes.createNode(this, config)
         var node = this
-        node.debug = config.host.indexOf("banana") > -1;
-        node.host = config.host.replace("banana", "");
+        node.debug = config.host.toString().toLowerCase().indexOf("banana") > -1;
+        node.host = config.host.toString().toLowerCase().replace("banana", "");
         node.port = config.port;
         node.protocol = config.protocol || "http";
         node.nodeClients = []; // Stores the registered clients

@@ -4,6 +4,10 @@
 [![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square)](https://www.paypal.me/techtoday) 
 
 <p>
+<b>Version 1.0.38</b> April 2021<br/>
+- Fidex a syntax error checking an url.<br/>
+</p>
+<p>
 <b>Version 1.0.37</b> April 2021<br/>
 - Fidex an issue in the new function of picture node.<br/>
 </p>
