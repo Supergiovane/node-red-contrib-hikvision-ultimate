@@ -330,10 +330,12 @@ module.exports = (RED) => {
 
                     if (_URL.toLowerCase().includes("/ptzctrl/")) {
 
-                    } else if (_URL.toLowerCase().includes("/streaming")) {
+                    } else if (_URL.toLowerCase().includes("/streaming/") || _URL.toLowerCase().includes("/streamingproxy/")) {
                         _callerNode.setNodeStatus({ fill: "red", shape: "ring", text: response.statusText || " unknown response code" });
                         // 07/04/2021 Wrong URL? Send this and is captured by picture node to try another url
                         _callerNode.sendPayload({ topic: _callerNode.topic || "", payload: false, wrongResponse: response.status });
+                    } else {
+                        _callerNode.setNodeStatus({ fill: "red", shape: "ring", text: response.statusText || " unknown response code" });
                     }
                     throw new Error("Error response: " + response.statusText || " unknown response code");
 

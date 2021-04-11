@@ -12,11 +12,8 @@ module.exports = function (RED) {
 		node.picture; // Stores the cam image
 		node.pictureLarghezza = 0;
 		node.pictureAltezza = 0;
-		node.urlImageCurrentIndex = 0; // Stores the valid URL
-
-
-		//node.textoverlay = config.textoverlay === undefined  ? "" : config.textoverlay;
-
+		node.urlImageCurrentIndex = config.urlImageCurrentIndex === undefined ? 0 : config.urlImageCurrentIndex; // Stores the valid URL
+		
 		node.setNodeStatus = ({ fill, shape, text }) => {
 			var dDate = new Date();
 			node.status({ fill: fill, shape: shape, text: text + " (" + dDate.getDate() + ", " + dDate.toLocaleTimeString() + ")" })
@@ -35,9 +32,10 @@ module.exports = function (RED) {
 			node.textoverlayXY = (_config.textoverlayXY === null || _config.textoverlayXY === undefined || _config.textoverlayXY.trim() === "") ? "0,0" : _config.textoverlayXY;
 			node.textoverlayWH = (_config.textoverlayWH === null || _config.textoverlayWH === undefined || _config.textoverlayWH.trim() === "") ? "" : _config.textoverlayWH;
 			node.textoverlayFont = (_config.textoverlayFont === null || _config.textoverlayFont === undefined || _config.textoverlayFont.trim() === "") ? "FONT_SANS_32_WHITE" : _config.textoverlayFont;
-			node.urlImage = ["/ISAPI/Streaming/channels/" + node.channelID + "01/picture", "/ISAPI/ContentMgmt/StreamingProxy/channels/" + node.channelID + "01/picture"]; // Stores all URLS the node will try to get images from
-			//node.urlImage = [ "/ISAPI/ContentMgmt/StreamingProxy/channels/" + node.channelID + "01/picture","/ISAPI/Streaming/channels/" + node.channelID + "01/picture"]; // Stores all URLS the node will try to get images from
 			
+			node.urlImage = ["/ISAPI/Streaming/channels/" + node.channelID + "01/picture", "/ISAPI/ContentMgmt/StreamingProxy/channels/" + node.channelID + "01/picture"]; // Stores all URLS the node will try to get images from
+			//node.urlImage = ["/ISAPI/ContentMgmt/StreamingProxy/channels/" + node.channelID + "01/picture", "/ISAPI/Streaming/channels/" + node.channelID + "01/picture"]; // Stores all URLS the node will try to get images from
+
 			if (node.cropimage !== "" && node.cropimage.split(",").length === 4) {
 				node.cropimage = {
 					x: Number(node.cropimage.split(",")[0].trim()),
@@ -68,7 +66,7 @@ module.exports = function (RED) {
 			}
 		}
 		node.variabilizeManipulation(config);
-		
+
 
 
 		// 14/12/2020 Get the picture image from camera
@@ -77,16 +75,6 @@ module.exports = function (RED) {
 				var _nodeServer = RED.nodes.getNode(req.query.serverID);// Retrieve node.id of the config node.
 				// Create the config object
 				//#region CREATING CONFIG
-				// var sManipulate = $("#node-input-channelID").val();
-				// sManipulate += "-SEP-" + $("#node-input-qualityimage").val();
-				// sManipulate += "-SEP-" + $("#node-input-rotateimage").val();
-				// sManipulate += "-SEP-" + $("#node-input-widthimage").val();
-				// sManipulate += "-SEP-" + $("#node-input-heightimage").val();
-				// sManipulate += "S-SEP-EP" + $("#node-input-cropimage").val().toString().trim().replace(/\s/g, '').replace(/,/g, "-");
-				// sManipulate += "-SEP-" + $("#node-input-textoverlay").val();
-				// sManipulate += "-SEP-" + $("#node-input-textoverlayXY").val().toString().trim().replace(/\s/g, '').replace(/,/g, "-");
-				// sManipulate += "-SEP-" + $("#node-input-textoverlayWH").val().toString().trim().replace(/\s/g, '').replace(/,/g, "-");
-				// sManipulate += "-SEP-" + $("#node-input-textoverlayFont").val();
 				var sManipulate = req.query.manipulate;
 				var oConfig = { channelID: sManipulate.split("-SEP-")[0].toString().trim() };
 				oConfig.qualityimage = sManipulate.split("-SEP-")[1].toString().trim();
@@ -98,9 +86,11 @@ module.exports = function (RED) {
 				oConfig.textoverlayXY = sManipulate.split("-SEP-")[7].toString().trim().replace(/-/g, ",");
 				oConfig.textoverlayWH = sManipulate.split("-SEP-")[8].toString().trim().replace(/-/g, ",");
 				oConfig.textoverlayFont = sManipulate.split("-SEP-")[9].toString().trim();
+				node.urlImageCurrentIndex = (sManipulate.split("-SEP-")[10].toString().trim() === "YES" ? 0 : node.urlImageCurrentIndex); // Retry from beginning, to find the right image url
 
 				node.variabilizeManipulation(oConfig);
 				//#endregion
+
 				//console.log("MAN " + JSON.stringify(oConfig))
 				if (_nodeServer === null) {
 					res.json({ picture: "", width: 0, height: 0 });
@@ -114,11 +104,20 @@ module.exports = function (RED) {
 						var CB = () => {
 							iTimeout += 1;
 							if (iTimeout >= 15) {
-								res.json({ picture: "", width: " !Error getting picture Timeout! ", height: 0 });
+								// Set the URL to the next in the list, so it can retry with that url in SendPayload
+								node.urlImageCurrentIndex += 1;
+								if (node.urlImageCurrentIndex > node.urlImage.length - 1) {
+									// No more URLs to try
+									node.urlImageCurrentIndex = 0;
+									res.json({ picture: "", width: " !Error getting picture Timeout! ", height: 0 });
+								} else {
+									// Cycled through all URLS
+									res.json({ picture: "", width: " !Retry new URL... ", height: 0 });
+								}
 								return;
 							} else {
 								if (node.picture !== null) {
-									res.json({ picture: node.picture, width: node.pictureLarghezza, height: node.pictureAltezza });
+									res.json({ picture: node.picture, width: node.pictureLarghezza, height: node.pictureAltezza, urlImageCurrentIndex: node.urlImageCurrentIndex });
 									return;
 								}
 								setTimeout(CB, 500);
@@ -127,6 +126,8 @@ module.exports = function (RED) {
 						setTimeout(CB, 500);
 
 					}).catch(error => {
+						// No more URLs to try
+						node.urlImageCurrentIndex = 0;
 						res.json({ picture: "", width: " !Error getting picture! ", height: " !" + error.message + "! " });
 					});
 				}
@@ -216,6 +217,7 @@ module.exports = function (RED) {
 			_msg.topic = node.topic;
 			if (_msg.hasOwnProperty("errorDescription")) { node.send([null, _msg]); return; }; // It's a connection error/restore comunication.
 			if (!_msg.hasOwnProperty("payload") || (_msg.hasOwnProperty("payload") && _msg.payload === undefined)) return;
+
 			// 07/04/2021 The server has got a wrong response from camera/NVR
 			if (_msg.hasOwnProperty("wrongResponse")) {
 				// Maybe the URL was not working because the NVR is old or requires another URL
@@ -223,17 +225,10 @@ module.exports = function (RED) {
 				node.setNodeStatus({ fill: "yellow", shape: "ring", text: "Got wrong response. Trying wit another URL." });
 				// Call the request, that then sends the result via node.sendPayload function
 				//console.log("BANANA FIGA NON VA CON", node.urlImage[node.urlImageCurrentIndex]);
-				if (node.server.debug) RED.log.info("BANANA IT DOES NOT WORK GETTING IMAGE WITH WITH", node.urlImage[node.urlImageCurrentIndex]);
-				node.urlImageCurrentIndex += 1;
-				if (node.urlImage.length - 1 >= node.urlImageCurrentIndex) {
-					if (node.server.debug) RED.log.info("BANANA TRYING GETTING IMAGE WITH", node.urlImage[node.urlImageCurrentIndex]);
-					//console.log("BANANA PROVA CON", node.urlImage[node.urlImageCurrentIndex]);
-					node.server.request(node, "GET", node.urlImage[node.urlImageCurrentIndex], null); // Hybrid NVR get image from an IP camera
-				} else {
-					// No more url to try
-					node.urlImageCurrentIndex = 0;
-					node.setNodeStatus({ fill: "red", shape: "ring", text: "Unable to get image. Tried all URLs!" });
-				}
+				if (node.server.debug) RED.log.info("BANANA TRYING GETTING IMAGE WITH", node.urlImage[node.urlImageCurrentIndex]);
+				//console.log("BANANA PROVA CON", node.urlImage[node.urlImageCurrentIndex]);
+				node.server.request(node, "GET", node.urlImage[node.urlImageCurrentIndex], null); // Hybrid NVR get image from an IP camera
+
 				return;
 			}
 
@@ -246,6 +241,7 @@ module.exports = function (RED) {
 						return; // It's a Heartbeat
 					}
 				} catch (error) { }
+				return;
 			}
 
 

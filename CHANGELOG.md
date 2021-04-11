@@ -4,6 +4,10 @@
 [![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square)](https://www.paypal.me/techtoday) 
 
 <p>
+<b>Version 1.0.40</b> April 2021<br/>
+- Picture Image: Better handling of automatic URLs selection.<br/>
+</p>
+<p>
 <b>Version 1.0.38</b> April 2021<br/>
 - Fidex a syntax error checking an url.<br/>
 </p>

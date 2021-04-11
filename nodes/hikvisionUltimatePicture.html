@@ -13,10 +13,11 @@
 			widthimage: { value: "" },
 			qualityimage: { value: "100" },
 			cropimage: { value: "" },
-			textoverlay:{ value: "" },
-			textoverlayXY:{ value: "0,0" },
-			textoverlayWH:{ value: "0,0" },
-			textoverlayFont:{ value: "FONT_SANS_32_WHITE" }
+			textoverlay: { value: "" },
+			textoverlayXY: { value: "0,0" },
+			textoverlayWH: { value: "0,0" },
+			textoverlayFont: { value: "FONT_SANS_32_WHITE" },
+			urlImageCurrentIndex: { value: 0 }
 		},
 		inputs: 1,
 		outputs: 2,
@@ -55,18 +56,20 @@
 			// Timer
 			var tImage = null;
 			var bAlreadyIn = false;
+			this.timerRetryAnotherURL = null;
 
 			// 19/02/2020 Used to alert the user if the CSV file has not been loaded and to get the server sooner als deploy
 			// ###########################
 			$("#node-input-server").change(function () {
 				try {
 					oNodeServer = RED.nodes.node($(this).val());
-					if (oNodeServer !== null && oNodeServer !== undefined) readPictureFromCamera(oNodeServer);
+					$("#picture").html("<img src=\"\" alt=\"Click the 'Refresh Image' button to get the picture from the camera\">");
+					//if (oNodeServer !== null && oNodeServer !== undefined) readPictureFromCamera(oNodeServer, true);
 				} catch (error) {
 				}
 			});
 			// ###########################
-			function readPictureFromCamera(_oNodeServer) {
+			function readPictureFromCamera(_oNodeServer, _beginRightURLSearchFromStart) {
 				if (bAlreadyIn) return;
 				bAlreadyIn = true;
 				$("#picture").html("<img src=\"https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/loading.gif\">");
@@ -81,11 +84,39 @@
 				sManipulate += "-SEP-" + $("#node-input-textoverlayXY").val().toString().trim().replace(/\s/g, '').replace(/,/g, "-");
 				sManipulate += "-SEP-" + $("#node-input-textoverlayWH").val().toString().trim().replace(/\s/g, '').replace(/,/g, "-");
 				sManipulate += "-SEP-" + $("#node-input-textoverlayFont").val();
+				sManipulate += "-SEP-" + (_beginRightURLSearchFromStart ? "YES" : "NO"); // Begin cycling right picture URL from the beginning?
+
 				$.getJSON('hikvisionUltimateGetPicture?serverID=' + _oNodeServer.id + "&manipulate=" + sManipulate, (data) => {
 					$("#picture").html("<img src=\"" + data.picture + "\" style=\"width:320px;height:200px;\" \">");
 					$("#picturedimensions").html("Width:" + data.width + "px" + " Height:" + data.height + "px");
-
 					bAlreadyIn = false;
+
+					// Check the return string to understand wether i must retry with another image URL or not
+					if (data.width.toString().toLowerCase().includes("retry")) {
+						// Retry
+						RED.notify("Problem getting image. Trying another URL...",
+							{
+								modal: false,
+								fixed: false,
+								type: 'info'
+							})
+						setTimeout(() => {
+							if (this.timerRetryAnotherURL !== null) clearTimeout(this.timerRetryAnotherURL);
+							readPictureFromCamera(oNodeServer, false);
+						}, 1000);
+
+					} else if (data.width.toString().toLowerCase().includes("error")) {
+						// I've cycled to all URLS, so the .js returns "Error"
+						RED.notify("Unable to get the image.",
+							{
+								modal: false,
+								fixed: false,
+								type: 'error'
+							})
+					} else if (data.hasOwnProperty("urlImageCurrentIndex")) {
+						// The image returned is OK and the .js tells me the index of the URL's Array.
+						$("#node-input-urlImageCurrentIndex").val(data.urlImageCurrentIndex);
+					}
 				}).error(function (jqXHR, textStatus, errorThrown) {
 					bAlreadyIn = false;
 					RED.notify("Problem reading the image from camera: " + jqXHR.responseText,
@@ -94,6 +125,7 @@
 							fixed: false,
 							type: 'error'
 						})
+
 				});
 
 			}
@@ -127,14 +159,14 @@
 						return;
 					}
 				}
-				readPictureFromCamera(oNodeServer);
+				readPictureFromCamera(oNodeServer, true);
 			});
 
 
 
 		},
 		oneditsave: function () {
-
+			if (this.timerRetryAnotherURL !== null) clearTimeout(this.timerRetryAnotherURL);
 		}
 	});
 
@@ -204,7 +236,7 @@
 	</div>
 	<div class="form-row">
         <label> <i class="fa fa-sign-in"></i> Image</label>
-        <input type="button" id="getinfocam" class="ui-button ui-corner-all ui-widget" style="background-color:#AEE1FF;width:150px" value="Reload">
+        <input type="button" id="getinfocam" class="ui-button ui-corner-all ui-widget" style="background-color:#AEE1FF;width:150px" value="Refresh Image">
     </div>
 	<div class="form-row">
         <label for="node-input-qualityimage"><i class="fa fa-tasks"></i> Jpeg Quality</label>
@@ -283,6 +315,10 @@
 			Above options: overlay a text over the image. You can set the X position from TOP and the Y position from LEFT, as well as the fonts. You can only choose between the list of avaiable fonts. You cannot currently add more than a row. You can override the overlayed text, by msg.textoverlay
 		 </div>
 	</div>
+	<div class="form-row">
+       <input type="hidden" id="node-input-urlImageCurrentIndex" >
+	</div>
+	
 </script>
 
 <script type="text/x-red" data-help-name="hikvisionUltimatePicture">
