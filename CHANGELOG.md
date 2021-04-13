@@ -4,7 +4,7 @@
 [![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square)](https://www.paypal.me/techtoday) 
 
 <p>
-<b>Version 1.0.40</b> April 2021<br/>
+<b>Version 1.0.41</b> April 2021<br/>
 - Picture Image: Better handling of automatic URLs selection.<br/>
 - Picture Image: fixed a false status whenever an alarm node receives an alarm.<br/>
 </p>
