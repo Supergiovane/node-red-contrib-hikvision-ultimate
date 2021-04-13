@@ -14,6 +14,7 @@ module.exports = function (RED) {
 		node.pictureAltezza = 0;
 		node.urlImageCurrentIndex = config.urlImageCurrentIndex === undefined ? 0 : config.urlImageCurrentIndex; // Stores the valid URL
 		
+
 		node.setNodeStatus = ({ fill, shape, text }) => {
 			var dDate = new Date();
 			node.status({ fill: fill, shape: shape, text: text + " (" + dDate.getDate() + ", " + dDate.toLocaleTimeString() + ")" })
@@ -32,9 +33,10 @@ module.exports = function (RED) {
 			node.textoverlayXY = (_config.textoverlayXY === null || _config.textoverlayXY === undefined || _config.textoverlayXY.trim() === "") ? "0,0" : _config.textoverlayXY;
 			node.textoverlayWH = (_config.textoverlayWH === null || _config.textoverlayWH === undefined || _config.textoverlayWH.trim() === "") ? "" : _config.textoverlayWH;
 			node.textoverlayFont = (_config.textoverlayFont === null || _config.textoverlayFont === undefined || _config.textoverlayFont.trim() === "") ? "FONT_SANS_32_WHITE" : _config.textoverlayFont;
-			
+
 			node.urlImage = ["/ISAPI/Streaming/channels/" + node.channelID + "01/picture", "/ISAPI/ContentMgmt/StreamingProxy/channels/" + node.channelID + "01/picture"]; // Stores all URLS the node will try to get images from
 			//node.urlImage = ["/ISAPI/ContentMgmt/StreamingProxy/channels/" + node.channelID + "01/picture", "/ISAPI/Streaming/channels/" + node.channelID + "01/picture"]; // Stores all URLS the node will try to get images from
+			if (node.urlImageCurrentIndex > node.urlImage.length - 1) node.urlImageCurrentIndex = 0;
 
 			if (node.cropimage !== "" && node.cropimage.split(",").length === 4) {
 				node.cropimage = {
