@@ -9,9 +9,9 @@ module.exports = (RED) => {
     function Hikvisionconfig(config) {
         RED.nodes.createNode(this, config)
         var node = this
+        node.port = config.port || 80;
         node.debug = config.host.toString().toLowerCase().indexOf("banana") > -1;
-        node.host = config.host.toString().toLowerCase().replace("banana", "");
-        node.port = config.port;
+        node.host = config.host.toString().toLowerCase().replace("banana", "") + ":" + node.port;
         node.protocol = config.protocol || "http";
         node.nodeClients = []; // Stores the registered clients
         node.isConnected = true; // Assumes, that is already connected.
@@ -64,7 +64,7 @@ module.exports = (RED) => {
             try {
                 (async () => {
                     try {
-                        const resInfo = await clientInfo.fetch(jParams.protocol + "://" + jParams.host + "/ISAPI/System/deviceInfo", opt);
+                        const resInfo = await clientInfo.fetch(jParams.protocol + "://" + jParams.host + ":" + jParams.port + "/ISAPI/System/deviceInfo", opt);
                         const body = await resInfo.text();
                         xml2js(body, function (err, result) {
                             if (err) {

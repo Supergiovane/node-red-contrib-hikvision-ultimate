@@ -63,13 +63,14 @@
 			$("#node-input-server").change(function () {
 				try {
 					oNodeServer = RED.nodes.node($(this).val());
-					$("#picture").html("<img src=\"\" alt=\"Click the 'Refresh Image' button to get the picture from the camera\">");
+					$("#picture").html("<span>Click the <b>Refresh Image</b> button to get the picture from the camera</span>");
 					//if (oNodeServer !== null && oNodeServer !== undefined) readPictureFromCamera(oNodeServer, true);
 				} catch (error) {
 				}
 			});
 			// ###########################
 			function readPictureFromCamera(_oNodeServer, _beginRightURLSearchFromStart) {
+
 				if (bAlreadyIn) return;
 				bAlreadyIn = true;
 				$("#picture").html("<img src=\"https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/loading.gif\">");
@@ -119,17 +120,19 @@
 					}
 				}).error(function (jqXHR, textStatus, errorThrown) {
 					bAlreadyIn = false;
-					RED.notify("Problem reading the image from camera: " + jqXHR.responseText,
+					$("#picture").html("<span>THIS NODE IS NEW. PLEASE SAVE AND DEPLOY FIRST! <br/> THEN CLICK AGAIN THE BUTTON.</span>");
+					// SAVE FIRST!
+					RED.notify("THIS NODE IS NEW. PLEASE SAVE AND DEPLOY FIRST! THEN CLICK AGAIN THE BUTTON.",
 						{
 							modal: false,
 							fixed: false,
 							type: 'error'
-						})
-
+						});
 				});
 
 			}
 			$("#getinfocam").click(function () {
+
 				if ($("#node-input-widthimage").val() !== "" && Number($("#node-input-widthimage").val()) > 9999) {
 					RED.notify("Max value for width is 9999",
 						{

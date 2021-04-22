@@ -8,7 +8,7 @@
             name: { value: "Server" },
             authentication: { value: "digest" },
             protocol: { value: "http" },
-            heartbeattimerdisconnectionlimit: { value: 1 },            
+            heartbeattimerdisconnectionlimit: { value: 1 },
             deviceinfo: { value: {} }
         },
         credentials: {
@@ -73,7 +73,7 @@
                         });
 
                 }).error(function (jqXHR, textStatus, errorThrown) {
-                    RED.notify("THIS IS YOUR FIRST CAMERA NODE EVER. PLEASE SAVE AND DEPLOY. THEN REOPEN THIS WINDOW AGAIN. Problem reading the informations from camera: " + jqXHR.responseText,
+                    RED.notify("THIS IS YOUR FIRST CAMERA NODE EVER. PLEASE SAVE AND DEPLOY. THEN REOPEN THIS WINDOW AGAIN.",
                         {
                             modal: false,
                             fixed: false,
@@ -89,7 +89,7 @@
 
         },
         oneditsave: function () {
-            //alert(this.host);
+           
         },
         label: function () {
             return typeof this.name === undefined ? (this.host + ":" + this.port) : this.name + " " + (this.host + ":" + this.port);
