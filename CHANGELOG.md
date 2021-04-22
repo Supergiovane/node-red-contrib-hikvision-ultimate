@@ -4,6 +4,10 @@
 [![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square)](https://www.paypal.me/techtoday) 
 
 <p>
+<b>Version 1.0.42</b> April 2021<br/>
+- Server node: the port config was totally ignored. Fixed, now you can set the port as well and it works. Thanks to @Mateiuc.<br/>
+</p>
+<p>
 <b>Version 1.0.41</b> April 2021<br/>
 - Picture Image: Better handling of automatic URLs selection.<br/>
 - Picture Image: fixed a false status whenever an alarm node receives an alarm.<br/>

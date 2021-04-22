@@ -1,6 +1,6 @@
 {
     "name": "node-red-contrib-hikvision-ultimate",
-    "version": "1.0.41",
+    "version": "1.0.42",
     "description": "A native set of nodes for Hikvision Cameras, Alarms, Radars etc.",
     "author": "Supergiovane (https://github.com/Supergiovane)",
     "dependencies": {
