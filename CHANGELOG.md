@@ -4,6 +4,11 @@
 [![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square)](https://www.paypal.me/techtoday) 
 
 <p>
+<b>Version 1.0.43</b> April 2021<br/>
+- ANPR: Fixed the authentication type (digest/basic) not retained.<br/>
+- ANPR: Fixed the error message visible if you have one and only ANPR camera in your flow.<br/>
+</p>
+<p>
 <b>Version 1.0.42</b> April 2021<br/>
 - Server node: the port config was totally ignored. Fixed, now you can set the port as well and it works. Thanks to @Mateiuc.<br/>
 </p>

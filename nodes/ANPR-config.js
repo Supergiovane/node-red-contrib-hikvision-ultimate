@@ -27,6 +27,64 @@ module.exports = (RED) => {
             node.nodeClients.map(nextStatus);
         }
 
+
+        // 14/12/2020 Get the infos from the camera
+        RED.httpAdmin.get("/hikvisionUltimateGetInfoCamANPR", RED.auth.needsPermission('ANPRconfig.read'), function (req, res) {
+            var jParams = JSON.parse(decodeURIComponent(req.query.params));// Retrieve node.id of the config node.
+            var _nodeServer = null;
+            var clientInfo;
+
+            if (jParams.password === "__PWRD__") {
+                // The password isn't changed or (the server node was already present, it's only updated)
+                _nodeServer = RED.nodes.getNode(req.query.nodeID);// Retrieve node.id of the config node.
+                if (jParams.authentication === "digest") clientInfo = new DigestFetch(jParams.user, _nodeServer.credentials.password); // Instantiate the fetch client.
+                if (jParams.authentication === "basic") clientInfo = new DigestFetch(jParams.user, _nodeServer.credentials.password, { basic: true }); // Instantiate the fetch client.
+            } else {
+                // The node is NEW
+                if (jParams.authentication === "digest") clientInfo = new DigestFetch(jParams.user, jParams.password); // Instantiate the fetch client.
+                if (jParams.authentication === "basic") clientInfo = new DigestFetch(jParams.user, jParams.password, { basic: true }); // Instantiate the fetch client.
+            }
+            var opt = {
+                // These properties are part of the Fetch Standard
+                method: "GET",
+                headers: {},        // request headers. format is the identical to that accepted by the Headers constructor (see below)
+                body: null,         // request body. can be null, a string, a Buffer, a Blob, or a Node.js Readable stream
+                redirect: 'follow', // set to `manual` to extract redirect headers, `error` to reject redirect
+                signal: null,       // pass an instance of AbortSignal to optionally abort requests
+
+                // The following properties are node-fetch extensions
+                follow: 20,         // maximum redirect count. 0 to not follow redirect
+                timeout: 5000,         // req/res timeout in ms, it resets on redirect. 0 to disable (OS limit applies). Signal is recommended instead.
+                compress: false,     // support gzip/deflate content encoding. false to disable
+                size: 0,            // maximum response body size in bytes. 0 to disable
+                agent: null         // http(s).Agent instance or function that returns an instance (see below)
+            };
+            try {
+                (async () => {
+                    try {
+                        const resInfo = await clientInfo.fetch(jParams.protocol + "://" + jParams.host + ":" + jParams.port + "/ISAPI/System/deviceInfo", opt);
+                        const body = await resInfo.text();
+                        xml2js(body, function (err, result) {
+                            if (err) {
+                                res.json(err);
+                                return;
+                            } else {
+                                res.json(result);
+                                return;
+                            }
+                        });
+                    } catch (error) {
+                        RED.log.error("Errore  hikvisionUltimateGetInfoCamANPR " + error.message);
+                        res.json(error);
+                    }
+
+                })();
+
+            } catch (err) {
+                res.json(err);
+            }
+        });
+
         //#region "PLATES ANPR"
         // Sort the plates, in any case, even if the anpr camera returns a sorted list. It's not always true!
         function sortPlates(a, b) {
@@ -47,7 +105,7 @@ module.exports = (RED) => {
 
         // Function to get the plate list from the camera
         async function getPlates(_lastPicName) {
-           
+
             if (_lastPicName == undefined || _lastPicName == null || _lastPicName == "") return null;
 
             var client;
@@ -195,7 +253,7 @@ module.exports = (RED) => {
                 // Ovviamente il picname è diventato quello vecchio lì, quindi, visto che appena 2 targhe prima c'era la mia, mi ha aperto il cancello
                 // Pick up the last plate by the most recent datetime instead of by the last item in the list (format 202001010101010000)
                 node.setAllClientsStatus({ fill: "grey", shape: "ring", text: "Found " + _PlatesObject.Plates.Plate.length + " old plates." });
-                  
+
                 try {
                     let nMostRecent = 0;
                     let nCurPicName = 0;
@@ -241,7 +299,7 @@ module.exports = (RED) => {
                 } catch (error) {
                     oPlates = null;
                 }
-                
+
                 if (oPlates === null) {
                     setTimeout(node.initPlateReader, 10000); // Restart initPlateReader
                 } else {

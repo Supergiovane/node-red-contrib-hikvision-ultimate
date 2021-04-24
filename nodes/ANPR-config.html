@@ -6,7 +6,8 @@
             port: { value: 80, required: true, validate: RED.validators.number() },
             name: { value: "License Plate Camera" },
             protocol: { value: "http" },
-            deviceinfo: { value: {} }
+            deviceinfo: { value: {} },
+            authentication : {value : "digest"}
         },
         credentials: {
             user: { type: "text" },
@@ -29,7 +30,7 @@
                 jManipulate.authentication = $("#node-config-input-authentication").val();
                 sQueryString = "?nodeID=" + node.id + "&params=" + encodeURIComponent(JSON.stringify(jManipulate));
 
-                $.getJSON("hikvisionUltimateGetInfoCam" + sQueryString, (data) => {
+                $.getJSON("hikvisionUltimateGetInfoCamANPR" + sQueryString, (data) => {
                     if (!data.hasOwnProperty("DeviceInfo")) {
                         RED.notify("Problem reading the informations from camera: " + JSON.stringify(data) + ". Check your credentials and connection properties.",
                             {
