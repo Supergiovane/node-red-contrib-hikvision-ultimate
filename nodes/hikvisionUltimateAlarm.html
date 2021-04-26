@@ -13,7 +13,7 @@
 			alarmfilterperiod: { value: 0 },
 			channelID: { value: "0" }
 		},
-		inputs: 0,
+		inputs: 1,
 		outputs: 2,
 		outputLabels: function (i) {
 			var ret = "";
@@ -73,21 +73,15 @@
 				filterReactTo(this.value);
 				if (this.value == 0) {
 					$("#ui_alarmfilterduration").hide();
+					$("#ui_alarmfilterperiod").hide();
 				} else {
 					$("#ui_alarmfilterduration").show();
+					$("#ui_alarmfilterperiod").show();
 				}
+				
 			});
 			filterReactTo($("#node-input-devicetype :selected").val());
 			// #################################################################
-
-			// 29/01/2021 Hide the filter duration if the devicetype is not a security system
-			// ##########################################################
-			if (node.devicetype == 0) {
-				$("#ui_alarmfilterduration").hide();
-			} else {
-				$("#ui_alarmfilterduration").show();
-			}
-			// ##########################################################
 
 			// 15/01/2021 Hide parts of the ui
 			// ##########################################################
@@ -102,7 +96,23 @@
 				} else {
 					$("#ui_alarmfilterperiod").show();
 				}
+				if ($("#node-input-devicetype").val() == 0) {
+					$("#ui_alarmfilterduration").hide();
+					$("#ui_alarmfilterperiod").hide();
+				}
+				
 			});
+			// ##########################################################
+
+			// 29/01/2021 Hide the filter duration if the devicetype is not a security system
+			// ##########################################################
+			if (this.devicetype == 0) {
+				$("#ui_alarmfilterduration").hide();
+				$("#ui_alarmfilterperiod").hide();
+			} else {
+				$("#ui_alarmfilterduration").show();
+				$("#ui_alarmfilterperiod").show();
+			}
 			// ##########################################################
 
 		},

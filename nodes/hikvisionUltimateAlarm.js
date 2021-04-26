@@ -13,8 +13,8 @@ module.exports = function (RED) {
 		node.total_alarmfilterduration = 0; // stores the total time an alarm has been true in the alarmfilterperiod time.
 		node.isNodeInAlarm = false; // Stores the current state of the filtered alarm.
 		node.isRunningTimerFilterPeriod = false; // Indicates wether the period timer is running;
-		node.alarmfilterduration = config.alarmfilterduration !== undefined ? config.alarmfilterduration : 0;
-		node.alarmfilterperiod = config.alarmfilterperiod !== undefined ? config.alarmfilterperiod : 0;
+		node.alarmfilterduration = config.alarmfilterduration !== undefined ? Number(config.alarmfilterduration) : 0;
+		node.alarmfilterperiod = config.alarmfilterperiod !== undefined ? Number(config.alarmfilterperiod) : 0;
 		node.devicetype = config.devicetype !== undefined ? config.devicetype : 0;
 		if (node.devicetype == 0) node.alarmfilterduration = 0; // Normal events, set it to zero
 
@@ -177,15 +177,15 @@ module.exports = function (RED) {
 			// 	},
 			// 	"_msgid": "853ba286.3a708"
 			//   }
-			
+
 			if (node.devicetype == 0) {
-				var sAlarmType = "";
+				var sEventType = "";
 				var bAlarmStatus = false;
 
 				if (_msg.payload.hasOwnProperty("eventType")) {
 					// Check if it's only a hearbeat alarm
-					sAlarmType = _msg.payload.eventType.toString().toLowerCase();
-					if (sAlarmType === "videoloss" && _msg.payload.hasOwnProperty("activePostCount") && _msg.payload.activePostCount == "0") {
+					sEventType = _msg.payload.eventType.toString().toLowerCase();
+					if (sEventType === "videoloss" && _msg.payload.hasOwnProperty("activePostCount") && _msg.payload.activePostCount == "0") {
 						node.setNodeStatus({ fill: "green", shape: "ring", text: "Received HeartBeat (the device is online)" });
 						return; // It's a Heartbeat
 					}
@@ -196,7 +196,7 @@ module.exports = function (RED) {
 
 				// Filter regionID (Zone)
 				let iRegionID = 0;
-				if (_msg.payload.hasOwnProperty("DetectionRegionList") && _msg.payload.DetectionRegionList.hasOwnProperty("DetectionRegionEntry") && _msg.payload.DetectionRegionList.DetectionRegionEntry.hasOwnProperty("regionID")) iRegionID = Number(_msg.payload.DetectionRegionList.DetectionRegionEntry.regionID) + 1;
+				if (_msg.payload.hasOwnProperty("DetectionRegionList") && _msg.payload.DetectionRegionList.hasOwnProperty("DetectionRegionEntry") && _msg.payload.DetectionRegionList.DetectionRegionEntry.hasOwnProperty("regionID")) iRegionID = Number(_msg.payload.DetectionRegionList.DetectionRegionEntry.regionID);// Era + 1;
 
 				if (Number(node.channelID) === 0 || Number(node.channelID) === Number(sChannelID)) {  // Filter only selcted channel
 
@@ -214,7 +214,7 @@ module.exports = function (RED) {
 						var aReactTo = node.reactto.split(","); // node.reactto can contain multiple names for the same event, depending from firmware
 						for (let index = 0; index < aReactTo.length; index++) {
 							const element = aReactTo[index];
-							if (element !== null && element !== undefined && element.trim() !== "" && sAlarmType === element) {
+							if (element !== null && element !== undefined && element.trim() !== "" && sEventType === element) {
 								oRetMsg.payload = bAlarmStatus;
 								oRetMsg.topic = _msg.topic;
 								oRetMsg.channelid = sChannelID; // Channel ID (in case of NVR)
@@ -258,7 +258,9 @@ module.exports = function (RED) {
 		}
 
 		this.on('input', function (msg) {
-
+			msg.payload = `{"$":{"version":"2.0","xmlns":"http://www.hikvision.com/ver20/XMLSchema"},"ipAddress":"10.0.0.2","ipv6Address":"::ffff:10.0.0.2","portNo":"80","protocol":"HTTP","macAddress":"08:a1:89:6a:3d:59","channelID":"1","dateTime":"2021-04-24T16:59:47+08:00","activePostCount":"1","eventType":"fielddetection","eventState":"active","eventDescription":"fielddetection alarm","DetectionRegionList":{"DetectionRegionEntry":{"regionID":"1","sensitivityLevel":"50","RegionCoordinatesList":{"RegionCoordinates":[{"positionX":"363","positionY":"872"},{"positionX":"653","positionY":"870"},{"positionX":"631","positionY":"666"},{"positionX":"418","positionY":"676"}]},"detectionTarget":"human","TargetRect":{"X":"508","Y":"705","width":"49","height":"198"}}},"channelName":"Hik","detectionPictureTransType":"binary","detectionPicturesNumber":"1","isDataRetransmission":"false"}`;
+			msg.payload = JSON.parse(msg.payload);
+			node.sendPayload(msg);
 		});
 
 		node.on("close", function (done) {
