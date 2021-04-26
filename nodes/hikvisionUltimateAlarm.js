@@ -179,7 +179,7 @@ module.exports = function (RED) {
 			//   }
 
 
-			// DURATION EVENT (this is a uration event of some alarm not trapped)
+			// DURATION EVENT (this is a uration event of some alarm not trapped) https://github.com/Supergiovane/node-red-contrib-hikvision-ultimate/issues/16
 			// {
 			// 	"$": {
 			// 	  "version": "2.0",
