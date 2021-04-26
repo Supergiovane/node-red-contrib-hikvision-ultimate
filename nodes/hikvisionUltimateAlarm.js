@@ -218,7 +218,7 @@ module.exports = function (RED) {
 						node.setNodeStatus({ fill: "green", shape: "ring", text: "Received HeartBeat (the device is online)" });
 						return; // It's a Heartbeat
 					}
-					if (sEventType === "duration") {
+					if (sEventType === "duration" && !node.isNodeInAlarm) {
 
 						// This is a duration event of an alarm, so i must get the real alarm event from the relationEvent prop
 						if (_msg.payload.hasOwnProperty("DurationList") && _msg.payload.DurationList.hasOwnProperty("Duration") && _msg.payload.DurationList.Duration.hasOwnProperty("relationEvent")) {
@@ -241,6 +241,7 @@ module.exports = function (RED) {
 
 						if (_msg.payload.hasOwnProperty("eventState")) {
 							bAlarmStatus = (_msg.payload.eventState.toString().toLowerCase() === "active" ? true : false);
+							node.isNodeInAlarm = bAlarmStatus;
 						} else {
 							// Mmmm.... no event state?
 							node.setNodeStatus({ fill: "red", shape: "ring", text: "Received alarm but no state!" });
@@ -321,6 +322,12 @@ module.exports = function (RED) {
 			  }`;
 			msg.payload = JSON.parse(msg.payload);
 			node.sendPayload(msg);
+
+			setTimeout(() => {
+				msg.payload = `{"$":{"version":"2.0","xmlns":"http://www.hikvision.com/ver20/XMLSchema"},"ipAddress":"10.0.0.2","ipv6Address":"::ffff:10.0.0.2","portNo":"80","protocol":"HTTP","macAddress":"08:a1:89:6a:3d:59","channelID":"1","dateTime":"2021-04-24T16:59:56+08:00","activePostCount":"1","eventType":"fielddetection","eventState":"inactive","eventDescription":"fielddetection alarm","channelName":"Hik"}`;
+				msg.payload = JSON.parse(msg.payload);
+				node.sendPayload(msg);
+			}, 5000);
 		});
 
 		node.on("close", function (done) {
