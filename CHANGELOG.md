@@ -4,6 +4,10 @@
 [![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square)](https://www.paypal.me/techtoday) 
 
 <p>
+<b>Version 1.0.44</b> April 2021<br/>
+- Alarm node: fixed an issue where the camera won't emit the intrusion detection event start, but only the end. Workaround for that.<br/>
+</p>
+<p>
 <b>Version 1.0.43</b> April 2021<br/>
 - ANPR: Fixed the authentication type (digest/basic) not retained.<br/>
 - ANPR: Fixed the error message visible if you have one and only ANPR camera in your flow.<br/>

@@ -178,9 +178,38 @@ module.exports = function (RED) {
 			// 	"_msgid": "853ba286.3a708"
 			//   }
 
+
+			// DURATION EVENT (this is a uration event of some alarm not trapped)
+			// {
+			// 	"$": {
+			// 	  "version": "2.0",
+			// 	  "xmlns": "http://www.hikvision.com/ver20/XMLSchema"
+			// 	},
+			// 	"ipAddress": "10.0.0.2",
+			// 	"ipv6Address": "::ffff:10.0.0.2",
+			// 	"portNo": "80",
+			// 	"protocol": "HTTP",
+			// 	"macAddress": "08:a1:89:6a:3d:59",
+			// 	"channelID": "1",
+			// 	"dateTime": "2021-04-24T16:59:47+08:00",
+			// 	"activePostCount": "1",
+			// 	"eventType": "duration",
+			// 	"eventState": "active",
+			// 	"eventDescription": "duration alarm",
+			// 	"channelName": "Hik",
+			// 	"DurationList": {
+			// 	  "Duration": {
+			// 		"relationEvent": "fielddetection"
+			// 	  }
+			// 	},
+			// 	"isDataRetransmission": "false"
+			//   }
+
 			if (node.devicetype == 0) {
 				var sEventType = "";
 				var bAlarmStatus = false;
+				let sEventDesc = "";
+				sEventDesc = (_msg.payload.hasOwnProperty("eventDescription") ? _msg.payload.eventDescription : "");
 
 				if (_msg.payload.hasOwnProperty("eventType")) {
 					// Check if it's only a hearbeat alarm
@@ -188,6 +217,14 @@ module.exports = function (RED) {
 					if (sEventType === "videoloss" && _msg.payload.hasOwnProperty("activePostCount") && _msg.payload.activePostCount == "0") {
 						node.setNodeStatus({ fill: "green", shape: "ring", text: "Received HeartBeat (the device is online)" });
 						return; // It's a Heartbeat
+					}
+					if (sEventType === "duration") {
+
+						// This is a duration event of an alarm, so i must get the real alarm event from the relationEvent prop
+						if (_msg.payload.hasOwnProperty("DurationList") && _msg.payload.DurationList.hasOwnProperty("Duration") && _msg.payload.DurationList.Duration.hasOwnProperty("relationEvent")) {
+							sEventType = _msg.payload.DurationList.Duration.relationEvent.toString().toLowerCase();
+							sEventDesc = sEventDesc + " of " + sEventType + ". Zone number will be ignored.";
+						}
 					}
 				}
 
@@ -200,7 +237,7 @@ module.exports = function (RED) {
 
 				if (Number(node.channelID) === 0 || Number(node.channelID) === Number(sChannelID)) {  // Filter only selcted channel
 
-					if (Number(node.filterzone) === 0 || Number(node.filterzone) === iRegionID) {  // Filter only selcted regionID (zone)
+					if (Number(node.filterzone) === 0 || Number(node.filterzone) === iRegionID || iRegionID === 0) {  // Filter only selcted regionID (zone). iRegionID is 0 when the eventtype is "duration"
 
 						if (_msg.payload.hasOwnProperty("eventState")) {
 							bAlarmStatus = (_msg.payload.eventState.toString().toLowerCase() === "active" ? true : false);
@@ -219,7 +256,7 @@ module.exports = function (RED) {
 								oRetMsg.topic = _msg.topic;
 								oRetMsg.channelid = sChannelID; // Channel ID (in case of NVR)
 								oRetMsg.zone = iRegionID; // Zone
-								oRetMsg.description = (_msg.payload.hasOwnProperty("eventDescription") ? _msg.payload.eventDescription : "");
+								oRetMsg.description = sEventDesc;
 								break; // Find first occurrence, exit.
 							}
 						}
@@ -258,7 +295,30 @@ module.exports = function (RED) {
 		}
 
 		this.on('input', function (msg) {
-			msg.payload = `{"$":{"version":"2.0","xmlns":"http://www.hikvision.com/ver20/XMLSchema"},"ipAddress":"10.0.0.2","ipv6Address":"::ffff:10.0.0.2","portNo":"80","protocol":"HTTP","macAddress":"08:a1:89:6a:3d:59","channelID":"1","dateTime":"2021-04-24T16:59:47+08:00","activePostCount":"1","eventType":"fielddetection","eventState":"active","eventDescription":"fielddetection alarm","DetectionRegionList":{"DetectionRegionEntry":{"regionID":"1","sensitivityLevel":"50","RegionCoordinatesList":{"RegionCoordinates":[{"positionX":"363","positionY":"872"},{"positionX":"653","positionY":"870"},{"positionX":"631","positionY":"666"},{"positionX":"418","positionY":"676"}]},"detectionTarget":"human","TargetRect":{"X":"508","Y":"705","width":"49","height":"198"}}},"channelName":"Hik","detectionPictureTransType":"binary","detectionPicturesNumber":"1","isDataRetransmission":"false"}`;
+			msg.payload = `{
+				"$": {
+				  "version": "2.0",
+				  "xmlns": "http://www.hikvision.com/ver20/XMLSchema"
+				},
+				"ipAddress": "10.0.0.2",
+				"ipv6Address": "::ffff:10.0.0.2",
+				"portNo": "80",
+				"protocol": "HTTP",
+				"macAddress": "08:a1:89:6a:3d:59",
+				"channelID": "1",
+				"dateTime": "2021-04-24T16:59:47+08:00",
+				"activePostCount": "1",
+				"eventType": "duration",
+				"eventState": "active",
+				"eventDescription": "duration alarm",
+				"channelName": "Hik",
+				"DurationList": {
+				  "Duration": {
+					"relationEvent": "fielddetection"
+				  }
+				},
+				"isDataRetransmission": "false"
+			  }`;
 			msg.payload = JSON.parse(msg.payload);
 			node.sendPayload(msg);
 		});
