@@ -4,7 +4,7 @@
 [![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square)](https://www.paypal.me/techtoday) 
 
 <p>
-<b>Version 1.0.46</b> April 2021<br/>
+<b>Version 1.0.47</b> April 2021<br/>
 - Alarm node: fixed an issue where the camera won't emit the intrusion detection event start, but only the end. Workaround for that.<br/>
 </p>
 <p>

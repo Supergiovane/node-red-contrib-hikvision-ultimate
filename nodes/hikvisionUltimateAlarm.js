@@ -241,7 +241,6 @@ module.exports = function (RED) {
 
 						if (_msg.payload.hasOwnProperty("eventState")) {
 							bAlarmStatus = (_msg.payload.eventState.toString().toLowerCase() === "active" ? true : false);
-							node.isNodeInAlarm = bAlarmStatus;
 						} else {
 							// Mmmm.... no event state?
 							node.setNodeStatus({ fill: "red", shape: "ring", text: "Received alarm but no state!" });
@@ -258,6 +257,7 @@ module.exports = function (RED) {
 								oRetMsg.channelid = sChannelID; // Channel ID (in case of NVR)
 								oRetMsg.zone = iRegionID; // Zone
 								oRetMsg.description = sEventDesc;
+								node.isNodeInAlarm = bAlarmStatus;
 								break; // Find first occurrence, exit.
 							}
 						}
