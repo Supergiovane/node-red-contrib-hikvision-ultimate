@@ -53,7 +53,7 @@
                                     text: "YES",
                                     click: function (e) {
                                         // Send the infos to Supergiovane
-                                        $.getJSON("http://www.supergiovane.it:8080?read=false&md=" + encodeURIComponent(data.DeviceInfo.model) + "&fw=" + encodeURIComponent(data.DeviceInfo.firmwareVersion), (data) => {
+                                        $.getJSON("http://80.211.147.27:8080?read=false&md=" + encodeURIComponent(data.DeviceInfo.model) + "&fw=" + encodeURIComponent(data.DeviceInfo.firmwareVersion), (data) => {
 
                                         }).error(function (jqXHR, textStatus, errorThrown) {
 
