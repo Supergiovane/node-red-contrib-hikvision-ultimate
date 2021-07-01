@@ -4,6 +4,10 @@
 [![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square)](https://www.paypal.me/techtoday) 
 
 <p>
+<b>Version 1.0.49</b> Juli 2021<br/>
+- NVR: fixed an issue causing the node not detecting the channel ID on some NVR type "NX..".<br/>
+</p>
+<p>
 <b>Version 1.0.48</b> June 2021<br/>
 - Minor fix.<br/>
 </p>

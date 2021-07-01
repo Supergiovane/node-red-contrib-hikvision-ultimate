@@ -229,7 +229,13 @@ module.exports = function (RED) {
 				}
 
 				// Filter channel
-				let sChannelID = (_msg.payload.hasOwnProperty("channelID") ? _msg.payload.channelID : "0")
+				let sChannelID = "0";
+				if (_msg.payload.hasOwnProperty("channelID")) {
+					sChannelID = _msg.payload.channelID;
+				} else if (_msg.payload.hasOwnProperty("dynChannelID")) {
+					sChannelID = _msg.payload.dynChannelID;
+				}
+
 
 				// Filter regionID (Zone)
 				let iRegionID = 0;
