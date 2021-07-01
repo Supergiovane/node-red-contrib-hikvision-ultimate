@@ -117,7 +117,7 @@ module.exports = function (RED) {
 			//#region "STANDARD"
 			// #################################
 
-			// STANDARD MOTION EVENT
+			// STANDARD MOTION EVENT VERSION 2.0
 			// {
 			// 	"topic": "",
 			// 	"payload": {
@@ -141,8 +141,27 @@ module.exports = function (RED) {
 			// 	"_msgid": "913ac479.52e768"
 			//   }
 
+			// STANDARD MOTION EVENT VERSION 1.0
+			// {
+			// 	"payload":{
+			// 	   "$":{
+			// 		  "version":"1.0",
+			// 		  "xmlns":"http://www.hikvision.com/ver20/XMLSchema"
+			// 	   },
+			// 	   "ipAddress":"192.168.60.25",
+			// 	   "portNo":"80",
+			// 	   "protocol":"HTTP",
+			// 	   "macAddress":"44:47:cc:cf:82:17",
+			// 	   "dynChannelID":"4",
+			// 	   "dateTime":"2021-07-01T09:11:21+02:00",
+			// 	   "activePostCount":"1",
+			// 	   "eventType":"VMD",
+			// 	   "eventState":"active",
+			// 	   "eventDescription":"Motion alarm"
+			// 	}
+			//  }
 
-			// SMART EVENT
+			// SMART EVENT VERSION 2.0
 			// {
 			// 	"topic": "",
 			// 	"payload": {
@@ -179,7 +198,7 @@ module.exports = function (RED) {
 			//   }
 
 
-			// DURATION EVENT (this is a uration event of some alarm not trapped) https://github.com/Supergiovane/node-red-contrib-hikvision-ultimate/issues/16
+			// DURATION EVENT VERSION 2.0 (this is a uration event of some alarm not trapped) https://github.com/Supergiovane/node-red-contrib-hikvision-ultimate/issues/16
 			// {
 			// 	"$": {
 			// 	  "version": "2.0",
@@ -231,8 +250,10 @@ module.exports = function (RED) {
 				// Filter channel
 				let sChannelID = "0";
 				if (_msg.payload.hasOwnProperty("channelID")) {
+					// API Version 2.0
 					sChannelID = _msg.payload.channelID;
 				} else if (_msg.payload.hasOwnProperty("dynChannelID")) {
+					// API Version 1.0
 					sChannelID = _msg.payload.dynChannelID;
 				}
 
@@ -302,6 +323,7 @@ module.exports = function (RED) {
 		}
 
 		this.on('input', function (msg) {
+			// TEST VERSION 2.0
 			msg.payload = `{
 				"$": {
 				  "version": "2.0",
@@ -326,6 +348,24 @@ module.exports = function (RED) {
 				},
 				"isDataRetransmission": "false"
 			  }`;
+			  // TEST VERSION 1.0
+			  msg.payload = `{
+				   "$":{
+					  "version":"1.0",
+					  "xmlns":"http://www.hikvision.com/ver20/XMLSchema"
+				   },
+				   "ipAddress":"192.168.60.25",
+				   "portNo":"80",
+				   "protocol":"HTTP",
+				   "macAddress":"44:47:cc:cf:82:17",
+				   "dynChannelID":"4",
+				   "dateTime":"2021-07-01T09:11:21+02:00",
+				   "activePostCount":"1",
+				   "eventType":"VMD",
+				   "eventState":"active",
+				   "eventDescription":"Motion alarm"
+				}`;
+
 			msg.payload = JSON.parse(msg.payload);
 			node.sendPayload(msg);
 
