@@ -254,7 +254,7 @@ module.exports = function (RED) {
 						}
 
 						// check alarm filter
-						var aReactTo = node.reactto.split(","); // node.reactto can contain multiple names for the same event, depending from firmware
+						var aReactTo = node.reactto.split(","); // node.reactto can contain multiple names for the same event, depending on firmware
 						for (let index = 0; index < aReactTo.length; index++) {
 							const element = aReactTo[index];
 							if (element !== null && element !== undefined && element.trim() !== "" && sEventType === element) {
