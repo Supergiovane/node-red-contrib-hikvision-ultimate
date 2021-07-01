@@ -25,7 +25,7 @@ A clear and concise description of what you expected to happen.
 **Screenshots**
 If applicable, add screenshots to help explain your problem.
 
-**Knx-Ultimate Version**
+**Hikvision-Ultimate Version**
  - Eg. 1.1.95
 
 **Are you running node-red behind homematic, docker or anything similar?**
