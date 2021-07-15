@@ -5,6 +5,7 @@ module.exports = (RED) => {
     const AbortController = require('abort-controller');
     const xml2js = require('xml2js').Parser({ explicitArray: false }).parseString;
     const readableStr = require('stream').Readable;
+    const https = require('https');
 
     function Hikvisionconfig(config) {
         RED.nodes.createNode(this, config)
@@ -29,6 +30,10 @@ module.exports = (RED) => {
             }
             node.nodeClients.map(nextStatus);
         }
+        // 14/07/2021 custom agent as global variable, to avoid issue with self signed certificates
+        const customHttpsAgent = new https.Agent({
+            rejectUnauthorized: false
+        });
 
         // 14/12/2020 Get the infos from the camera
         RED.httpAdmin.get("/hikvisionUltimateGetInfoCam", RED.auth.needsPermission('Hikvisionconfig.read'), function (req, res) {
@@ -46,6 +51,8 @@ module.exports = (RED) => {
                 if (jParams.authentication === "digest") clientInfo = new DigestFetch(jParams.user, jParams.password); // Instantiate the fetch client.
                 if (jParams.authentication === "basic") clientInfo = new DigestFetch(jParams.user, jParams.password, { basic: true }); // Instantiate the fetch client.
             }
+
+
             var opt = {
                 // These properties are part of the Fetch Standard
                 method: "GET",
@@ -59,7 +66,7 @@ module.exports = (RED) => {
                 timeout: 5000,         // req/res timeout in ms, it resets on redirect. 0 to disable (OS limit applies). Signal is recommended instead.
                 compress: false,     // support gzip/deflate content encoding. false to disable
                 size: 0,            // maximum response body size in bytes. 0 to disable
-                agent: null         // http(s).Agent instance or function that returns an instance (see below)
+                agent: jParams.protocol === "https" ? customHttpsAgent :null        // http(s).Agent instance or function that returns an instance (see below)
             };
             try {
                 (async () => {
@@ -143,7 +150,7 @@ module.exports = (RED) => {
                 timeout: 0,         // req/res timeout in ms, it resets on redirect. 0 to disable (OS limit applies). Signal is recommended instead.
                 compress: false,     // support gzip/deflate content encoding. false to disable
                 size: 0,            // maximum response body size in bytes. 0 to disable
-                agent: null
+                agent: node.protocol === "https" ? customHttpsAgent :null
 
             };
             try {
@@ -303,7 +310,7 @@ module.exports = (RED) => {
                 timeout: 8000,         // req/res timeout in ms, it resets on redirect. 0 to disable (OS limit applies). Signal is recommended instead.
                 compress: false,     // support gzip/deflate content encoding. false to disable
                 size: 0,            // maximum response body size in bytes. 0 to disable
-                agent: null         // http(s).Agent instance or function that returns an instance (see below)
+                agent: node.protocol === "https" ? customHttpsAgent :null         // http(s).Agent instance or function that returns an instance (see below)
             };
             try {
                 if (!_URL.startsWith("/")) _URL = "/" + _URL;

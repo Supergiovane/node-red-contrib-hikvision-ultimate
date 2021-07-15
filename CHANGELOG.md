@@ -4,6 +4,10 @@
 [![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square)](https://www.paypal.me/techtoday) 
 
 <p>
+<b>Version 1.0.50</b> Juli 2021<br/>
+- You can now connect to devices using HTTPS with a self signed certificate. Preiouusly, the node was given an SSL warning and refuse to connect.<br/>
+</p>
+<p>
 <b>Version 1.0.49</b> Juli 2021<br/>
 - NVR: fixed an issue causing the node not detecting the channel ID on some NVR type "NX..".<br/>
 </p>
