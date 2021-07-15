@@ -7,7 +7,7 @@
             name: { value: "License Plate Camera" },
             protocol: { value: "http" },
             deviceinfo: { value: {} },
-            authentication : {value : "digest"}
+            authentication: { value: "digest" }
         },
         credentials: {
             user: { type: "text" },
@@ -17,7 +17,8 @@
             var node = this;
 
             $("#getinfocam").click(function () {
-
+                this.value = "Wait...";
+                this.disabled = true;
                 // If the node is newly created, the backend cannot get the infos, so i must pass each parameter back
                 var sQueryString = "";
                 var jManipulate = {};
@@ -31,6 +32,8 @@
                 sQueryString = "?nodeID=" + node.id + "&params=" + encodeURIComponent(JSON.stringify(jManipulate));
 
                 $.getJSON("hikvisionUltimateGetInfoCamANPR" + sQueryString, (data) => {
+                    this.value = "Connect";
+                    this.disabled = false;
                     if (!data.hasOwnProperty("DeviceInfo")) {
                         RED.notify("Problem reading the informations from camera: " + JSON.stringify(data) + ". Check your credentials and connection properties.",
                             {
