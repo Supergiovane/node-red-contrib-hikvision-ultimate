@@ -5,7 +5,7 @@ module.exports = function (RED) {
 		RED.nodes.createNode(this, config);
 		var node = this;
 		node.server = RED.nodes.getNode(config.server)
-		node.XML = config.XML === undefined ? "" : config.XML;
+		node.xmlText = config.xmlText === undefined ? "" : config.xmlText;
 		node.path = config.path === undefined ? "" : config.path;
 		node.method = config.method === undefined ? "PUT" : config.method;
 
@@ -20,14 +20,14 @@ module.exports = function (RED) {
 		this.on('input', function (msg) {
 
 			// Overrides
-			if (msg.hasOwnProperty("XML")) node.XML = msg.XML;
+			if (msg.hasOwnProperty("XML")) node.xmlText = msg.XML;
 			if (msg.hasOwnProperty("path")) node.path = msg.path;
 			if (msg.hasOwnProperty("method")) node.method = msg.method;
 			
 			node.setNodeStatus({ fill: "green", shape: "ring", text: "OK" });
 			try {
 				// Params: _callerNode, _method, _URL, _body
-				node.server.request(node, node.method, node.path, node.XML);
+				node.server.request(node, node.method, node.path, node.xmlText);
 			} catch (error) {
 				
 			}

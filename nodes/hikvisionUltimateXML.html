@@ -5,7 +5,7 @@
 		defaults: {
 			name: { value: "" },
 			server: { type: "Hikvision-config", required: true },
-			XML: { value: "" },
+			xmlText: { value: "" },
 			path: { value: "" },
 			method: { value: "PUT" }
 		},
@@ -39,7 +39,7 @@
 		oneditprepare: function () {
 			var node = this;
 			node.editor = RED.editor.createEditor({
-				id: 'node-input-XML',
+				id: 'node-input-xmlText',
 				mode: 'ace/mode/xml',
 				value: node.XML
 			});
@@ -86,8 +86,8 @@
         <input type="text" id="node-input-path" placeholder="Sample: /ISAPI/System/Video/inputs/channels/1/overlays/text">
 	</div>
 	<div class="form-row">
-        <label for="node-input-XML"><i class="fa fa-tasks"></i> XML</label>
-        <div style="height: 250px; min-height:150px;" class="node-text-editor" id="node-input-XML"></div>
+        <label for="node-input-xmlText"><i class="fa fa-tasks"></i> XML</label>
+        <div style="height: 250px; min-height:150px;" class="node-text-editor" id="node-input-xmlText"></div>
 	</div>
 	<div class="form-tips" style="margin-top:11px">
 		Above options: you can send RAW XML text to a device. Please read the ISAPI Hikvision documentation or search in the Internet, to learn what to write with these fields.
