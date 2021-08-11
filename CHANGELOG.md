@@ -5,7 +5,7 @@
 
 <p>
 <b>Version 1.0.51</b> August 2021<br/>
-- FIX: XML Node won't retain the XML text.<br/>
+- FIX: XML Node do not retain the XML text.<br/>
 </p>
 <p>
 <b>Version 1.0.50</b> Juli 2021<br/>
