@@ -30,6 +30,7 @@
     "node-red": {
         "nodes": {
             "Hikvision-config": "nodes/Hikvision-config.js",
+            "Doorbell-config": "nodes/Doorbell-config.js",
             "ANPR-config": "nodes/ANPR-config.js",
             "hikvisionUltimateText": "nodes/hikvisionUltimateText.js",
             "hikvisionUltimateAlarm": "nodes/hikvisionUltimateAlarm.js",
@@ -37,7 +38,8 @@
             "hikvisionUltimateANPR": "nodes/hikvisionUltimateANPR.js",
             "hikvisionUltimatePTZ": "nodes/hikvisionUltimatePTZ.js",
             "hikvisionUltimatePicture": "nodes/hikvisionUltimatePicture.js",
-            "hikvisionUltimateXML": "nodes/hikvisionUltimateXML.js"
+            "hikvisionUltimateXML": "nodes/hikvisionUltimateXML.js",
+            "hikvisionUltimateDoorbell": "nodes/hikvisionUltimateDoorbell.js"
         }
     }
 }

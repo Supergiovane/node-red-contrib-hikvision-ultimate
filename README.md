@@ -462,6 +462,17 @@ msg = {
     "_msgid": "dd5b3622.884a78"
 }
 ```
+<br/>
+<br/>
+
+---
+
+## DOORBELL NODE
+The doorbell node allow you to receive ring events and open the doors. This node works with hikvision doorbells. <br/>
+The node is under development and will be out with the upcoming Jikvision-Ultimate version.<br/>
+
+<br/>
+<br/>
 
 # HIKVISION DEVICES TESTED WITH THE NODE
 This is a list of Hikvision models the users own and decided to share because it checked working with Hikvision-Ultimate. <br/>
