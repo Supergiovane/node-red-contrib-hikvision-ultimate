@@ -106,7 +106,7 @@ module.exports = (RED) => {
                     try {
                         if (controller !== null) controller.abort().then(ok => { }).catch(err => { });
                     } catch (error) { }
-                    setTimeout(startAlarmStream, 10000); // Reconnect
+                    setTimeout(startCallStatus, 10000); // Reconnect
                 } else {
                     // 28/12/2020 Connection attempt limit reached
                     node.heartBeatTimerDisconnectionCounter = 0;
@@ -121,20 +121,20 @@ module.exports = (RED) => {
                         if (controller !== null) controller.abort().then(ok => { }).catch(err => { });
                     } catch (error) { }
                     node.isConnected = false;
-                    setTimeout(startAlarmStream, 5000); // Reconnect
+                    setTimeout(startCallStatus, 5000); // Reconnect
                 }
             }, 40000);
         }
 
-        //#region ALARMSTREAM
-        async function startAlarmStream() {
+        //#region CallStatus
+        async function startCallStatus() {
 
             node.resetHeartBeatTimer(); // First thing, start the heartbeat timer.
             node.setAllClientsStatus({ fill: "grey", shape: "ring", text: "Connecting..." });
 
-            var clientAlarmStream;
-            if (node.authentication === "digest") clientAlarmStream = new DigestFetch(node.credentials.user, node.credentials.password); // Instantiate the fetch client.
-            if (node.authentication === "basic") clientAlarmStream = new DigestFetch(node.credentials.user, node.credentials.password, { basic: true }); // Instantiate the fetch client.
+            var clientCallStatus;
+            if (node.authentication === "digest") clientCallStatus = new DigestFetch(node.credentials.user, node.credentials.password); // Instantiate the fetch client.
+            if (node.authentication === "basic") clientCallStatus = new DigestFetch(node.credentials.user, node.credentials.password, { basic: true }); // Instantiate the fetch client.
 
             controller = new AbortController(); // For aborting the stream request
             var optionsAlarmStream = {
@@ -232,7 +232,7 @@ module.exports = (RED) => {
                 // ###################################
                 //#endregion
 
-                const response = await clientAlarmStream.fetch(node.protocol + "://" + node.host + "/ISAPI/Event/notification/alertStream", optionsAlarmStream);
+                const response = await clientCallStatus.fetch(node.protocol + "://" + node.host + "/ISAPI/Event/notification/alertStream", optionsAlarmStream);
 
                 if (response.status >= 200 && response.status <= 300) {
                     node.setAllClientsStatus({ fill: "green", shape: "ring", text: "Waiting for event." });
@@ -286,7 +286,7 @@ module.exports = (RED) => {
             };
 
         };
-        setTimeout(startAlarmStream, 10000); // First connection.
+        setTimeout(startCallStatus, 10000); // First connection.
         //#endregion
 
         //#region GENERIC GET OT PUT CALL

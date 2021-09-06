@@ -474,8 +474,8 @@ The node is under development and will be out with the upcoming Jikvision-Ultima
 <br/>
 <br/>
 
-# HIKVISION DEVICES TESTED WITH THE NODE
-This is a list of Hikvision models the users own and decided to share because it checked working with Hikvision-Ultimate. <br/>
+# HIKVISION AND OTHER HIK BASED DEVICES, TESTED WITH THE NODE
+This is a list of Hikvision (and hik compatible) models the users own and decided to share because it checked working with Hikvision-Ultimate. <br/>
 This is only a partial model list. Hikvision-Ultimate should work with basically ALL Hikvision devices.<br/>
 [Click HERE to view the list of tested devices](http://80.211.147.27:8080/?read=true&md=noCD&fw=no) 
 
