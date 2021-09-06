@@ -2,7 +2,7 @@ var http = require('http');
 var url = require('url');
 var fs = require('fs');
 
-console.log("NODE.JS Server started on port 8080 for collectiong things from my node-red nodes");
+console.log("Ciao. NODE.JS Server started on port 8080 for collectiong things from my node-red nodes");
 
 //create a server object:
 http.createServer(function (req, res) {
@@ -19,7 +19,7 @@ http.createServer(function (req, res) {
     var sFileContent = fs.readFileSync(sFilePath, "utf8");
     var sFileContentPage = fs.readFileSync(sFilePathPage, "utf8");
     var q = url.parse(req.url, true).query;
-    console.log(shortStartDate + " Received: " + JSON.stringify(q) + " from: " + req.connection.remoteAddress);
+    console.log(shortStartDate + " Received: " + JSON.stringify(q) + " from: " + req.socket.remoteAddress);
     if (q.md === undefined || q.fw === undefined || q.read === undefined) {
         res.writeHead(404, { 'Content-Type': 'text/html' });
         res.write("<b>Sorry but... who are you? An Hacker i suppose</b>.<br/>There is nothing here for you, so please go away.");
