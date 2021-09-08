@@ -49,7 +49,7 @@
                     $("#node-config-input-deviceinfo").val(JSON.stringify(data));
                     $("#labeldeviceinfo").html("<b>DEVICE INFORMATION</b><br/>Name: <b>" + data.DeviceInfo.deviceName + "</b><br/>Model: <b>" + data.DeviceInfo.model + "</b><br/>Firmware: <b>" + data.DeviceInfo.firmwareVersion + "</b>");
 
-                    var myNotification = RED.notify("Can i inform the developer, that the Hikvision " + data.DeviceInfo.model + " works with this node? This will help other users.",
+                    var myNotification = RED.notify("Can i inform the developer, that the device " + data.DeviceInfo.model + " works with this node? This will help other users.",
                         {
                             modal: true,
                             fixed: true,

@@ -1,19 +1,18 @@
 <script type="text/javascript">
 	RED.nodes.registerType('hikvisionUltimateDoorbell', {
 		category: 'Hikvision Ultimate',
-		color: '#C0C0C0',
+		color: 'red',
 		defaults: {
 			name: { value: "" },
 			topic: { value: "" },
 			server: { type: "Doorbell-config", required: true },
-			reactto: { value: "vmd" },
-			devicetype: { value: 0 },
-			filterzone: { value: "0" },
-			alarmfilterduration: { value: 0 },
-			alarmfilterperiod: { value: 0 },
-			channelID: { value: "0" }
+			ringStatus: { value: "all" },
+			floorNo : {value: "all"},
+			unitNo: {value: "all"},
+			zoneNo: {value: "all"},
+			buildingNo: {value: "all"}
 		},
-		inputs: 0,
+		inputs: 1,
 		outputs: 2,
 		outputLabels: function (i) {
 			var ret = "";
@@ -31,89 +30,19 @@
 		icon: "font-awesome/fa-bell",
 		label:
 			function () {
-				var label = "Doorbell"
+				var label = "Doorbell BETA (not for production)"
 				if (this.name !== undefined && this.name.length > 0) {
 					label = this.name;
 				}
-				return label;// + " " + this.reactto;
+				return label;// + " " + this.status;
 			},
 		paletteLabel: function () {
-			return "Doorbell";
+			return "Doorbell BETA";
 		},
 		oneditprepare: function () {
 			var node = this;
 
-			// 28/01/2021 Filter events based on device type
-			// #################################################################
-			var alarmList = $("#node-input-reactto").html();
-			function filterReactTo(_val) {
-				let textFilter = "";
-				switch (Number(_val)) {
-					case 0:
-						textFilter = "(Camera/NVR)";
-						break;
-					case 1:
-						textFilter = "(Security system)";
-						break;
-					case 2:
-						textFilter = "(Radar)";
-						break;
-					default:
-						break;
-				}
-				$("#node-input-reactto").html(alarmList);
-				$('#node-input-reactto option').each(function () {
-					if ($(this).text().indexOf(textFilter) == -1) {
-						$(this).remove();
-					}
-				});
-				$("#node-input-reactto").val(node.reactto);
-			}
-			$("#node-input-devicetype").change(function (e) {
-				filterReactTo(this.value);
-				if (this.value == 0) {
-					$("#ui_alarmfilterduration").hide();
-					$("#ui_alarmfilterperiod").hide();
-				} else {
-					$("#ui_alarmfilterduration").show();
-					$("#ui_alarmfilterperiod").show();
-				}
-				
-			});
-			filterReactTo($("#node-input-devicetype :selected").val());
-			// #################################################################
-
-			// 15/01/2021 Hide parts of the ui
-			// ##########################################################
-			if (node.alarmfilterduration == 0) {
-				$("#ui_alarmfilterperiod").hide();
-			} else {
-				$("#ui_alarmfilterperiod").show();
-			}
-			$("#node-input-alarmfilterduration").change(function (e) {
-				if ($("#node-input-alarmfilterduration").val() == 0) {
-					$("#ui_alarmfilterperiod").hide();
-				} else {
-					$("#ui_alarmfilterperiod").show();
-				}
-				if ($("#node-input-devicetype").val() == 0) {
-					$("#ui_alarmfilterduration").hide();
-					$("#ui_alarmfilterperiod").hide();
-				}
-				
-			});
-			// ##########################################################
-
-			// 29/01/2021 Hide the filter duration if the devicetype is not a security system
-			// ##########################################################
-			if (this.devicetype == 0) {
-				$("#ui_alarmfilterduration").hide();
-				$("#ui_alarmfilterperiod").hide();
-			} else {
-				$("#ui_alarmfilterduration").show();
-				$("#ui_alarmfilterperiod").show();
-			}
-			// ##########################################################
+			
 
 		},
 		oneditsave: function () {
@@ -126,7 +55,7 @@
 
 <script type="text/x-red" data-template-name="hikvisionUltimateDoorbell">
 	<div class="form-row">
-		<b>Alarm node</b>&nbsp&nbsp&nbsp&nbsp<span style="color:red"><i class="fa fa-question-circle"></i>&nbsp<a target="_blank" href="https://github.com/Supergiovane/node-red-contrib-hikvision-ultimate"><u>Help online</u></a></span>
+		<b>Doorbell node</b>&nbsp&nbsp&nbsp&nbsp<span style="color:red"><i class="fa fa-question-circle"></i>&nbsp<a target="_blank" href="https://github.com/Supergiovane/node-red-contrib-hikvision-ultimate"><u>Help online</u></a></span>
         <br/>
 		<br/>
 		
@@ -142,261 +71,77 @@
         <input type="text" id="node-input-topic" placeholder="Node's own topic">
 	</div>
 	<div class="form-row">
-        <label for="node-input-devicetype"><i class="fa fa-tasks"></i> Device type</label>
-		<select id="node-input-devicetype">
-			<option value=0>Camera or NVR/DVR</option>
-			<option value=1>Alarm system (Security system like AX Hub, Hybrid panel, etc...)</option>
-			<option value=2>Radar</option>
+        <label for="node-input-ringStatus"><i class="fa fa-tasks"></i> React to</label>
+		<select id="node-input-ringStatus">
+			<option value="all">All</option>
+			<option value="ring">Ring only</option>
+			<option value="oncall">On Call only</option>
 		</select>
-	</div>		
+	</div>
+	
 	<div class="form-row">
-        <label for="node-input-reactto"><i class="fa fa-tasks"></i> React to Event</label>
-		<select id="node-input-reactto">
-			<option value="CID:1131-3131">Intrusion alarm (MOST COMMON: this is the intruder alarm) (Security system)</option>
-			<option value="CID:1110-3110">Fire alarm (Security system)</option>
-			<option value="CID:1120-3120">Panic alarm (Panic button has been pressed) (Security system)</option>
-			<option value="CID:1137-3137">Tamper (The device has been tampered) (Security system)</option>
-			<option value="CID:1301-3301">AC Power loss (Main voltge supply has been lost) (Security system)</option>
-			<option value="CID:1103-3103">Bulgary alarm (MOST COMMON: when motion is detected in a zone/crossing line)(Radar)</option>
-			<option value="CID:1148-3148">Device moved alarm (The device itsef has been moved during a sabotage) (Radar)</option>
-			<option value="vmd">Video motion (MOST COMMON: when motion is detected) (Camera/NVR)</option>
-			<option value="io">Local alarm input (MOST COMMON: it's the device's IO pigtail connector) (Camera/NVR)</option>
-			<option value="linedetection">Line crossing (MOST COMMON: when someone crosses a line) (Camera/NVR)</option>
-			<option value="videoloss">Video loss (MOST COMMON: when the camera loses the video signal) (Camera/NVR)</option>
-			<option value="shelteralarm">Video blind (MOST COMMON: when you put something in front of the camera to block image) (Camera/NVR)</option>
-			<option value="fielddetection">Intrusion detection (Camera/NVR)</option>
-			<option value="ROI">Region of interest (Camera/NVR)</option>
-			<option value="facedetection">Face detection (Camera/NVR)</option>
-			<option value="intelliTrace">Auto-track (Camera/NVR)</option>
-			<option value="defocus,defocusDetection">Defocus detection (Camera/NVR)</option>
-			<option value="audioexception,audioDetection">Audio exception detection (Camera/NVR)</option>
-			<option value="scenechangedetection">Sudden scene change detection (Camera/NVR)</option>
-			<option value="regionEntrance">Region entrance detection (Camera/NVR)</option>
-			<option value="regionExiting">Region exiting detection (Camera/NVR)</option>
-			<option value="loitering">Loitering detection (Camera/NVR)</option>
-			<option value="group">People gathering detection  (Camera/NVR)</option>
-			<option value="rapidMove">Fast moving detection (Camera/NVR)</option>
-			<option value="parking">Parking detection (Camera/NVR)</option>
-			<option value="unattendedBaggage">Unattended baggage (Camera/NVR)</option>
-			<option value="attendedBaggage">Object removal detection (Camera/NVR)</option>
-			<option value="peopleDetection">Human detection (Camera/NVR)</option>
-			<option value="storageDetection">HDD health detection (Camera/NVR)</option>
-			<option value="behavior">Behavior analysis (Camera/NVR)</option>
-			<option value="faceCapture,faceSnap">Face capture (Camera/NVR)</option>
-			<option value="ANPR,vehicleDetection">Vehicle detection (Camera/NVR)</option>
-			<option value="fireDetection">Fire detection (Camera/NVR)</option>
-			<option value="shipsDetection">Ship detection (Camera/NVR)</option>
-			<option value="PIR">PIR alarm (Camera/NVR)</option>
-			<option value="targetCapture,humanRecognition">Target capture (Camera/NVR)</option>
-			<option value="alarmResult,faceContrast">Face comparison (Camera/NVR)</option>
-			<option value="framesPeopleCounting">People counting in single frame (Camera/NVR)</option>
-			<option value="hide">Tampering detection (Camera/NVR)</option>
-			<option value="audioLoss">Audio loss (Camera/NVR)</option>
-			<option value="cameraAngleAnormaly">Image exception (Camera/NVR)</option>
-			<option value="violentMotion">Violent motion (Camera/NVR)</option>
-			<option value="trial">Tailing (Camera/NVR)</option>
-			<option value="humanEnter">Human entrance (Camera/NVR)</option>
-			<option value="operateOverTime">Operation timed out (Camera/NVR)</option>
-			<option value="stickUp">Sticking scrip (Camera/NVR)</option>
-			<option value="installScanner">Installing scanner (Camera/NVR)</option>
-			<option value="faceDetect">ATM face detection (Camera/NVR)</option>
-			<option value="temperature,temperatureDetection">Temperature difference detection (Camera/NVR)</option>
-			<option value="PeopleCounting">People counting (Camera/NVR)</option>
-			<option value="personQueueDetection">People queuing-up detection (Camera/NVR)</option>
-			<option value="heatmap">Heat map (Camera/NVR)</option>
-			<option value="mixedTargetDetection">Multi-target-type detection (Camera/NVR)</option>
-			<option value="MTD_face">Supported face attributes of multi-target-type detection (MTD) (Camera/NVR)</option>
-			<option value="MTD_human">Supported human attributes of multi-target-type detection (MTD) (Camera/NVR)</option>
-			<option value="MTD_vehicle">Supported motor vehicle attributes of multi-target- type detection (MTD) (Camera/NVR)</option>
-			<option value="MTD_nonMotor">Supported non-motor vehicle attributes of multi- target-type detection (MTD) (Camera/NVR)</option>
-			<option value="faceSnapModeling">Face capture modeling (Camera/NVR)</option>
-			<option value="HVTVehicleDetection">Mixed-traffic detection (Camera/NVR)</option>
-			<option value="PictureCaptureComparision">N:1 face comparison (Camera/NVR)</option>
-			<option value="smokeDetection">Smoke detection (Camera/NVR)</option>
-			<option value="smokeAndFireDetection">Smoke and fire detection (Camera/NVR)</option>
-			<option value="diskfull">HDD is full (Camera/NVR)</option>
-			<option value="diskerror">HDD error (Camera/NVR)</option>
-			<option value="nicbroken">Network disconnected (Camera/NVR)</option>
-			<option value="ipconflict">IP address conflicted (Camera/NVR)</option>
-			<option value="illaccess">Illegal access (Camera/NVR)</option>
-			<option value="personDensityDetection">People density detection (Camera/NVR)</option>
-			<option value="vehicleControl">Upload alarm of vehicle in whitelist and blacklist (Camera/NVR)</option>
-			<option value="vehicleRcogResult">Vehicle secondary recognition (Camera/NVR)</option>
-			<option value="cardMatch">Authentication (Camera/NVR)</option>
-			<option value="overSpeed">Overspeed alarm (Camera/NVR)</option>
-			<option value="highTempAlarm">High temperature alarm (Camera/NVR)</option>
-			<option value="abnormalAcceleration">Abnormal accelerated speed alarm (Camera/NVR)</option>
-			<option value="failDown">People falling down (Camera/NVR)</option>
-			<option value="leavePosition">Absence detection (Camera/NVR)</option>
-			<option value="peopleNumChange">The number of people changed (Camera/NVR)</option>
-			<option value="retention">Overstay detection (Camera/NVR)</option>
-			<option value="running">Running (Camera/NVR)</option>
-			<option value="thermometry">Temperature measurement (Camera/NVR)</option>
-			<option value="heatmapPDC">Heat map people counting (Camera/NVR)</option>
-			<option value="heatmapDuration">Heat map people staying duration (Camera/NVR)</option>
-			<option value="intersectionAnalysis">Intersection analysis (Camera/NVR)</option>
-			<option value="AID_abandonedObject">Thrown object in traffic events (Camera/NVR)</option>
-			<option value="AID_pedestrian">Pedestrian detection in traffic events (Camera/NVR)</option>
-			<option value="AID_​congestion">Congestion detection in traffic events (Camera/NVR)</option>
-			<option value="AID_roadBlock">Roadblock detection in traffic events (Camera/NVR)</option>
-			<option value="AID_​construction">Construction detection in traffic events (Camera/NVR)</option>
-			<option value="AID_​trafficAccident">Traffic accident detection in traffic events (Camera/NVR)</option>
-			<option value="AID_​fogDetection">Fog detection in traffic events (Camera/NVR)</option>
-			<option value="TFS_illegalParking">Illegal parking of enforcement events (Camera/NVR)</option>
-			<option value="TFS_​wrongDirection">Wrong-way driving of enforcement events (Camera/NVR)</option>
-			<option value="TFS_crossLane">Driving on lane line of enforcement events (Camera/NVR)</option>
-			<option value="TFS_laneChange">Lane change of enforcement events (Camera/NVR)</option>
-			<option value="TFS_vehicleExist">Vehicle existing of enforcement events (Camera/NVR)</option>
-			<option value="TFS_turnRound">Turning round of enforcement events (Camera/NVR)</option>
-			<option value="TFS_parallelParking">Parallel parking of enforcement events (Camera/NVR)</option>
-			<option value="TPS">Traffic data collection configuration (Camera/NVR)</option>
-			<option value="luma">Brightness exception (Camera/NVR)</option>
-			<option value="chroma">Color cast detection (Camera/NVR)</option>
-			<option value="snow">Snow noise (Camera/NVR)</option>
-			<option value="streak">Stripe noise (Camera/NVR)</option>
-			<option value="freeze">Image freeze (Camera/NVR)</option>
-			<option value="sigLose">Signal loss (Camera/NVR)</option>
-			<option value="clarity">Clarity exception (Camera/NVR)</option>
-			<option value="jitter">Image flutter (Camera/NVR)</option>
-			<option value="block">Video tampering (Camera/NVR)</option>
-			<option value="flowers">Blurred screen detection (Camera/NVR)</option>
-			<option value="noise">Image noise (Camera/NVR)</option>
-			<option value="ghost">Abnormal light spot detection (Camera/NVR)</option>
-			<option value="purple">Image purple edge detection (Camera/NVR)</option>
-			<option value="ICR">ICR exception detection (Camera/NVR)</option>
-			<option value="protectiveFilm">Protective film unremoved (Camera/NVR)</option>
-			<option value="certificateRevocation">Certificate is expired (Camera/NVR)</option>
+        <label for="node-input-buildingNo"><i class="fa fa-tasks"></i> Building no.</label>
+		<select id="node-input-buildingNo">
+			<option value="all">All buildings</option>
+			<option value="1">1</option>
+			<option value="2">2</option>
+			<option value="3">3</option>
+			<option value="4">4</option>
+			<option value="5">5</option>
+			<option value="6">6</option>
+			<option value="7">7</option>
+			<option value="8">8</option>
+			<option value="8">9</option>
+			<option value="10">10</option>
 		</select>
 	</div>
 	<div class="form-row">
-        <label for="node-input-channelID"><i class="fa fa-tasks"></i> React to Channel</label>
-		<select id="node-input-channelID">
-			<option value="0">All channels</option>
-			<option value="1">Channel 1</option>
-			<option value="2">Channel 2</option>
-			<option value="3">Channel 3</option>
-			<option value="4">Channel 4</option>
-			<option value="5">Channel 5</option>
-			<option value="6">Channel 6</option>
-			<option value="7">Channel 7</option>
-			<option value="8">Channel 8</option>
-			<option value="9">Channel 9</option>
-			<option value="10">Channel 10</option>
-			<option value="11">Channel 11</option>
-			<option value="12">Channel 12</option>
-			<option value="13">Channel 13</option>
-			<option value="14">Channel 14</option>
-			<option value="15">Channel 15</option>
-			<option value="16">Channel 16</option>
-			<option value="17">Channel 17</option>
-			<option value="18">Channel 18</option>
-			<option value="19">Channel 19</option>
-			<option value="20">Channel 20</option>
-			<option value="21">Channel 21</option>
-			<option value="22">Channel 22</option>
-			<option value="23">Channel 23</option>
-			<option value="24">Channel 24</option>
-			<option value="25">Channel 25</option>
-			<option value="26">Channel 26</option>
-			<option value="27">Channel 27</option>
-			<option value="28">Channel 28</option>
-			<option value="29">Channel 29</option>
-			<option value="30">Channel 30</option>
-			<option value="31">Channel 31</option>
-			<option value="32">Channel 32</option>
+        <label for="node-input-floorNo"><i class="fa fa-tasks"></i> Floor</label>
+		<select id="node-input-floorNo">
+			<option value="all">All floors</option>
+			<option value="1">1</option>
+			<option value="2">2</option>
+			<option value="3">3</option>
+			<option value="4">4</option>
+			<option value="5">5</option>
+			<option value="6">6</option>
+			<option value="7">7</option>
+			<option value="8">8</option>
+			<option value="8">9</option>
+			<option value="10">10</option>
 		</select>
 	</div>
 	<div class="form-row">
-        <label for="node-input-filterzone"><i class="fa fa-tasks"></i> React to Zone </label>
-		<select id="node-input-filterzone">
-			<option value="0">All zones</option>
-			<option value="1">Zone 1</option>
-			<option value="2">Zone 2</option>
-			<option value="3">Zone 3</option>
-			<option value="4">Zone 4</option>
-			<option value="5">Zone 5</option>
-			<option value="6">Zone 6</option>
-			<option value="7">Zone 7</option>
-			<option value="8">Zone 8</option>
-			<option value="9">Zone 9</option>
-			<option value="10">Zone 10</option>
-			<option value="11">Zone 11</option>
-			<option value="12">Zone 12</option>
-			<option value="13">Zone 13</option>
-			<option value="14">Zone 14</option>
-			<option value="15">Zone 15</option>
-			<option value="16">Zone 16</option>
-		</select>
-		<div class="form-tips" style="margin-top:11px">
-			The above option allow the node to react to alarms coming from one of these events. For NVR, the Channel represents the CAMERA number, while for Cameras, represents the sensor number (by default 1, if the camera has only one image sensor). The zone represents the alarm zone for RADARS AND SECURITY SYSTEM, otherwise the region (for example the intrusion alert region number)
-		 </div>
-	</div>
-	<br/>
-	<div class="form-row" id="ui_alarmfilterduration">
-		<i class="fa fa-filter"></i>&nbsp&nbsp<b>False alarms filtering options</b>
-		<br/>	<br/>
-        <label for="node-input-alarmfilterduration"><i class="fa fa-tasks"></i> Alarm duration</label>
-		<select id="node-input-alarmfilterduration">
-			<option value=0>No wait. Immediate alarm.</option>
-			<option value=1>more than 1 Second</option>
-			<option value=2>more than 2 Seconds</option>
-			<option value=3>more than 3 Seconds</option>
-			<option value=4>more than 4 Seconds</option>
-			<option value=5>more than 5 Seconds</option>
-			<option value=6>more than 6 Seconds</option>
-			<option value=7>more than 7 Seconds</option>
-			<option value=8>more than 8 Seconds</option>
-			<option value=9>more than 9 Seconds</option>
-			<option value=10>more than 10 Seconds</option>
-			<option value=11>more than 11 Seconds</option>
-			<option value=12>more than 12 Seconds</option>
-			<option value=13>more than 13 Seconds</option>
-			<option value=14>more than 14 Seconds</option>
-			<option value=15>more than 15 Seconds</option>
-			<option value=16>more than 16 Seconds</option
-			<option value=17>more than 17 Seconds</option>
-			<option value=18>more than 18 Seconds</option>
-			<option value=19>more than 19 Seconds</option>
-			<option value=20>more than 20 Seconds</option>
+        <label for="node-input-unitNo"><i class="fa fa-tasks"></i> Unit number</label>
+		<select id="node-input-unitNo">
+			<option value="all">All units</option>
+			<option value="1">1</option>
+			<option value="2">2</option>
+			<option value="3">3</option>
+			<option value="4">4</option>
+			<option value="5">5</option>
+			<option value="6">6</option>
+			<option value="7">7</option>
+			<option value="8">8</option>
+			<option value="8">9</option>
+			<option value="10">10</option>
 		</select>
 	</div>
-	<div class="form-row" id="ui_alarmfilterperiod">
-		<label for="node-input-alarmfilterperiod"><i class="fa fa-tasks"></i> Evaluation period</label>
-		<select id="node-input-alarmfilterperiod">
-			<option value=1>1 Second</option>
-			<option value=2>2 Seconds</option>
-			<option value=3>3 Seconds</option>
-			<option value=4>4 Seconds</option>
-			<option value=5>5 Seconds</option>
-			<option value=6>6 Seconds</option>
-			<option value=7>7 Seconds</option>
-			<option value=8>8 Seconds</option>
-			<option value=9>9 Seconds</option>
-			<option value=10>10 Seconds</option>
-			<option value=11>11 Seconds</option>
-			<option value=12>12 Seconds</option>
-			<option value=13>13 Seconds</option>
-			<option value=14>14 Seconds</option>
-			<option value=15>15 Seconds</option>
-			<option value=16>16 Seconds</option
-			<option value=17>17 Seconds</option>
-			<option value=18>18 Seconds</option>
-			<option value=19>19 Seconds</option>
-			<option value=20>20 Seconds</option>
-			<option value=21>21 Seconds</option>
-			<option value=22>22 Seconds</option>
-			<option value=23>23 Seconds</option>
-			<option value=24>24 Seconds</option>
-			<option value=25>25 Seconds</option>
-			<option value=26>26 Seconds</option>
-			<option value=27>27 Seconds</option>
-			<option value=28>28 Seconds</option>
-			<option value=29>29 Seconds</option>
-			<option value=30>30 Seconds</option>
+	<div class="form-row">
+        <label for="node-input-zoneNo"><i class="fa fa-tasks"></i> Zone</label>
+		<select id="node-input-zoneNo">
+			<option value="all">All zones</option>
+			<option value="1">1</option>
+			<option value="2">2</option>
+			<option value="3">3</option>
+			<option value="4">4</option>
+			<option value="5">5</option>
+			<option value="6">6</option>
+			<option value="7">7</option>
+			<option value="8">8</option>
+			<option value="8">9</option>
+			<option value="10">10</option>
 		</select>
-		<div class="form-tips" style="margin-top:11px">
-		Above options: the node will emit an alarm msg only if the alarm persists (remains TRUE) or repeats (in this case, the persisting time of each TRUE value is evaluated) for the time specified in "Alarm duration", during the "Evaluation period".
-		</div>
 	</div>
   
 </script>
@@ -407,7 +152,10 @@
         
 	</p>
 	<p>
-		The node outputs true/false on PIN 1 and a connection ERROR on PIN 2 (true if the node is DISCONNECTED to the server, otherwise false IF IT'S RECONNECTED).
+		The node outputs a payload true/false and other detalis on PIN 1 and a connection ERROR on PIN 2 (true if the node is DISCONNECTED to the server, otherwise false IF IT'S RECONNECTED).
+	</p>
+	<p>
+		For input, see the help link in the config window.
 	</p>
 	
 </script>

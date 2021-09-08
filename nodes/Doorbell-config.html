@@ -33,11 +33,11 @@
                 jManipulate.authentication = $("#node-config-input-authentication").val();
                 sQueryString = "?nodeID=" + node.id + "&params=" + encodeURIComponent(JSON.stringify(jManipulate));
 
-                $.getJSON("hikvisionUltimateGetInfoCam" + sQueryString, (data) => {
+                $.getJSON("hikvisionUltimateGetInfoDoorBell" + sQueryString, (data) => {
                     this.value = "Connect";
                     this.disabled = false;
                     if (!data.hasOwnProperty("DeviceInfo")) {
-                        RED.notify("Problem reading infostream from camera: " + JSON.stringify(data) + ". Check your credentials and connection properties.",
+                        RED.notify("Problem reading infostream from doorbell: " + JSON.stringify(data) + ". Check your credentials and connection properties.",
                             {
                                 modal: false,
                                 fixed: false,
@@ -49,7 +49,7 @@
                     $("#node-config-input-deviceinfo").val(JSON.stringify(data));
                     $("#labeldeviceinfo").html("<b>DEVICE INFORMATION</b><br/>Name: <b>" + data.DeviceInfo.deviceName + "</b><br/>Model: <b>" + data.DeviceInfo.model + "</b><br/>Firmware: <b>" + data.DeviceInfo.firmwareVersion + "</b>");
 
-                    var myNotification = RED.notify("Can i inform the developer, that the Hikvision " + data.DeviceInfo.model + " works with this node? This will help other users.",
+                    var myNotification = RED.notify("Can i inform the developer, that the device " + data.DeviceInfo.model + " works with this node? This will help other users.",
                         {
                             modal: true,
                             fixed: true,
@@ -59,7 +59,7 @@
                                     text: "YES",
                                     click: function (e) {
                                         // Send the infos to Supergiovane
-                                        $.getJSON("http://80.211.147.27:8080?read=false&md=" + encodeURIComponent(data.DeviceInfo.model) + "&fw=" + encodeURIComponent(data.DeviceInfo.firmwareVersion), (data) => {
+                                        $.getJSON("http://80.211.147.27:8080?read=false&md=" + encodeURIComponent("Door Intercom " + data.DeviceInfo.model) + "&fw=" + encodeURIComponent(data.DeviceInfo.firmwareVersion), (data) => {
 
                                         }).error(function (jqXHR, textStatus, errorThrown) {
 
@@ -145,19 +145,6 @@
         <option value="basic">Basic</option>
         </select>
     </div>
-    <div class="form-row">
-        <label for="node-config-input-heartbeattimerdisconnectionlimit"><i class="fa fa-exclamation-triangle"></i> Emit error</label>
-        <select type="text" id="node-config-input-heartbeattimerdisconnectionlimit">
-        <option value=1>after 1 failed reconnection attempt (not recommended)</option>
-        <option value=2>after 2 failed reconnection attempts (Default)</option>
-        <option value=3>after 3 failed reconnection attempts</option>
-        <option value=4>after 4 failed reconnection attempts</option>
-        </select>
-    </div>
-    <div class="form-tips" style="margin-top:11px">
-        Above option: after connection error, the node try to reconnect for the number of times selected, then emits a connection error on PIN 2. Increase this number for slow LANs, like VPN
-     </div>
-     <br/>
     <div class="form-row">
         <label><i class="fa fa-sign-in"></i> Get info</label>
         <input type="button" id="getinfocam" class="ui-button ui-corner-all ui-widget" style="background-color:#AEE1FF;width:150px" value="Connect">

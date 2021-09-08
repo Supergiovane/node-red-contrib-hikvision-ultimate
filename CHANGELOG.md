@@ -4,6 +4,10 @@
 [![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square)](https://www.paypal.me/techtoday) 
 
 <p>
+<b>Version 1.0.52</b> September 2021<br/>
+- NEW: Doorbell node (you can be notified on ringing, on call and even open the door).<br/>
+</p>
+<p>
 <b>Version 1.0.51</b> August 2021<br/>
 - FIX: XML Node do not retain the XML text.<br/>
 </p>

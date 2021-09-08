@@ -16,12 +16,11 @@ module.exports = (RED) => {
         node.protocol = config.protocol || "http";
         node.nodeClients = []; // Stores the registered clients
         node.isConnected = true; // Assumes, that is already connected.
-        node.timerCheckHeartBeat = null;
         node.errorDescription = ""; // Contains the error description in case of connection error.
         node.authentication = config.authentication || "digest";
         node.deviceinfo = config.deviceinfo || {};
-        node.heartBeatTimerDisconnectionCounter = 0;
-        node.heartbeattimerdisconnectionlimit = config.heartbeattimerdisconnectionlimit || 2;
+        node.timerCheckRing = null;
+
         var controller = null; // AbortController
 
         node.setAllClientsStatus = ({ fill, shape, text }) => {
@@ -35,8 +34,8 @@ module.exports = (RED) => {
             rejectUnauthorized: false
         });
 
-        // 14/12/2020 Get the infos from the camera
-        RED.httpAdmin.get("/hikvisionUltimateGetInfoCam", RED.auth.needsPermission('Doorbellconfig.read'), function (req, res) {
+        // 14/12/2020 Get the infos from the doorbell
+        RED.httpAdmin.get("/hikvisionUltimateGetInfoDoorBell", RED.auth.needsPermission('Doorbellconfig.read'), function (req, res) {
             var jParams = JSON.parse(decodeURIComponent(req.query.params));// Retrieve node.id of the config node.
             var _nodeServer = null;
             var clientInfo;
@@ -66,7 +65,7 @@ module.exports = (RED) => {
                 timeout: 5000,         // req/res timeout in ms, it resets on redirect. 0 to disable (OS limit applies). Signal is recommended instead.
                 compress: false,     // support gzip/deflate content encoding. false to disable
                 size: 0,            // maximum response body size in bytes. 0 to disable
-                agent: jParams.protocol === "https" ? customHttpsAgent :null        // http(s).Agent instance or function that returns an instance (see below)
+                agent: jParams.protocol === "https" ? customHttpsAgent : null        // http(s).Agent instance or function that returns an instance (see below)
             };
             try {
                 (async () => {
@@ -94,43 +93,32 @@ module.exports = (RED) => {
             }
         });
 
-        // This function starts the heartbeat timer, to detect the disconnection from the server
-        node.resetHeartBeatTimer = () => {
-            // Reset node.timerCheckHeartBeat
-            if (node.timerCheckHeartBeat !== null) clearTimeout(node.timerCheckHeartBeat);
-            node.timerCheckHeartBeat = setTimeout(() => {
-                node.heartBeatTimerDisconnectionCounter += 1;
-                if (node.heartBeatTimerDisconnectionCounter < node.heartbeattimerdisconnectionlimit) {
-                    // 28/12/2020 Retry again until connection attempt limit reached
-                    node.setAllClientsStatus({ fill: "yellow", shape: "ring", text: "Temporary lost connection. Attempt " + node.heartBeatTimerDisconnectionCounter + " of " + node.heartbeattimerdisconnectionlimit });
-                    try {
-                        if (controller !== null) controller.abort().then(ok => { }).catch(err => { });
-                    } catch (error) { }
-                    setTimeout(startCallStatus, 10000); // Reconnect
-                } else {
-                    // 28/12/2020 Connection attempt limit reached
-                    node.heartBeatTimerDisconnectionCounter = 0;
-                    if (node.isConnected) {
-                        if (node.errorDescription === "") node.errorDescription = "Timeout waiting heartbeat"; // In case of timeout of a stream, there is no error throwed.
-                        node.nodeClients.forEach(oClient => {
-                            oClient.sendPayload({ topic: oClient.topic || "", errorDescription: node.errorDescription, payload: true });
-                        });
-                        node.setAllClientsStatus({ fill: "red", shape: "ring", text: "Lost connection...Retry... " + node.errorDescription });
-                    }
-                    try {
-                        if (controller !== null) controller.abort().then(ok => { }).catch(err => { });
-                    } catch (error) { }
-                    node.isConnected = false;
-                    setTimeout(startCallStatus, 5000); // Reconnect
-                }
-            }, 40000);
+
+
+        //#region "HANDLE STREAM MESSAGE"
+        // Handle the complete stream message, enclosed into the --boundary stream string
+        // If there is more boundary, process each one separately
+        // ###################################
+        function handleChunk(result) {
+            try {
+                // 05/12/2020 process the data
+                let jSonStatus = JSON.parse(result);
+                if (node.debug) RED.log.info("Doorbell-config: handleChunk: " + result);
+                node.nodeClients.forEach(oClient => {
+                    oClient.sendPayload(jSonStatus);
+                });
+            } catch (error) {
+                if (node.debug) RED.log.error("Doorbell-config: readStream error: " + (error.message || " unknown error"));
+                node.errorDescription = "readStream error " + (error.message || " unknown error");
+                throw (error);
+
+            }
         }
+        // ###################################
+        //#endregion
 
         //#region CallStatus
-        async function startCallStatus() {
-
-            node.resetHeartBeatTimer(); // First thing, start the heartbeat timer.
-            node.setAllClientsStatus({ fill: "grey", shape: "ring", text: "Connecting..." });
+        async function queryCallStatus() {
 
             var clientCallStatus;
             if (node.authentication === "digest") clientCallStatus = new DigestFetch(node.credentials.user, node.credentials.password); // Instantiate the fetch client.
@@ -147,92 +135,15 @@ module.exports = (RED) => {
 
                 // The following properties are node-fetch extensions
                 follow: 20,         // maximum redirect count. 0 to not follow redirect
-                timeout: 0,         // req/res timeout in ms, it resets on redirect. 0 to disable (OS limit applies). Signal is recommended instead.
+                timeout: 4000,         // req/res timeout in ms, it resets on redirect. 0 to disable (OS limit applies). Signal is recommended instead.
                 compress: false,     // support gzip/deflate content encoding. false to disable
                 size: 0,            // maximum response body size in bytes. 0 to disable
-                agent: node.protocol === "https" ? customHttpsAgent :null
+                agent: node.protocol === "https" ? customHttpsAgent : null
 
             };
             try {
 
-
-                //#region "HANDLE STREAM MESSAGE"
-                // Handle the complete stream message, enclosed into the --boundary stream string
-                // If there is more boundary, process each one separately
-                // ###################################
-                async function handleChunk(result) {
-                    try {
-                        // 05/12/2020 process the data
-                        var aResults = result.split("--boundary");
-                        if (node.debug) RED.log.info("SPLITTATO RESULT COUNT: ####### " + aResults.length + " ###################### FINE SPLITTATO RESULT");
-                        aResults.forEach(sRet => {
-                            if (sRet.trim() !== "") {
-                                if (node.debug) RED.log.error("BANANA PROCESSING" + sRet);
-                                try {
-                                    //sRet = sRet.replace(/--boundary/g, '');
-                                    var i = sRet.indexOf("<"); // Get only the XML, starting with "<"
-                                    if (i > -1) {
-                                        sRet = sRet.substring(i);
-                                        // By xml2js
-                                        xml2js(sRet, function (err, result) {
-                                            if (err) {
-                                                sRet = "";
-                                            } else {
-                                                if (node.debug) RED.log.error("BANANA SBANANATO XML -> JSON " + JSON.stringify(result));
-                                                if (result !== null && result !== undefined && result.hasOwnProperty("EventNotificationAlert")) {
-                                                    node.nodeClients.forEach(oClient => {
-                                                        if (result !== undefined) oClient.sendPayload({ topic: oClient.topic || "", payload: result.EventNotificationAlert });
-                                                    });
-                                                }
-                                            }
-                                        });
-                                    } else {
-                                        i = sRet.indexOf("{") // It's a Json
-                                        if (i > -1) {
-                                            if (node.debug) RED.log.error("BANANA SBANANATO JSON " + sRet);
-                                            sRet = sRet.substring(i);
-                                            try {
-                                                sRet = JSON.parse(sRet);
-                                                //  if (node.debug)  RED.log.error("BANANA JSONATO: " + sRet);
-                                                if (sRet !== null && sRet !== undefined) {
-                                                    node.nodeClients.forEach(oClient => {
-                                                        oClient.sendPayload({ topic: oClient.topic || "", payload: sRet });
-                                                    })
-                                                }
-                                            } catch (error) {
-                                                sRet = "";
-                                            }
-                                        } else {
-                                            // Invalid body
-                                            if (node.debug) RED.log.info("Doorbell-config: DecodingBody Info only: Invalid Json " + sRet);
-                                        }
-                                    }
-                                    // All is fine. Reset and restart the hearbeat timer
-                                    // Hikvision sends an heartbeat alarm (videoloss), depending on firmware, every 300ms or more.
-                                    // If this HeartBeat isn't received, abort the stream request and restart.
-                                    node.resetHeartBeatTimer();
-                                } catch (error) {
-                                    //  if (node.debug) RED.log.error("BANANA startAlarmStream decodifica body: " + error);
-                                    if (node.debug) RED.log.error("Doorbell-config: DecodingBody error: " + (error.message || " unknown error"));
-                                    throw (error);
-                                }
-                            } else {
-                                if (node.debug) RED.log.info("SPLITTATO RESULT EMPTY: ####### " + sRet + " ###################### FINE SPLITTATO RESULT");
-                            }
-                        });
-
-
-                    } catch (error) {
-                        if (node.debug) RED.log.info("Doorbell-config: readStream error: " + (error.message || " unknown error"));
-                        node.errorDescription = "readStream error " + (error.message || " unknown error");
-                        throw (error);
-
-                    }
-                }
-                // ###################################
-                //#endregion
-
-                const response = await clientCallStatus.fetch(node.protocol + "://" + node.host + "/ISAPI/Event/notification/alertStream", optionsAlarmStream);
+                const response = await clientCallStatus.fetch(node.protocol + "://" + node.host + "/ISAPI/VideoIntercom/callerInfo?format=json", optionsAlarmStream);
 
                 if (response.status >= 200 && response.status <= 300) {
                     node.setAllClientsStatus({ fill: "green", shape: "ring", text: "Waiting for event." });
@@ -254,25 +165,46 @@ module.exports = (RED) => {
                     try {
                         if (node.debug) RED.log.info("Doorbell-config: before Pipelining...");
                         const oReadable = readableStr.from(response.body, { encoding: 'utf8' });
-                        var result = "";
                         oReadable.on('data', (chunk) => {
-                            result += chunk;
-                            if (result.indexOf("--boundary") > -1) {
-                                handleChunk(result);
-                                result = "";
+                            if (node.debug) RED.log.info("Doorbell-config: oReadable.on('data') " + chunk);
+                            if (chunk.endsWith("}")) {
+                                try {
+                                    handleChunk(chunk);
+                                } catch (error) {
+                                    throw (error);
+                                }
                             }
                         });
                         oReadable.on('end', function () {
-                            if (node.debug) RED.log.info("Doorbell-config: streamPipeline: STREAMING HAS ENDED.");
+                            if (node.debug) RED.log.info("Doorbell-config: queryCallStatus: STREAMING HAS ENDED.");
+                            if (node.timerCheckRing !== null) clearTimeout(node.timerCheckRing);
+                            node.timerCheckRing = setTimeout(queryCallStatus, 2000);
                         });
 
                         oReadable.on('error', function (error) {
-                            if (node.debug) RED.log.error("Doorbell-config: streamPipeline: " + (error.message || " unknown error"));
+                            if (node.debug) RED.log.error("Doorbell-config: queryCallStatus: " + (error.message || " unknown error"));
+                            if (node.timerCheckRing !== null) clearTimeout(node.timerCheckRing);
+                            node.timerCheckRing = setTimeout(queryCallStatus, 10000);
                         });
 
-                        //await streamPipeline(response.body, readStream);
+                        //await queryCallStatus(response.body, readStream);
                     } catch (error) {
-                        if (node.debug) RED.log.error("Doorbell-config: streamPipeline: Please be sure to have the latest Node.JS version installed: " + (error.message || " unknown error"));
+                        if (node.debug) RED.log.error("Doorbell-config: queryCallStatus: " + (error.message || " unknown error"));
+
+                        // Signal disconnection
+                        // ######################
+                        if (node.isConnected) {
+                            if (node.errorDescription === "") node.errorDescription = "queryCallStatus error " + (error.message || " unknown error");
+                            node.nodeClients.forEach(oClient => {
+                                oClient.sendPayload({ topic: oClient.topic || "", errorDescription: node.errorDescription, payload: true });
+                            });
+                            node.setAllClientsStatus({ fill: "red", shape: "ring", text: "queryCallStatus error...Retry... " + node.errorDescription });
+                            node.isConnected = false;
+                        }
+                        // ######################
+
+                        if (node.timerCheckRing !== null) clearTimeout(node.timerCheckRing);
+                        node.timerCheckRing = setTimeout(queryCallStatus, 10000);
                     }
 
                 }
@@ -283,10 +215,29 @@ module.exports = (RED) => {
                 //node.errorDescription = "Fetch error " + JSON.stringify(error, Object.getOwnPropertyNames(error));
                 node.errorDescription = "Fetch error " + (error.message || " unknown error");
                 if (node.debug) RED.log.error("Doorbell-config: FETCH ERROR: " + (error.message || " unknown error"));
+
+
+                // Signal disconnection
+                // ######################
+                if (node.isConnected) {
+                    if (node.errorDescription === "") node.errorDescription = "Timeout waiting response " + (error.message || " unknown error"); // In case of timeout 
+                    node.nodeClients.forEach(oClient => {
+                        oClient.sendPayload({ topic: oClient.topic || "", errorDescription: node.errorDescription, payload: true });
+                    });
+                    node.setAllClientsStatus({ fill: "red", shape: "ring", text: "Timeout waiting response...Retry... " + node.errorDescription });
+                    node.isConnected = false;
+                }
+                // ######################
+
+                if (node.timerCheckRing !== null) clearTimeout(node.timerCheckRing);
+                node.timerCheckRing = setTimeout(queryCallStatus, 10000);
             };
 
         };
-        setTimeout(startCallStatus, 10000); // First connection.
+
+
+        if (node.timerCheckRing !== null) clearTimeout(node.timerCheckRing);
+        node.timerCheckRing = setTimeout(queryCallStatus, 6000); // First connection.
         //#endregion
 
         //#region GENERIC GET OT PUT CALL
@@ -310,7 +261,7 @@ module.exports = (RED) => {
                 timeout: 8000,         // req/res timeout in ms, it resets on redirect. 0 to disable (OS limit applies). Signal is recommended instead.
                 compress: false,     // support gzip/deflate content encoding. false to disable
                 size: 0,            // maximum response body size in bytes. 0 to disable
-                agent: node.protocol === "https" ? customHttpsAgent :null         // http(s).Agent instance or function that returns an instance (see below)
+                agent: node.protocol === "https" ? customHttpsAgent : null         // http(s).Agent instance or function that returns an instance (see below)
             };
             try {
                 if (!_URL.startsWith("/")) _URL = "/" + _URL;
@@ -373,7 +324,7 @@ module.exports = (RED) => {
             try {
                 if (controller !== null) controller.abort().then(ok => { }).catch(err => { });
             } catch (error) { }
-            if (node.timerCheckHeartBeat !== null) clearTimeout(node.timerCheckHeartBeat);
+            if (node.timerCheckRing !== null) clearTimeout(node.timerCheckRing);
             done();
         });
 
