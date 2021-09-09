@@ -11,12 +11,12 @@ module.exports = function (RED) {
 		node.unitNo = (config.unitNo === null || config.unitNo === undefined) ? "all" : config.unitNo;
 		node.zoneNo = (config.zoneNo === null || config.zoneNo === undefined) ? "all" : config.zoneNo;
 		node.buildingNo = (config.buildingNo === null || config.buildingNo === undefined) ? "all" : config.buildingNo;
+		node.currentEmittedMSG = {}; // To keep the current status and avoid emitting msg if already emitted.
 
 		node.setNodeStatus = ({ fill, shape, text }) => {
 			var dDate = new Date();
 			node.status({ fill: fill, shape: shape, text: text + " (" + dDate.getDate() + ", " + dDate.toLocaleTimeString() + ")" })
 		}
-
 
 
 		// Called from config node, to send output to the flow
@@ -40,18 +40,23 @@ module.exports = function (RED) {
 		node.sendPayload = (_msg) => {
 			if (_msg === null || _msg === undefined) return;
 			_msg.topic = node.topic;
+			_msg.payload = true;
 			if (_msg.hasOwnProperty("errorDescription")) { node.send([null, _msg]); return; }; // It's a connection error/restore comunication.
 
 			if (_msg.hasOwnProperty("CallerInfo") && _msg.CallerInfo.hasOwnProperty("status")) {
 
 				if (
 					((node.ringStatus === "all" || node.ringStatus === _msg.CallerInfo.status.toString()) && _msg.CallerInfo.status.toString() !== "idle")
+					//((node.ringStatus === "all" || node.ringStatus === _msg.CallerInfo.status.toString()))
 					&& (node.floorNo === "all" || node.floorNo === _msg.CallerInfo.floorNo.toString())
 					&& (node.unitNo === "all" || node.unitNo === _msg.CallerInfo.unitNo.toString())
 					&& (node.zoneNo === "all" || node.zoneNo === _msg.CallerInfo.zoneNo.toString())
 					&& (node.buildingNo === "all" || node.buildingNo === _msg.CallerInfo.buildingNo.toString())
 				) {
-					_msg.payload = true;
+					delete _msg._msgid; // To allow objects compare
+					delete node.currentEmittedMSG._msgid; // To allow objects compare
+					if (RED.util.compareObjects(node.currentEmittedMSG, _msg)) return; // Omit sending the same notification more than once
+					node.currentEmittedMSG = _msg;
 					node.send(_msg, null);
 				}
 

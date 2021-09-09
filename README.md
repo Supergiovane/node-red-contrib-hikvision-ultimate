@@ -58,7 +58,7 @@ This below is an example of msg output:</br>
 **Output PIN 1**
 ```javascript
 // Example of an event from NVR/Camera
-msg.payload = {
+msg = {
   "payload": true,
   "topic": "",
   "channelid": "13", // This is the camera number for NVR, or the channel ID for cameras
@@ -70,7 +70,7 @@ msg.payload = {
 
 ```javascript
 // Example of an event from Security System or Radar
-msg.payload = {
+msg = {
 {
     "zone": 1, // This is the zone number that fired the alarm
     "payload": true, // true if alarm, otherwise false if alarm ended.
@@ -133,7 +133,7 @@ The payload contains the license plate number and the property *plate* contains 
 
 **Output PIN 1**
 ```javascript
-msg.payload = {
+msg = {
     "topic":"",
     "payload":"AB123CD", // This is the license plate
     "plate":{
@@ -179,7 +179,7 @@ msg.payload = true; // Recalls the preset
 
 **Output PIN 1**
 ```javascript
-msg.payload = {
+msg = {
 {
     "payload": true, // true after the camera has reached the PTZ preset position
     "_msgid": "b07e50f6.86a72"
@@ -419,7 +419,7 @@ This below is an example of msg output (in this case, a movement detected from a
 
 **Output PIN 1**
 ```javascript
-msg.payload = {
+msg = {
     "topic": "",
     "payload": {
         "ipAddress": "192.168.1.25",
@@ -468,8 +468,47 @@ msg = {
 ---
 
 ## DOORBELL NODE
-The doorbell node allow you to receive ring events and open the doors. This node works with hikvision doorbells. <br/>
+The doorbell node allow you to receive ring/call progress events, open the doors, hangup th calls and other things from hikvision and hik compatible doorbells. <br/>
+Everytime ad intercom sends a message to the node, this message is validated using the filters you selected in the configuration window. In case of a match, it emits a msg to the flow. 
+<br/>There are many filters you can apply (ringStatus (ring or on call), floor number, unit number, building number and so on.).
 The node is under development and will be out with the upcoming Jikvision-Ultimate version.<br/>
+
+**Flow Messages**
+
+The node outputs a payload on **PIN 1** that can vary, depending on the event type sent by the connected intercom.</br>
+Anyway, it emits always a payload = ***true** as soon as an intercom message matching filters you configured in the configuration window, arrives. You can use that payload to trigger events.
+The node outputs a payload on **PIN 2**, representing a connection error. ***TRUE*** if error, otherwise ***FALSE***</br>
+This below is an example of msg output (in this case, a movement detected from a radar)</br>
+
+
+**Output PIN 1**
+```javascript
+msg = {
+   "CallerInfo":{
+      "buildingNo":1,
+      "floorNo":1,
+      "zoneNo":1,
+      "unitNo":1,
+      "devNo":88,
+      "devType":1,
+      "lockNum":1,
+      "status":"idle"
+   },
+   "topic":"",
+   "payload":true,
+   "_msgid":"e48d23b5ed8b24c8"
+}
+```
+
+**Output PIN 2 (connection error)**
+```javascript
+msg = {
+    "topic": "",
+    "errorDescription": "", // This will contain the error rescription, in case of errors.
+    "payload": false, // Or TRUE if error
+    "_msgid": "dd5b3622.884a78"
+}
+```
 
 <br/>
 <br/>

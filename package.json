@@ -17,7 +17,10 @@
         "camera",
         "radar",
         "ANPR",
-        "license plate"
+        "license plate",
+        "doorbell",
+        "door intercom",
+        "anker"
     ],
     "engines": {
         "node": ">=12.3.0"
