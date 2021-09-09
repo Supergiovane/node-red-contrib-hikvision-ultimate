@@ -475,7 +475,30 @@ The node is under development and will be out with the upcoming Jikvision-Ultima
 
 **Flow Messages**
 
-The node outputs a payload on **PIN 1** that can vary, depending on the event type sent by the connected intercom.</br>
+**Input**
+
+The node accepts messages from the flow.<br/>
+See these messages you can pass to it:<br/>
+
+*OPEN THE DOOR LATCHES*
+```javascript
+// Open the door. 
+msg.openDoor = 1; // Pass the door number to open as value, in this case, 1.
+return msg;
+```
+
+*STOP RINGING*
+```javascript
+// Stop the door intercom ringing 
+msg.stopRinging = true; 
+return msg;
+```
+<br/>
+<br/>
+
+**Output**
+
+The node outputs a payload on **PIN 1** that can vary, depending on the event type sent by the connected intercom.<br/>
 Anyway, it emits always a payload = ***true** as soon as an intercom message matching filters you configured in the configuration window, arrives. You can use that payload to trigger events.
 The node outputs a payload on **PIN 2**, representing a connection error. ***TRUE*** if error, otherwise ***FALSE***</br>
 This below is an example of msg output (in this case, a movement detected from a radar)</br>

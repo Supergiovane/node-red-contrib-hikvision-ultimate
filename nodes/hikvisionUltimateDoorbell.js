@@ -46,8 +46,8 @@ module.exports = function (RED) {
 			if (_msg.hasOwnProperty("CallerInfo") && _msg.CallerInfo.hasOwnProperty("status")) {
 
 				if (
-					((node.ringStatus === "all" || node.ringStatus === _msg.CallerInfo.status.toString()) && _msg.CallerInfo.status.toString() !== "idle")
-					//((node.ringStatus === "all" || node.ringStatus === _msg.CallerInfo.status.toString()))
+					//((node.ringStatus === "all" || node.ringStatus === _msg.CallerInfo.status.toString()) && _msg.CallerInfo.status.toString() !== "idle")
+					((node.ringStatus === "all" || node.ringStatus === _msg.CallerInfo.status.toString()))
 					&& (node.floorNo === "all" || node.floorNo === _msg.CallerInfo.floorNo.toString())
 					&& (node.unitNo === "all" || node.unitNo === _msg.CallerInfo.unitNo.toString())
 					&& (node.zoneNo === "all" || node.zoneNo === _msg.CallerInfo.zoneNo.toString())
@@ -61,9 +61,6 @@ module.exports = function (RED) {
 				}
 
 			}
-
-
-
 		}
 
 		// On each deploy, unsubscribe+resubscribe
@@ -72,8 +69,69 @@ module.exports = function (RED) {
 			node.server.addClient(node);
 		}
 
+
 		this.on('input', function (msg) {
-			node.send(msg, null);
+			// node.request = async function (_callerNode, _method, _URL, _body) {
+
+			if (msg.hasOwnProperty("openDoor")) {
+				// Open the door latch
+				let iDoor = msg.openDoor || 1;
+				// <RemoteOpenDoor version="2.0" xmlns="http://www.isapi.org/ver20/XMLSchema"> 
+				// <gateWayIndex>
+				// 	<!--required, xs:integer, access control point No., currently, the value can only be equal to 1--> 
+				// </gateWayIndex>
+				// <command>
+				// 	<!--required, xs:string, unlocking command, currently, only the "unlock" is supported-->
+				// </command>
+				// <controlSrc>
+				// 	<!--required, xs:string, control command source, the format is "web site+IP address"-->
+				// </controlSrc>
+				// </RemoteOpenDoor>
+				let sBody = `<RemoteOpenDoor version="2.0" xmlns="http://www.isapi.org/ver20/XMLSchema">
+				<gateWayIndex>`+ iDoor + `</gateWayIndex>
+				<command>unlock</command>
+				<controlSrc>HikvisionUltimate</controlSrc>
+				</RemoteOpenDoor>
+				`;
+
+				// Try with API 2.0
+				node.server.request(node, "PUT", "/ISAPI/VideoIntercom/remoteOpenDoor", sBody).then(success => {
+					node.setNodeStatus({ fill: "green", shape: "ring", text: "Door unlocked" });
+					msg.payload = true;
+					node.send(msg, null);
+				}).catch(error => {
+					// Try with API 1.0
+					node.server.request(node, "PUT", "/ISAPI/AccessControl/RemoteControl/door/" + iDoor, "<RemoteControlDoor><cmd>open</cmd></RemoteControlDoor>").then(success => {
+						node.setNodeStatus({ fill: "green", shape: "ring", text: "Door unlocked" });
+						msg.payload = true;
+						node.send(msg, null);
+					}).catch(error => {
+						node.setNodeStatus({ fill: "red", shape: "ring", text: "Error unlocking door " + error.message });
+						msg.payload = false;
+						node.send(msg, null);
+					});
+
+				});
+
+			}
+
+			if (msg.hasOwnProperty("stopRinging")) {
+				// Stop ringing.
+
+				// Try with API 2.0
+				node.server.request(node, "DELETE", "/ISAPI/VideoIntercom/ring", null).then(success => {
+					node.setNodeStatus({ fill: "green", shape: "ring", text: "Stop ringing" });
+					msg.payload = true;
+					node.send(msg, null);
+				}).catch(error => {
+					node.setNodeStatus({ fill: "red", shape: "ring", text: "Error stop ringing " + error.message });
+					msg.payload = false;
+					node.send(msg, null);
+				});
+
+			}
+
+
 
 		});
 

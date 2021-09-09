@@ -241,7 +241,7 @@ module.exports = (RED) => {
         //#endregion
 
         //#region GENERIC GET OT PUT CALL
-        // Function to get or post generic data on camera
+        // Function to get or post generic data on device
         node.request = async function (_callerNode, _method, _URL, _body) {
             var clientGenericRequest;
             if (node.authentication === "digest") clientGenericRequest = new DigestFetch(node.credentials.user, node.credentials.password); // Instantiate the fetch client.
@@ -266,52 +266,15 @@ module.exports = (RED) => {
             try {
                 if (!_URL.startsWith("/")) _URL = "/" + _URL;
                 const response = await clientGenericRequest.fetch(node.protocol + "://" + node.host + _URL, options);
-                if (response.status >= 200 && response.status < 300) {
-                    //node.setAllClientsStatus({ fill: "green", shape: "ring", text: "Connected." });
-                } else {
-                    // _callerNode.setNodeStatus({ fill: "red", shape: "ring", text: response.statusText || " unknown response code" });
-                    // // 07/04/2021 Wrong URL? Send this and is captured by picture node to try another url
-                    //  _callerNode.sendPayload({ topic: _callerNode.topic || "", payload: false, wrongResponse: response.status });
-                    // throw new Error("Error response: " + response.statusText || " unknown response code");
-                }
                 if (response.ok) {
-                    var body = "";
-                    // Based on URL, will return the appropriate encoded body
-                    if (_URL.toLowerCase().includes("/ptzctrl/")) {
-                        _callerNode.sendPayload({ topic: _callerNode.topic || "", payload: true });
-                    } else if (_URL.toLowerCase().includes("/streaming")) {
-                        body = await response.buffer(); // "data:image/png;base64," +    
-                        //_callerNode.sendPayload({ topic: _callerNode.topic || "", payload:  body.toString("base64")});
-                        _callerNode.sendPayload({ topic: _callerNode.topic || "", payload: body });
-                    }
                 } else {
-
-                    if (_URL.toLowerCase().includes("/ptzctrl/")) {
-
-                    } else if (_URL.toLowerCase().includes("/streaming/") || _URL.toLowerCase().includes("/streamingproxy/")) {
-                        _callerNode.setNodeStatus({ fill: "red", shape: "ring", text: response.statusText || " unknown response code" });
-                        // 07/04/2021 Wrong URL? Send this and is captured by picture node to try another url
-                        _callerNode.sendPayload({ topic: _callerNode.topic || "", payload: false, wrongResponse: response.status });
-                    } else {
-                        _callerNode.setNodeStatus({ fill: "red", shape: "ring", text: response.statusText || " unknown response code" });
-                    }
                     throw new Error("Error response: " + response.statusText || " unknown response code");
-
                 }
 
             } catch (err) {
-                //console.log("ORRORE " + err.message);
                 // Main Error
-                _callerNode.setNodeStatus({ fill: "grey", shape: "ring", text: "clientGenericRequest.fetch error: " + err.message });
-                _callerNode.sendPayload({ topic: _callerNode.topic || "", errorDescription: err.message, payload: true });
                 if (node.debug) RED.log.error("Doorbell-config: clientGenericRequest.fetch error " + err.message);
-                // Abort request
-                if (reqController !== null) {
-                    try {
-                        //if (reqController !== null) reqController.abort().then(ok => { }).catch(err => { });
-                        reqController.abort();
-                    } catch (error) { }
-                }
+                throw (new Error("clientGenericRequest.fetch error:" + err.message));
             }
         };
         //#endregion

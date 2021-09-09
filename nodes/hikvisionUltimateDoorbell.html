@@ -1,7 +1,7 @@
 <script type="text/javascript">
 	RED.nodes.registerType('hikvisionUltimateDoorbell', {
 		category: 'Hikvision Ultimate',
-		color: 'red',
+		color: '#C0C0C0',
 		defaults: {
 			name: { value: "" },
 			topic: { value: "" },
@@ -30,14 +30,14 @@
 		icon: "font-awesome/fa-bell",
 		label:
 			function () {
-				var label = "Doorbell BETA (not for production)"
+				var label = "Doorbell"
 				if (this.name !== undefined && this.name.length > 0) {
 					label = this.name;
 				}
 				return label;// + " " + this.status;
 			},
 		paletteLabel: function () {
-			return "Doorbell BETA";
+			return "Doorbell";
 		},
 		oneditprepare: function () {
 			var node = this;
