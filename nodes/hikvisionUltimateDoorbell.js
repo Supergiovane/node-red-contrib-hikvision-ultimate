@@ -46,8 +46,8 @@ module.exports = function (RED) {
 			if (_msg.hasOwnProperty("CallerInfo") && _msg.CallerInfo.hasOwnProperty("status")) {
 
 				if (
-					//((node.ringStatus === "all" || node.ringStatus === _msg.CallerInfo.status.toString()) && _msg.CallerInfo.status.toString() !== "idle")
-					((node.ringStatus === "all" || node.ringStatus === _msg.CallerInfo.status.toString()))
+					((node.ringStatus === "all" || node.ringStatus === _msg.CallerInfo.status.toString()) && _msg.CallerInfo.status.toString() !== "idle")
+					//((node.ringStatus === "all" || node.ringStatus === _msg.CallerInfo.status.toString()))
 					&& (node.floorNo === "all" || node.floorNo === _msg.CallerInfo.floorNo.toString())
 					&& (node.unitNo === "all" || node.unitNo === _msg.CallerInfo.unitNo.toString())
 					&& (node.zoneNo === "all" || node.zoneNo === _msg.CallerInfo.zoneNo.toString())
@@ -119,7 +119,7 @@ module.exports = function (RED) {
 				// Stop ringing.
 
 				// Try with API 2.0
-				node.server.request(node, "DELETE", "/ISAPI/VideoIntercom/ring", null).then(success => {
+				node.server.request(node, "DELETE", "/ISAPI/VideoIntercom/ring", "").then(success => {
 					node.setNodeStatus({ fill: "green", shape: "ring", text: "Stop ringing" });
 					msg.payload = true;
 					node.send(msg, null);
@@ -127,7 +127,18 @@ module.exports = function (RED) {
 					node.setNodeStatus({ fill: "red", shape: "ring", text: "Error stop ringing " + error.message });
 					msg.payload = false;
 					node.send(msg, null);
+					RED.log.error("hikvisionUltimateDoorbell: Error stopping ring " + error.message);
 				});
+
+				// Stop current call initiated by the intercom
+				// Try with API 2.0
+				node.server.request(node, "PUT", "/ISAPI/VideoIntercom/callSignal?format=json", '{"CallSignal":{"cmdType":"hangUp"}}').then(success => {
+					node.setNodeStatus({ fill: "green", shape: "ring", text: "Stop calls" });
+				}).catch(error => {
+					node.setNodeStatus({ fill: "red", shape: "ring", text: "Error stopping calls " + error.message });
+					RED.log.error("hikvisionUltimateDoorbell: Error stopping calls after ring " + error.message);
+				});
+
 
 			}
 
