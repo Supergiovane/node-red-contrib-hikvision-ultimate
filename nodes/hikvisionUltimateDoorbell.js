@@ -46,8 +46,8 @@ module.exports = function (RED) {
 			if (_msg.hasOwnProperty("CallerInfo") && _msg.CallerInfo.hasOwnProperty("status")) {
 
 				if (
-					((node.ringStatus === "all" || node.ringStatus === _msg.CallerInfo.status.toString()) && _msg.CallerInfo.status.toString() !== "idle")
-					//((node.ringStatus === "all" || node.ringStatus === _msg.CallerInfo.status.toString()))
+					//((node.ringStatus === "all" || node.ringStatus === _msg.CallerInfo.status.toString()) && _msg.CallerInfo.status.toString() !== "idle")
+					((node.ringStatus === "all" || node.ringStatus === _msg.CallerInfo.status.toString()))
 					&& (node.floorNo === "all" || node.floorNo === _msg.CallerInfo.floorNo.toString())
 					&& (node.unitNo === "all" || node.unitNo === _msg.CallerInfo.unitNo.toString())
 					&& (node.zoneNo === "all" || node.zoneNo === _msg.CallerInfo.zoneNo.toString())
@@ -57,7 +57,8 @@ module.exports = function (RED) {
 					delete node.currentEmittedMSG._msgid; // To allow objects compare
 					if (RED.util.compareObjects(node.currentEmittedMSG, _msg)) return; // Omit sending the same notification more than once
 					node.currentEmittedMSG = _msg;
-					node.send(_msg, null);
+					// Oputputs only msg that are no "idle"
+					if (_msg.CallerInfo.status.toString() !== "idle") node.send(_msg, null);
 				}
 
 			}
