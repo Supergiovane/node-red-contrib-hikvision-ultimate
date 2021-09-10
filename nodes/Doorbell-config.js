@@ -267,10 +267,10 @@ module.exports = (RED) => {
                 if (!_URL.startsWith("/")) _URL = "/" + _URL;
                 const response = await clientGenericRequest.fetch(node.protocol + "://" + node.host + _URL, options);
                 if (response.ok) {
-                    // const oReadable = readableStr.from(response.body, { encoding: 'utf8' });
-                    // oReadable.on('data', (chunk) => {
-                    //     console.log(chunk);
-                    // });
+                    const oReadable = readableStr.from(response.body, { encoding: 'utf8' });
+                    oReadable.on('data', (chunk) => {
+                        console.log(chunk);
+                    });
                 } else {
                     throw new Error("Error response: " + response.statusText || " unknown response code");
                 }
