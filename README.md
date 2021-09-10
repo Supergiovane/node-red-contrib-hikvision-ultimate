@@ -1,7 +1,7 @@
 
 <p align="center"><img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/logo.png' width="60%"></p>
 
-A native set of nodes for Hikvision Cameras, Alarms, Radars, NVR etc.
+A native set of nodes for Hikvision (and compatible) Cameras, Alarms, Radars, NVR, Doorbells etc.
 
 [![NPM version][npm-version-image]][npm-url]
 [![NPM downloads per month][npm-downloads-month-image]][npm-url]
@@ -14,7 +14,7 @@ A native set of nodes for Hikvision Cameras, Alarms, Radars, NVR etc.
 
 ## DESCRIPTION
 This is a set of nodes to handle ISAPI Hikvision messages. It works exclusively with ***HIKVISION*** and Hikvision based compatible devices.<br/>
-Works with cameras, NVR, Security Systems and also with specialized devices, like Radar (for example DS-PR1-60, DS-PR1-100 and DS-PR1-120).<br/>
+Works with cameras, NVR, Security Systems, Doorbells and also with specialized devices, like Radar (for example DS-PR1-60, DS-PR1-100 and DS-PR1-120).<br/>
 Digest authentication: it should work with all devices.<br/>
 All nodes are capable of auto reconnect if the connection is lost and are able to actively monitor the connection.<br/>
 Be sure to have installed **Node.js v12.3.0** or newer (issue a node -v command in a console, to check it out).<br/>
@@ -468,10 +468,9 @@ msg = {
 ---
 
 ## DOORBELL NODE
-The doorbell node allow you to receive ring/call progress events, open the doors, hangup th calls and other things from hikvision and hik compatible doorbells. <br/>
+The doorbell node allow you to receive ring/call progress events, open the doors, hangup calls and other things from hikvision and hik compatible doorbells. <br/>
 Everytime ad intercom sends a message to the node, this message is validated using the filters you selected in the configuration window. In case of a match, it emits a msg to the flow. 
 <br/>There are many filters you can apply (ringStatus (ring or on call), floor number, unit number, building number and so on.).
-The node is under development and will be out with the upcoming Jikvision-Ultimate version.<br/>
 
 **Flow Messages**
 
@@ -487,10 +486,10 @@ msg.openDoor = 1; // Pass the door number to open as value, in this case, 1.
 return msg;
 ```
 
-*STOP RINGING*
+*HANG UP THE CURRENT CALL*
 ```javascript
-// Stop the door intercom ringing 
-msg.stopRinging = true; 
+// Hangup the current call and stop ringing 
+msg.hangUp = true; 
 return msg;
 ```
 <br/>
@@ -501,7 +500,7 @@ return msg;
 The node outputs a payload on **PIN 1** that can vary, depending on the event type sent by the connected intercom.<br/>
 Anyway, it emits always a payload = ***true** as soon as an intercom message matching filters you configured in the configuration window, arrives. You can use that payload to trigger events.
 The node outputs a payload on **PIN 2**, representing a connection error. ***TRUE*** if error, otherwise ***FALSE***</br>
-This below is an example of msg output (in this case, a movement detected from a radar)</br>
+This below is an example of msg output</br>
 
 
 **Output PIN 1**
@@ -518,8 +517,7 @@ msg = {
       "status":"idle"
    },
    "topic":"",
-   "payload":true,
-   "_msgid":"e48d23b5ed8b24c8"
+   "payload":true
 }
 ```
 
@@ -528,8 +526,7 @@ msg = {
 msg = {
     "topic": "",
     "errorDescription": "", // This will contain the error rescription, in case of errors.
-    "payload": false, // Or TRUE if error
-    "_msgid": "dd5b3622.884a78"
+    "payload": false // Or TRUE if error
 }
 ```
 
