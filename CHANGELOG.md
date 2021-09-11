@@ -5,7 +5,7 @@
 
 <p>
 <b>Version 1.0.52</b> September 2021<br/>
-- NEW: Doorbell node (you can be notified on ringing, on call and even open the door).<br/>
+- NEW: Doorbell node (you can be notified on ringing, on call and even open the door). Thanks @ur5zeb for help in testing.<br/>
 </p>
 <p>
 <b>Version 1.0.51</b> August 2021<br/>

@@ -136,9 +136,6 @@ module.exports = function (RED) {
 					RED.log.error("hikvisionUltimateDoorbell: Error hangUp " + error.message);
 				});
 
-				msg.payload = true;
-				node.send(msg, null);
-
 			}
 
 

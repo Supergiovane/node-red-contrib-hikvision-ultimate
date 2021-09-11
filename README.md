@@ -472,6 +472,24 @@ The doorbell node allow you to receive ring/call progress events, open the doors
 Everytime ad intercom sends a message to the node, this message is validated using the filters you selected in the configuration window. In case of a match, it emits a msg to the flow. 
 <br/>There are many filters you can apply (ringStatus (ring or on call), floor number, unit number, building number and so on.).
 
+<img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/Doorbell.png' width="80%">
+
+**Copy this code and paste it into your flow**
+
+<details><summary>View code</summary>
+
+> Adjust the nodes according to your setup
+
+<code>
+
+```javascript
+[{"id":"22420ca523840eef","type":"hikvisionUltimateDoorbell","z":"48095c5671f0ab16","name":"","topic":"","server":"085ef798e6c04064","ringStatus":"all","floorNo":"all","unitNo":"all","zoneNo":"all","buildingNo":"all","x":360,"y":180,"wires":[["5d1eddc07a46bd2c"],["7b5813c6cd794885"]]},{"id":"5d1eddc07a46bd2c","type":"debug","z":"48095c5671f0ab16","name":"Output","active":true,"tosidebar":true,"console":false,"tostatus":false,"complete":"true","targetType":"full","statusVal":"","statusType":"auto","x":550,"y":160,"wires":[]},{"id":"7b5813c6cd794885","type":"debug","z":"48095c5671f0ab16","name":"Error report","active":true,"tosidebar":true,"console":false,"tostatus":false,"complete":"payload","targetType":"msg","statusVal":"","statusType":"auto","x":570,"y":200,"wires":[]},{"id":"a1032b3b72cf9db6","type":"inject","z":"48095c5671f0ab16","name":"Open Door","props":[{"p":"openDoor","v":"1","vt":"num"},{"p":"topic","vt":"str"}],"repeat":"","crontab":"","once":false,"onceDelay":0.1,"topic":"","x":180,"y":160,"wires":[["22420ca523840eef"]]},{"id":"54590a36f409ce0f","type":"inject","z":"48095c5671f0ab16","name":"Hang Up","props":[{"p":"hangUp","v":"true","vt":"bool"},{"p":"topic","vt":"str"}],"repeat":"","crontab":"","once":false,"onceDelay":"8","topic":"","x":180,"y":200,"wires":[["22420ca523840eef"]]},{"id":"2388a3941360bd3c","type":"comment","z":"48095c5671f0ab16","name":"Doorbell sample. Caution: \"Open Door\" will open your door.","info":"","x":330,"y":120,"wires":[]},{"id":"085ef798e6c04064","type":"Doorbell-config","host":"192.168.1.5","port":"80","name":"OUTDOOR STATION","authentication":"digest","protocol":"http","heartbeattimerdisconnectionlimit":"1","deviceinfo":"{\"DeviceInfo\":{\"$\":{\"version\":\"2.0\",\"xmlns\":\"http://www.isapi.org/ver20/XMLSchema\"},\"deviceName\":\"OUTDOOR STATION\",\"deviceID\":\"7d49925b-4fc7-406b-a0ec-2ca59cc25838\",\"deviceDescription\":\"\\tVis\",\"deviceLocation\":\"STD-CGI\",\"systemContact\":\"STD-CGI\",\"model\":\"DS-KV6113-WPE1(B)\",\"serialNumber\":\"DS-KV6113-WPE1(B)0120210416RRF86332026\",\"macAddress\":\"24:18:c6:39:42:29\",\"firmwareVersion\":\"V2.2.50\",\"firmwareReleasedDate\":\"build 210630\",\"bootVersion\":\"33685554\",\"bootReleasedDate\":\"1377822\",\"hardwareVersion\":\"0x0\",\"encoderVersion\":\"V4.0\",\"encoderReleasedDate\":\"build 181206\",\"deviceType\":\"\\tVis\",\"telecontrolID\":\"88\",\"supportBeep\":\"true\",\"supportVideoLoss\":\"true\",\"alarmOutNum\":\"2\",\"alarmInNum\":\"4\",\"RS485Num\":\"1\",\"customizedInfo\":\"\"}}"}]
+```
+
+</code>
+</details>
+
+
 **Flow Messages**
 
 **Input**
@@ -486,7 +504,7 @@ msg.openDoor = 1; // Pass the door number to open as value, in this case, 1.
 return msg;
 ```
 
-*HANG UP THE CURRENT CALL*
+*HANG UP THE CURRENT CALL AND STOP RINGING*
 ```javascript
 // Hangup the current call and stop ringing 
 msg.hangUp = true; 
