@@ -57,7 +57,7 @@ module.exports = function (RED) {
 					if (RED.util.compareObjects(node.currentEmittedMSG, _msg)) return; // Omit sending the same notification more than once
 					node.currentEmittedMSG = _msg;
 					// Oputputs only msg that are no "idle"
-					if (_msg.CallerInfo.status.toString() !== "idle") node.send(_msg, null);
+					if (_msg.CallerInfo.status.toString() !== "idle") node.send([_msg, null]);
 				}
 
 			}
@@ -98,17 +98,17 @@ module.exports = function (RED) {
 				node.server.request(node, "PUT", "/ISAPI/VideoIntercom/remoteOpenDoor", sBody).then(success => {
 					node.setNodeStatus({ fill: "green", shape: "ring", text: "Door unlocked" });
 					msg.payload = true;
-					node.send(msg, null);
+					node.send([msg, null]);
 				}).catch(error => {
 					// Try with API 1.0
 					node.server.request(node, "PUT", "/ISAPI/AccessControl/RemoteControl/door/" + iDoor, "<RemoteControlDoor><cmd>open</cmd></RemoteControlDoor>").then(success => {
 						node.setNodeStatus({ fill: "green", shape: "ring", text: "Door unlocked" });
 						msg.payload = true;
-						node.send(msg, null);
+						node.send([msg, null]);
 					}).catch(error => {
 						node.setNodeStatus({ fill: "red", shape: "ring", text: "Error unlocking door " + error.message });
 						msg.payload = false;
-						node.send(msg, null);
+						node.send([msg, null]);
 					});
 
 				});

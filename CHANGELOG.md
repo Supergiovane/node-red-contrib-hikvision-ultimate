@@ -4,6 +4,10 @@
 [![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square)](https://www.paypal.me/techtoday) 
 
 <p>
+<b>Version 1.0.53</b> September 2021<br/>
+- FIX: Doorbell node now correctly emits error on the second PIN instead of the first output PIN.<br/>
+</p>
+<p>
 <b>Version 1.0.52</b> September 2021<br/>
 - NEW: Doorbell node (you can be notified on ringing, on call and even open the door). Thanks @ur5zeb for help in testing.<br/>
 </p>
