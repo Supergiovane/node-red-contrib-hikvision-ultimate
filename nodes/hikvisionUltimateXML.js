@@ -15,7 +15,13 @@ module.exports = function (RED) {
 			node.status({ fill: fill, shape: shape, text: text + " (" + dDate.getDate() + ", " + dDate.toLocaleTimeString() + ")" })
 		}
 
+		// Called from config node, to send output to the flow
+		node.sendPayload = (_msg) => {
+			node.setNodeStatus({ fill: "green", shape: "ring", text: "Received response" });
+			if (_msg === null || _msg === undefined) return;
+			node.send(_msg);
 
+		}
 
 		this.on('input', function (msg) {
 
@@ -23,23 +29,18 @@ module.exports = function (RED) {
 			if (msg.hasOwnProperty("XML")) node.xmlText = msg.XML;
 			if (msg.hasOwnProperty("path")) node.path = msg.path;
 			if (msg.hasOwnProperty("method")) node.method = msg.method;
-			
-			node.setNodeStatus({ fill: "green", shape: "ring", text: "OK" });
+
+			node.setNodeStatus({ fill: "green", shape: "ring", text: "Send request..." });
 			try {
-				// Params: _callerNode, _method, _URL, _body
-				node.server.request(node, node.method, node.path, node.xmlText);
+				// Params: _callerNode, _method, _URL, _body, _fromXMLNode
+				node.server.request(node, node.method, node.path, node.xmlText, true);
 			} catch (error) {
-				
+
 			}
 
 		});
 
-		// Called from config node, to send output to the flow
-		node.sendPayload = (_msg) => {
-			
-		};
-
-
+		
 		node.on("close", function (done) {
 			done();
 		});

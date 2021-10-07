@@ -66,7 +66,7 @@ module.exports = (RED) => {
                 timeout: 5000,         // req/res timeout in ms, it resets on redirect. 0 to disable (OS limit applies). Signal is recommended instead.
                 compress: false,     // support gzip/deflate content encoding. false to disable
                 size: 0,            // maximum response body size in bytes. 0 to disable
-                agent: jParams.protocol === "https" ? customHttpsAgent :null        // http(s).Agent instance or function that returns an instance (see below)
+                agent: jParams.protocol === "https" ? customHttpsAgent : null        // http(s).Agent instance or function that returns an instance (see below)
             };
             try {
                 (async () => {
@@ -150,7 +150,7 @@ module.exports = (RED) => {
                 timeout: 0,         // req/res timeout in ms, it resets on redirect. 0 to disable (OS limit applies). Signal is recommended instead.
                 compress: false,     // support gzip/deflate content encoding. false to disable
                 size: 0,            // maximum response body size in bytes. 0 to disable
-                agent: node.protocol === "https" ? customHttpsAgent :null
+                agent: node.protocol === "https" ? customHttpsAgent : null
 
             };
             try {
@@ -291,7 +291,8 @@ module.exports = (RED) => {
 
         //#region GENERIC GET OT PUT CALL
         // Function to get or post generic data on camera
-        node.request = async function (_callerNode, _method, _URL, _body) {
+        node.request = async function (_callerNode, _method, _URL, _body, _fromXMLNode) {
+            if (_fromXMLNode === undefined) _fromXMLNode = false; // 07/10/2021 Does the request come from an XML node?
             var clientGenericRequest;
             if (node.authentication === "digest") clientGenericRequest = new DigestFetch(node.credentials.user, node.credentials.password); // Instantiate the fetch client.
             if (node.authentication === "basic") clientGenericRequest = new DigestFetch(node.credentials.user, node.credentials.password, { basic: true }); // Instantiate the fetch client.
@@ -310,11 +311,17 @@ module.exports = (RED) => {
                 timeout: 8000,         // req/res timeout in ms, it resets on redirect. 0 to disable (OS limit applies). Signal is recommended instead.
                 compress: false,     // support gzip/deflate content encoding. false to disable
                 size: 0,            // maximum response body size in bytes. 0 to disable
-                agent: node.protocol === "https" ? customHttpsAgent :null         // http(s).Agent instance or function that returns an instance (see below)
+                agent: node.protocol === "https" ? customHttpsAgent : null         // http(s).Agent instance or function that returns an instance (see below)
             };
+
             try {
                 if (!_URL.startsWith("/")) _URL = "/" + _URL;
+
+                // 07/10/2021 Strip the body in case of GET and HEAD (otherwise, Fetch thwors an error)
+                if (options.method.toString().toUpperCase() === "GET" || options.method.toString().toUpperCase() === "HEAD") delete (options.body)
+
                 const response = await clientGenericRequest.fetch(node.protocol + "://" + node.host + _URL, options);
+
                 if (response.status >= 200 && response.status < 300) {
                     //node.setAllClientsStatus({ fill: "green", shape: "ring", text: "Connected." });
                 } else {
@@ -323,10 +330,24 @@ module.exports = (RED) => {
                     //  _callerNode.sendPayload({ topic: _callerNode.topic || "", payload: false, wrongResponse: response.status });
                     // throw new Error("Error response: " + response.statusText || " unknown response code");
                 }
+
                 if (response.ok) {
                     var body = "";
-                    // Based on URL, will return the appropriate encoded body
-                    if (_URL.toLowerCase().includes("/ptzctrl/")) {
+
+                    // 07/10/2021 If the request comes from XML node, return any response
+                    if (_fromXMLNode) {
+                        body = await response.buffer(); // "data:image/png;base64," +    
+                        //_callerNode.sendPayload({ topic: _callerNode.topic || "", payload:  body.toString("base64")});
+                        xml2js(body.toString(), function (err, result) {
+                            if (err) {
+                                _callerNode.sendPayload({ topic: _callerNode.name || "", payload: body.toString() });
+                            } else {
+                                _callerNode.sendPayload({ topic: _callerNode.name || "", payload: result });
+                            }
+                        });
+
+
+                    } else if (_URL.toLowerCase().includes("/ptzctrl/")) {// Based on URL, will return the appropriate encoded body
                         _callerNode.sendPayload({ topic: _callerNode.topic || "", payload: true });
                     } else if (_URL.toLowerCase().includes("/streaming")) {
                         body = await response.buffer(); // "data:image/png;base64," +    
@@ -334,8 +355,10 @@ module.exports = (RED) => {
                         _callerNode.sendPayload({ topic: _callerNode.topic || "", payload: body });
                     }
                 } else {
-
-                    if (_URL.toLowerCase().includes("/ptzctrl/")) {
+                    if (_fromXMLNode) {
+                        // 07/10/2021 If the request comes from XML node, return any response
+                        _callerNode.sendPayload({ topic: _callerNode.name || "", wrongResponse: response.status });
+                    } else if (_URL.toLowerCase().includes("/ptzctrl/")) {
 
                     } else if (_URL.toLowerCase().includes("/streaming/") || _URL.toLowerCase().includes("/streamingproxy/")) {
                         _callerNode.setNodeStatus({ fill: "red", shape: "ring", text: response.statusText || " unknown response code" });

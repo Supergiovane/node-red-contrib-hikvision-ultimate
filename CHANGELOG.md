@@ -4,6 +4,10 @@
 [![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square)](https://www.paypal.me/techtoday) 
 
 <p>
+<b>Version 1.0.54</b> October 2021<br/>
+- NEW: the XML Node can now emit a message containing the response from the camera. You can now ask a camera for anything (for example if the motion detect is enabled) and get the response in JSON format. See the gitHub README on how to do that.<br/>
+</p>
+<p>
 <b>Version 1.0.53</b> September 2021<br/>
 - FIX: Doorbell node now correctly emits error on the second PIN instead of the first output PIN.<br/>
 </p>

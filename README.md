@@ -366,20 +366,7 @@ Please read the ISAPI Hikvision documentation or dig into the Internet to learn 
 
 <img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/XML.png' width="80%">
 
-**Copy this code and paste it into your flow**
 
-<details><summary>View code</summary>
-
-> Adjust the nodes according to your setup
-
-<code>
-
-```javascript
-[{"id":"3aa8a40f.9a0964","type":"inject","z":"3f22f0c6.ff1328","name":"Go","props":[{"p":"payload"},{"p":"topic","vt":"str"}],"repeat":"","crontab":"","once":false,"onceDelay":0.1,"topic":"","payload":"","payloadType":"date","x":170,"y":120,"wires":[["49fbbee3.1cc7e"]]},{"id":"2b4d9297.75ee46","type":"comment","z":"3f22f0c6.ff1328","name":"Send your own XML","info":"","x":190,"y":80,"wires":[]},{"id":"49fbbee3.1cc7e","type":"hikvisionUltimateXML","z":"3f22f0c6.ff1328","name":"XML","server":"fb0c2de0.8a3da","XML":"<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<VideoOverlay version=\"1.0\" xmlns=\"http://www.hikvision.com/ver20/XMLSchema\">\n<fontSize>1</fontSize>\n<TextOverlayList size=\"6\">\n\n<TextOverlay version=\"1.0\" xmlns=\"http://www.hikvision.com/ver20/XMLSchema\">\n<id>1</id>\n<enabled>true</enabled>\n<positionX>464</positionX>\n<positionY>96</positionY>\n<displayText>HELLO WORLD</displayText>\n</TextOverlay>\n\n\n\n</TextOverlayList>\n</VideoOverlay>","path":"/ISAPI/System/Video/inputs/channels/1/overlays/text","method":"PUT","x":470,"y":120,"wires":[]},{"id":"fb0c2de0.8a3da","type":"Hikvision-config","host":"192.168.1.25","port":"80","name":"Radar Est","authentication":"digest","protocol":"http","heartbeattimerdisconnectionlimit":"1","deviceinfo":"{\"DeviceInfo\":{\"$\":{\"version\":\"1.0\",\"xmlns\":\"http://www.hikvision.com/ver20/XMLSchema\"},\"deviceName\":\"Net Module\",\"deviceID\":\"48443138-3031-3233-3932-988b0a858e51\",\"model\":\"CAM\",\"serialNumber\":\"20190509AARRD18012392\",\"macAddress\":\"BANANARAMA\",\"firmwareVersion\":\"V1.0.2\",\"firmwareReleasedDate\":\"build 191222\",\"hardwareVersion\":\"0x1001\",\"encoderVersion\":\"V5.0\",\"encoderReleasedDate\":\"build 000000\",\"deviceType\":\"Radar\",\"telecontrolID\":\"255\",\"localZoneNum\":\"8\",\"alarmOutNum\":\"4\",\"distanceResolution\":\"5.00\",\"detectDistance\":\"60.00\"}}"}]
-```
-
-</code>
-</details>
 <br/>
 <br/>
 
@@ -398,6 +385,93 @@ msg.path = ""; // For example /ISAPI/System/Video/inputs/channels/1/overlays
 msg.method = "PUT"; // This must be PUT, POST or GET (uppercase)
 
 return msg;
+```
+
+<br/>
+
+As an example, you can set a text overlay via XML 
+```javascript
+// Set an overlay text (if the camera supports overlaying text)
+
+msg.XML = `<?xml version="1.0" encoding="UTF-8" ?>
+<VideoOverlay version="1.0" xmlns="http://www.hikvision.com/ver20/XMLSchema\">
+<fontSize>1</fontSize>
+<TextOverlayList size="6">
+    <TextOverlay version="1.0" xmlns="http://www.hikvision.com/ver20/XMLSchema\">
+    <id>1</id>
+    <enabled>true</enabled>
+    <positionX>464</positionX>
+    <positionY>96</positionY>
+    <displayText>HELLO WORLD</displayText>
+    </TextOverlay>
+</TextOverlayList>
+</VideoOverlay>`; // Here goes your XML. These strange chars after the = allow you to do multiline text
+msg.path = "/ISAPI/System/Video/inputs/channels/1/overlays/text"; // For example /ISAPI/System/Video/inputs/channels/1/overlays
+msg.method = "PUT"; // This must be PUT, POST or GET (uppercase)
+
+return msg;
+```
+
+**Output**
+
+The node will return the response from the camera.
+<br/>
+For example, if you wish to know if your camera has motion detect enable, just pass this to the node<br/>
+
+```javascript
+// Ask the camera if it supports motion detect
+msg.path = "/ISAPI/System/Video/inputs/channels/1/motionDetection";
+msg.method ="GET";
+return msg;
+```
+
+The response will be something like this
+
+```javascript
+{
+   "topic":"Camera Sud",
+   "payload":{
+      "MotionDetection":{
+         "$":{
+            "version":"2.0",
+            "xmlns":"http://www.hikvision.com/ver20/XMLSchema"
+         },
+         "enabled":"false",
+         "enableHighlight":"true",
+         "samplingInterval":"2",
+         "startTriggerTime":"500",
+         "endTriggerTime":"500",
+         "regionType":"grid",
+         "Grid":{
+            "rowGranularity":"18",
+            "columnGranularity":"22"
+         },
+         "MotionDetectionLayout":{
+            "$":{
+               "version":"2.0",
+               "xmlns":"http://www.hikvision.com/ver20/XMLSchema"
+            },
+            "sensitivityLevel":"80",
+            "layout":{
+               "gridMap":"000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+            }
+         },
+         "enableWithMoving":"false"
+      }
+   },
+   "_msgid":"fa45ddc3240240cf"
+}
+```
+<br/>
+
+If an ***error*** occurs, the XML node will output a msg with the error
+
+```javascript
+{
+   "topic":"XML Node",
+   "errorDescription":"network timeout at: http://192.168.1.211:80/ISAPI/System/Video/inputs/channels/1/motionDetection",
+   "_msgid":"8289d3fbf2919d2b"
+}
 ```
 
 <br/>

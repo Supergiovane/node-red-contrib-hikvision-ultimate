@@ -10,7 +10,7 @@
 			method: { value: "PUT" }
 		},
 		inputs: 1,
-		outputs: 0,
+		outputs: 1,
 		outputLabels: function (i) {
 			var ret = "";
 			switch (i) {
@@ -74,7 +74,7 @@
         <input type="text" id="node-input-name" placeholder="Name">
     </div>
 	<div class="form-row">
-        <label for="node-input-method"><i class="fa fa-tasks"></i> Channel</label>
+        <label for="node-input-method"><i class="fa fa-tasks"></i> Method</label>
 		<select id="node-input-method">
 			<option value="PUT">PUT (Default)</option>
 			<option value="POST">POST</option>
@@ -90,7 +90,7 @@
         <div style="height: 250px; min-height:150px;" class="node-text-editor" id="node-input-editorxmlText"></div>
 	</div>
 	<div class="form-tips" style="margin-top:11px">
-		Above options: you can send RAW XML text to a device. Please read the ISAPI Hikvision documentation or search in the Internet, to learn what to write with these fields.
+		Above options: you can send RAW XML text to a device. Please read the ISAPI Hikvision documentation or search in the Internet, to learn what to write in these fields.
 	</div>	
 
 
