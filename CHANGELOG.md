@@ -5,7 +5,7 @@
 
 <p>
 <b>Version 1.0.55</b> November 2021<br/>
-- Workaround for an issue in a js library used by knx-ultimate. <br/>
+- Workaround for an issue in a js library used by hikvision-ultimate. <br/>
 </p>
 <p>
 <b>Version 1.0.54</b> October 2021<br/>
