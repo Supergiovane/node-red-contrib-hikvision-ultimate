@@ -174,18 +174,25 @@ module.exports = (RED) => {
                                     if (i > -1) {
                                         sRet = sRet.substring(i);
                                         // By xml2js
-                                        xml2js(sRet, function (err, result) {
-                                            if (err) {
-                                                sRet = "";
-                                            } else {
-                                                if (node.debug) RED.log.error("BANANA SBANANATO XML -> JSON " + JSON.stringify(result));
-                                                if (result !== null && result !== undefined && result.hasOwnProperty("EventNotificationAlert")) {
-                                                    node.nodeClients.forEach(oClient => {
-                                                        if (result !== undefined) oClient.sendPayload({ topic: oClient.topic || "", payload: result.EventNotificationAlert });
-                                                    });
+                                        try {
+                                            xml2js(sRet, function (err, result) {
+                                                if (err) {
+                                                    sRet = "";
+                                                } else {
+                                                    if (node.debug) RED.log.error("BANANA SBANANATO XML -> JSON " + JSON.stringify(result));
+                                                    if (result !== null && result !== undefined && result.hasOwnProperty("EventNotificationAlert")) {
+                                                        node.nodeClients.forEach(oClient => {
+                                                            if (result !== undefined) oClient.sendPayload({ topic: oClient.topic || "", payload: result.EventNotificationAlert });
+                                                        });
+                                                    }
                                                 }
-                                            }
-                                        });
+                                            });
+                                        } catch (error) {
+                                            sRet = "";
+                                            if (node.debug) RED.log.error("BANANA ERRORE xml2js(sRet, function (err, result) " + error.message || "");
+                                                   
+                                        }
+
                                     } else {
                                         i = sRet.indexOf("{") // It's a Json
                                         if (i > -1) {
@@ -258,7 +265,11 @@ module.exports = (RED) => {
                         oReadable.on('data', (chunk) => {
                             result += chunk;
                             if (result.indexOf("--boundary") > -1) {
-                                handleChunk(result);
+                                try {
+                                    handleChunk(result);
+                                } catch (error) {
+                                    if (node.debug) RED.log.info("Hikvision-config: Error handleChunk " + error.message || "");
+                                }                                
                                 result = "";
                             }
                         });
