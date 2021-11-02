@@ -4,11 +4,11 @@
     "description": "A native set of nodes for Hikvision (and compatible) Cameras, Alarms, Radars, NVR, Doorbells, etc.",
     "author": "Supergiovane (https://github.com/Supergiovane)",
     "dependencies": {
-        "xml2js": ">=0.4.23",
-        "node-fetch": ">=3.0.0",
-        "digest-fetch": ">=1.2.1",
+        "xml2js": "0.4.23",
+        "node-fetch": "2.6.1",
+        "digest-fetch": "1.1.5",
         "abort-controller": ">=3.0.0",
-        "jimp": ">=0.16.1"
+        "jimp": "0.16.1"
     },
     "keywords": [
         "node-red",
