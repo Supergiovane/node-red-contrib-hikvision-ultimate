@@ -4,7 +4,7 @@
 [![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square)](https://www.paypal.me/techtoday) 
 
 <p>
-<b>Version 1.0.55</b> November 2021<br/>
+<b>Version 1.0.56</b> November 2021<br/>
 - Workaround for an issue in a js library used by hikvision-ultimate. <br/>
 </p>
 <p>
