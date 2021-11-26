@@ -4,6 +4,10 @@
 [![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square)](https://www.paypal.me/techtoday) 
 
 <p>
+<b>Version 1.0.57</b> November 2021<br/>
+- NEW: PTZ Node: you can now pass the channelID and PTZ preset number by msg.payload. <br/>
+</p>
+<p>
 <b>Version 1.0.56</b> November 2021<br/>
 - Workaround for an issue in a js library used by hikvision-ultimate. <br/>
 </p>

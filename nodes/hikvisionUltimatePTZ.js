@@ -18,7 +18,7 @@ module.exports = function (RED) {
 			_msg.topic = node.topic;
 			if (_msg.hasOwnProperty("errorDescription")) { node.send([null, _msg]); return; }; // It's a connection error/restore comunication.
 			if (!_msg.hasOwnProperty("payload") || (_msg.hasOwnProperty("payload") && _msg.payload === undefined)) return;
-			
+
 			if (_msg.hasOwnProperty("payload")) {
 				if (_msg.payload.hasOwnProperty("eventType")) {
 					// Chech if it's only a hearbeat alarm
@@ -44,18 +44,29 @@ module.exports = function (RED) {
 		this.on('input', function (msg) {
 			if (msg === null || msg === undefined) return;
 			if (msg.hasOwnProperty("payload") && msg.hasOwnProperty("payload") !== null && msg.hasOwnProperty("payload") !== undefined) {
-				if (msg.payload === true) {
-					// Recall PTZ Preset
-					// Params: _callerNode, _method, _URL, _body
-					try {
-						node.server.request(node, "PUT", "/ISAPI/PTZCtrl/channels/" + node.channelID + "/presets/" + node.PTZPreset + "/goto", "");
-					} catch (error) {
-
-					}
+				if (typeof msg.payload === "boolean" && msg.payload === true) {
+					recallPTZ();
+				} else if (typeof msg.payload === "object") {
+					// Set the preset via input msg
+					if (msg.payload.hasOwnProperty("channelID")) node.channelID = msg.payload.channelID;
+					if (msg.payload.hasOwnProperty("PTZPreset")) node.PTZPreset = msg.payload.PTZPreset;
+					node.setNodeStatus({ fill: "green", shape: "dot", text: "Preset passed by msg input." });
+					recallPTZ();					
 				}
 			}
 
 		});
+
+		// Recalls the PTZ
+		function recallPTZ() {
+			// Recall PTZ Preset
+			// Params: _callerNode, _method, _URL, _body
+			try {
+				node.server.request(node, "PUT", "/ISAPI/PTZCtrl/channels/" + node.channelID + "/presets/" + node.PTZPreset + "/goto", "");
+			} catch (error) {
+
+			}
+		}
 
 		node.on("close", function (done) {
 			if (node.server) {

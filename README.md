@@ -165,6 +165,7 @@ msg = {
 ## PTZ NODE
 Recalls a PTZ pre-recorded preset.<br/>
 Just select the preset in the configuration window and recall it by passing ***true*** as payload.<br/>
+You can also set the Camera Number and PTZ preset number by msg.payload.channelID (optional) and msg.payload.PTZPreset. See below.<br/>
 
 <img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/PTZ.png' width="80%">
 
@@ -174,7 +175,16 @@ The node outputs ***true*** on PIN 1 if the command is executed, otherwise an er
 
 **Input**
 ```javascript
+// Recall the preset set in the configuration window
 msg.payload = true; // Recalls the preset
+return msg;
+```
+
+```javascript
+// Pass the Camera Number and PTZ preset by message
+msg.payload.channelID = 1; // OPTIONAL, pass the Camera number
+msg.payload.PTZPreset = 2; // OPTIONAL, pass the PTZ preset number
+return msg;
 ```
 
 **Output PIN 1**
