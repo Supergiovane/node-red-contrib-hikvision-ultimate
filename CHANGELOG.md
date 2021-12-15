@@ -4,6 +4,10 @@
 [![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square)](https://www.paypal.me/techtoday) 
 
 <p>
+<b>Version 1.0.58</b> December 2021<br/>
+- FIX a possible error in wrong XML returned by the node, if node-red runs under IOBroker, having an old XML parser version.<br/>
+</p>
+<p>
 <b>Version 1.0.57</b> November 2021<br/>
 - NEW: PTZ Node: you can now pass the channelID and PTZ preset number by msg.payload. <br/>
 </p>
