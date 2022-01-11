@@ -190,7 +190,6 @@ module.exports = (RED) => {
                                         } catch (error) {
                                             sRet = "";
                                             if (node.debug) RED.log.error("BANANA ERRORE xml2js(sRet, function (err, result) " + error.message || "");
-                                                   
                                         }
 
                                     } else {
@@ -265,16 +264,31 @@ module.exports = (RED) => {
                         oReadable.on('data', (chunk) => {
                             result += chunk;
                             if (result.indexOf("--boundary") > -1) {
-                                try {
-                                    handleChunk(result);
-                                } catch (error) {
-                                    if (node.debug) RED.log.info("Hikvision-config: Error handleChunk " + error.message || "");
-                                }                                
-                                result = "";
+
+                                // 11/01/2022 let's do some other checks on the event stream text
+                                let bMessageCanBeHandled = false;
+                                if (result.includes("</EventNotificationAlert>")) {
+                                    // Is the XML
+                                    bMessageCanBeHandled = true;
+                                } else if (result.includes("}")) {
+                                    // Should be the JSON
+                                    bMessageCanBeHandled = true;
+                                }
+
+                                if (bMessageCanBeHandled) {
+                                    try {
+                                        handleChunk(result);
+                                    } catch (error) {
+                                        if (node.debug) RED.log.info("Hikvision-config: Error handleChunk " + error.message || "");
+                                    }
+                                    result = "";
+                                }
                             }
                         });
                         oReadable.on('end', function () {
+                            // For some reason, some NVRs do end the stream. I must restart it.
                             if (node.debug) RED.log.info("Hikvision-config: streamPipeline: STREAMING HAS ENDED.");
+                            startAlarmStream();
                         });
 
                         oReadable.on('error', function (error) {

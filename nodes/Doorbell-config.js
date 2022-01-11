@@ -167,7 +167,7 @@ module.exports = (RED) => {
                         const oReadable = readableStr.from(response.body, { encoding: 'utf8' });
                         oReadable.on('data', (chunk) => {
                             if (node.debug) RED.log.info("Doorbell-config: oReadable.on('data') " + chunk);
-                            if (chunk.endsWith("}")) {
+                            if (chunk.includes("}")) {
                                 try {
                                     handleChunk(chunk);
                                 } catch (error) {
