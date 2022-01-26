@@ -636,6 +636,7 @@ msg = {
 <br/>
 
 # HIKVISION AND OTHER HIK BASED DEVICES, TESTED WITH THE NODE
+It seems to be filled in by the autodetect function in nodered, though it does not prove functionaluty. KD8003-ime1 for example does not work without modifications.
 This is a list of Hikvision (and hik compatible) models the users own and decided to share because it checked working with Hikvision-Ultimate. <br/>
 This is only a partial model list. Hikvision-Ultimate should work with basically ALL Hikvision devices.<br/>
 [Click HERE to view the list of tested devices](http://80.211.147.27:8080/?read=true&md=noCD&fw=no) 
