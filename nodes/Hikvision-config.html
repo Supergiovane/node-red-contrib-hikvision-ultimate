@@ -49,31 +49,31 @@
                     $("#node-config-input-deviceinfo").val(JSON.stringify(data));
                     $("#labeldeviceinfo").html("<b>DEVICE INFORMATION</b><br/>Name: <b>" + data.DeviceInfo.deviceName + "</b><br/>Model: <b>" + data.DeviceInfo.model + "</b><br/>Firmware: <b>" + data.DeviceInfo.firmwareVersion + "</b>");
 
-                    var myNotification = RED.notify("Can i inform the developer, that the device " + data.DeviceInfo.model + " works with this node? This will help other users.",
-                        {
-                            modal: true,
-                            fixed: true,
-                            type: 'info',
-                            buttons: [
-                                {
-                                    text: "YES",
-                                    click: function (e) {
-                                        // Send the infos to Supergiovane
-                                        $.getJSON("http://80.211.147.27:8080?read=false&md=" + encodeURIComponent(data.DeviceInfo.model) + "&fw=" + encodeURIComponent(data.DeviceInfo.firmwareVersion), (data) => {
+                    // var myNotification = RED.notify("Can i inform the developer, that the device " + data.DeviceInfo.model + " works with this node? This will help other users.",
+                    //     {
+                    //         modal: true,
+                    //         fixed: true,
+                    //         type: 'info',
+                    //         buttons: [
+                    //             {
+                    //                 text: "YES",
+                    //                 click: function (e) {
+                    //                     // Send the infos to Supergiovane
+                    //                     $.getJSON("http://80.211.147.27:8080?read=false&md=" + encodeURIComponent(data.DeviceInfo.model) + "&fw=" + encodeURIComponent(data.DeviceInfo.firmwareVersion), (data) => {
 
-                                        }).error(function (jqXHR, textStatus, errorThrown) {
+                    //                     }).error(function (jqXHR, textStatus, errorThrown) {
 
-                                        });
-                                        myNotification.close();
-                                    }
-                                },
-                                {
-                                    text: "NO",
-                                    click: function (e) {
-                                        myNotification.close();
-                                    }
-                                }]
-                        });
+                    //                     });
+                    //                     myNotification.close();
+                    //                 }
+                    //             },
+                    //             {
+                    //                 text: "NO",
+                    //                 click: function (e) {
+                    //                     myNotification.close();
+                    //                 }
+                    //             }]
+                    //     });
 
                 }).error(function (jqXHR, textStatus, errorThrown) {
                     RED.notify("THIS IS YOUR FIRST CAMERA NODE EVER. PLEASE SAVE AND DEPLOY. THEN REOPEN THIS WINDOW AGAIN.",
