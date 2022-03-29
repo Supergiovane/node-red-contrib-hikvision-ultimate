@@ -4,6 +4,10 @@
 [![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square)](https://www.paypal.me/techtoday) 
 
 <p>
+<b>Version 1.0.61</b> April 2022<br/>
+- Maintenance release. Bumped required depencencies.<br/>
+</p>
+<p>
 <b>Version 1.0.60</b> January 2022<br/>
 - Maintenance release. Removed the device compatiblility list from the bottom of the readme page, because with the new Doorbell Hik devices (that i haven't and i cannot test with), this list isn't realistic anymore.<br/>
 </p>
