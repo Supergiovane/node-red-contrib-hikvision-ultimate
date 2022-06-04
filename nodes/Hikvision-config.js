@@ -1,7 +1,7 @@
 
 module.exports = (RED) => {
 
-    const DigestFetch = require('digest-fetch')
+    const DigestFetch = require('digest-fetch'); // 04/6/2022 DO NOT UPGRADE TO NODE-FETCH V3, BECAUSE DIGEST-FETCH DOESN'T SUPPORT IT
     const AbortController = require('abort-controller');
     const xml2js = require('xml2js').Parser({ explicitArray: false }).parseString;
     const readableStr = require('stream').Readable;
