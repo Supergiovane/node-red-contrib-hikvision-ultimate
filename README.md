@@ -9,7 +9,7 @@ A native set of nodes for Hikvision (and compatible) Cameras, Alarms, Radars, NV
 [![MIT License][license-image]][license-url]
 [![JavaScript Style Guide](https://img.shields.io/badge/code_style-standard-brightgreen.svg)](https://standardjs.com)
 [![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square)](https://www.paypal.me/techtoday) 
-[![Facebook][facebook-image]][facebook-url]
+
 
 
 ## DESCRIPTION
@@ -649,5 +649,3 @@ msg = {
 [npm-version-image]: https://img.shields.io/npm/v/node-red-contrib-hikvision-ultimate.svg
 [npm-downloads-month-image]: https://img.shields.io/npm/dm/node-red-contrib-hikvision-ultimate.svg
 [npm-downloads-total-image]: https://img.shields.io/npm/dt/node-red-contrib-hikvision-ultimate.svg
-[facebook-image]: https://img.shields.io/badge/Visit%20me-Facebook-blue
-[facebook-url]: https://www.facebook.com/supergiovaneDev
