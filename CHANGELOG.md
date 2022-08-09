@@ -4,6 +4,11 @@
 [![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square)](https://www.paypal.me/techtoday) 
 
 <p>
+<b>Version 1.0.63</b> August 2022<br/>
+- Maintenance release. Optimized the scope of some variables.<br/>
+- Aded a Warning on the README page.<br/>
+</p>
+<p>
 <b>Version 1.0.62</b> Juni 2022<br/>
 - Maintenance release. Fixed an issue with node-fetch v3 incompatibility.<br/>
 </p>

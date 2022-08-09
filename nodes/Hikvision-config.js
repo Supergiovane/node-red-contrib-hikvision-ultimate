@@ -322,7 +322,7 @@ module.exports = (RED) => {
             if (node.authentication === "digest") clientGenericRequest = new DigestFetch(node.credentials.user, node.credentials.password); // Instantiate the fetch client.
             if (node.authentication === "basic") clientGenericRequest = new DigestFetch(node.credentials.user, node.credentials.password, { basic: true }); // Instantiate the fetch client.
 
-            reqController = new AbortController(); // For aborting the stream request
+            var reqController = new AbortController(); // For aborting the stream request
             var options = {
                 // These properties are part of the Fetch Standard
                 method: _method.toString().toUpperCase(),
