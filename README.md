@@ -19,6 +19,9 @@ Digest authentication: it should work with all devices.<br/>
 All nodes are capable of auto reconnect if the connection is lost and are able to actively monitor the connection.<br/>
 Be sure to have installed **Node.js v12.3.0** or newer (issue a node -v command in a console, to check it out).<br/>
 
+## WARNING
+Due to the many models and firmware versions out there, not all cams/NVR/Intercoms does work. For example, many intercoms does not really support, what the official ISAPI documentation says it supports, thus, they don't work, non only with this node, but also with any software using the public ISAPI documentation. Please don't blame the developer, as it can do nothing to workaround such problems. <br/>
+
 **Note:** for NVR/DVR, pleas remember to select "Notify Alarm Center" in the event window, otherwise the NVR won't emit any alarm event.<br/>
 <img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/NotifyCenter.png' width="30%">
 
