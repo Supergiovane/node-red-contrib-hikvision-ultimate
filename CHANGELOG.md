@@ -4,6 +4,10 @@
 [![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square)](https://www.paypal.me/techtoday) 
 
 <p>
+<b>Version 1.0.64</b> September 2022<br/>
+- Not all Hikvision door intercom does have the proper APIs to connect to. Added warning.<br/>
+</p>
+<p>
 <b>Version 1.0.63</b> August 2022<br/>
 - Maintenance release. Optimized the scope of some variables.<br/>
 - Aded a Warning on the README page.<br/>
