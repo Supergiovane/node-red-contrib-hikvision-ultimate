@@ -13,7 +13,7 @@ module.exports = function (RED) {
 		node.pictureLarghezza = 0;
 		node.pictureAltezza = 0;
 		node.urlImageCurrentIndex = config.urlImageCurrentIndex === undefined ? 0 : config.urlImageCurrentIndex; // Stores the valid URL
-		
+		node.previousInputMessage = {}; // 01/09/2022 previous msg input to be passet to the output
 
 		node.setNodeStatus = ({ fill, shape, text }) => {
 			var dDate = new Date();
@@ -216,6 +216,8 @@ module.exports = function (RED) {
 		// Called from config node, to send output to the flow
 		node.sendPayload = (_msg) => {
 			if (_msg === null || _msg === undefined) return;
+			// 01/09/2022 Add the previous input message
+			_msg.previousInputMessage = node.previousInputMessage;
 			_msg.topic = node.topic;
 			if (_msg.hasOwnProperty("errorDescription")) { node.send([null, _msg]); return; }; // It's a connection error/restore comunication.
 			if (!_msg.hasOwnProperty("payload") || (_msg.hasOwnProperty("payload") && _msg.payload === undefined)) return;
@@ -268,6 +270,8 @@ module.exports = function (RED) {
 
 		this.on('input', function (msg) {
 			if (msg === null || msg === undefined) return;
+			// 01/09/2022 Save the original message to be passed through and sent out 
+			node.previousInputMessage = msg;
 			if (msg.hasOwnProperty("textoverlay")) node.textoverlay = msg.textoverlay;
 
 			if (msg.hasOwnProperty("payload") && msg.hasOwnProperty("payload") !== null && msg.hasOwnProperty("payload") !== undefined) {

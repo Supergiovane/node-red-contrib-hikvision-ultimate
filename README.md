@@ -263,10 +263,11 @@ For the picture to show up directly into the flow, you can use this node develop
 
 **Flow Messages**
 
-The node outputs the image in in mamy formats  on PIN 1, otherwise an error on PIN 2. On PIN 1 you'll have:<br/>
+The node outputs the image in in mamy formats on PIN 1, otherwise an error on PIN 2. On PIN 1 you'll have:<br/>
 *base64 JPG string format*, ready for the UI Dashboard.</br>
 *JPG Buffer*, ready to be sent as email attachment.</br>
 *pure base64 format*, for many other uses.</br>
+The Picture Node now passes through the input message, in the property **msg.previousInputMessage**</br>
 
 **Input**
 ```javascript
@@ -287,6 +288,7 @@ return msg;
 ```javascript
 msg = {
 {
+    "previousInputMessage" : {topic : "banana"}, // this is the original passedthrough message
     "payload": "data:image/jpg;base64,/9j/4AAQSk...", // FOR THE DASHBOARD UI: Image as string in base64 format with JPG DATA header already there.
     "forEmail": "<buffer>", // FOR EMAIL: Image as buffer format, ready to be attached to an email as JPG attachment.
     "base64": "/9j/4AAQSk...", // FOR FURTHER MANIPULATION: Image as pure base64 string.

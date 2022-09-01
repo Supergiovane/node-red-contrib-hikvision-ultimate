@@ -6,6 +6,7 @@
 <p>
 <b>Version 1.0.64</b> September 2022<br/>
 - Not all Hikvision door intercom does have the proper APIs to connect to. Added warning.<br/>
+- Add: The Picture Node now passes through the input message, in the property msg.previousInputMessage<br/>
 </p>
 <p>
 <b>Version 1.0.63</b> August 2022<br/>
