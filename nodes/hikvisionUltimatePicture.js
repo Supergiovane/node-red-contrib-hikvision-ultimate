@@ -274,7 +274,7 @@ module.exports = function (RED) {
 			node.previousInputMessage = msg;
 			if (msg.hasOwnProperty("textoverlay")) node.textoverlay = msg.textoverlay;
 
-			if (msg.hasOwnProperty("payload") && msg.hasOwnProperty("payload") !== null && msg.hasOwnProperty("payload") !== undefined) {
+			if (msg.hasOwnProperty("payload") && msg.payload !== null && msg.payload !== undefined) {
 				if (msg.payload === true) {
 					try {
 						// Call the request, that then sends the result via node.sendPayload function

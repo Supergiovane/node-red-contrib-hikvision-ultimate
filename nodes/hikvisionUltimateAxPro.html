@@ -1,13 +1,13 @@
 <script type="text/javascript">
-	RED.nodes.registerType('hikvisionUltimateAlarmRaw', {
+	RED.nodes.registerType('hikvisionUltimateAxPro', {
 		category: 'Hikvision Ultimate',
 		color: '#C0C0C0',
 		defaults: {
 			name: { value: "" },
 			topic: { value: "" },
-			server: { type: "Hikvision-config", required: true }
+			server: { type: "AXPro-config", required: true }
 		},
-		inputs: 0,
+		inputs: 1,
 		outputs: 2,
 		outputLabels: function (i) {
 			var ret = "";
@@ -26,17 +26,17 @@
 					break;
 			}
 		},
-		icon: "feed.svg",
+		icon: "node-raw-icon.png",
 		label:
 			function () {
-				var label = "RAW Camera Event"
+				var label = "AX Pro (beta)"
 				if (this.name !== undefined && this.name.length > 0) {
 					label = this.name;
 				}
 				return label;
 			},
 		paletteLabel: function () {
-			return "RAW Camera Event";
+			return "AX Pro (beta)";
 		},
 		oneditprepare: function () {
 
@@ -50,13 +50,14 @@
 
 </script>
 
-<script type="text/x-red" data-template-name="hikvisionUltimateAlarmRaw">
+<script type="text/x-red" data-template-name="hikvisionUltimateAxPro">
 	<div class="form-row">
-		<b>RAW Alarm node</b>&nbsp&nbsp&nbsp&nbsp<span style="color:red"><i class="fa fa-question-circle"></i>&nbsp<a target="_blank" href="https://github.com/Supergiovane/node-red-contrib-hikvision-ultimate"><u>Help online</u></a></span>
+		<b>AX Pro node</b>&nbsp&nbsp&nbsp&nbsp<span style="color:red"><i class="fa fa-question-circle"></i>&nbsp<a target="_blank" href="https://github.com/Supergiovane/node-red-contrib-hikvision-ultimate"><u>Help online</u></a></span>
         <br/>
+		This node is still in beta testing, so it's not suitable for stable production environments.<br/>
 		<br/>
 
-		<label for="node-input-server">Server</label>
+		<label for="node-input-server">Alarm Panel</label>
 		<input type="text" id="node-input-server" />
 	</div>
 	<div class="form-row">
@@ -73,7 +74,7 @@
 
 </script>
 
-<script type="text/x-red" data-help-name="hikvisionUltimateAlarmRaw">
+<script type="text/x-red" data-help-name="hikvisionUltimateAxPro">
 	<p>
         <a href="https://www.paypal.me/techtoday" target="_blank"><img src='https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square' width='30%'></a>
    </p>

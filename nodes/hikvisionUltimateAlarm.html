@@ -28,17 +28,17 @@
 					break;
 			}
 		},
-		icon: "node-alarm.png",
+		icon: "feed.svg",
 		label:
 			function () {
-				var label = "Alarm"
+				var label = "Camera Event"
 				if (this.name !== undefined && this.name.length > 0) {
 					label = this.name;
 				}
 				return label;// + " " + this.reactto;
 			},
 		paletteLabel: function () {
-			return "Alarm";
+			return "Camera Event";
 		},
 		oneditprepare: function () {
 			var node = this;
@@ -145,7 +145,7 @@
         <label for="node-input-devicetype"><i class="fa fa-tasks"></i> Device type</label>
 		<select id="node-input-devicetype">
 			<option value=0>Camera or NVR/DVR</option>
-			<option value=1>Alarm system (Security system like AX Hub, Hybrid panel, etc...)</option>
+			<option value=1>Old Alarm system (For example, Axiom) For new AX Pro and AX Hybrid use the AX PRO Node.</option>
 			<option value=2>Radar</option>
 		</select>
 	</div>		

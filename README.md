@@ -39,13 +39,13 @@ I'm looking for collaborators to develop these nodes. I'm alone. I have other no
 <br/>
 
 
-## ALARM NODE
-The alarm node connects to ***NVR, Camera, Alarm system, Radars, etc..*** and outputs true/false in case of an alarm. <br/>
-The node can be configured as **Camera/NVR** (with standard and smart events) or as **Security System** and **Radar** (with specific CID events, designed for these type of security devices)<br/>
+## CAMERA EVENT NODE
+The Camera Event node connects to ***NVR, Camera, Radars, etc..*** and outputs true/false in case of an alarm. <br/>
+The node can be configured as **Camera/NVR** (with standard and smart events) or as **Old Security System** and **Radar** (with specific CID events, designed for these type of security devices)<br/>
 You can optionally filter the alarms by CHANNEL, EVENT and ZONE. <br/>
 For NVR/DVR, the ***Channel*** property is the CAMERA number, while for Cameras, is the image sensor number (normally 1).<br/>
-The ***Zone*** property is the alarm zone (RADARS AND SECURITY SYSTEM), or the alert region number (CAMERAS AND NVR/DVR).<br/>
-For RADAR and SECURITY SYSTEM device types, you can filter improper/false alams as well.<br/>
+The ***Zone*** property is the alarm zone (RADARS), or the alert region number (CAMERAS AND NVR/DVR).<br/>
+For RADAR device types, you can filter improper/false alams as well.<br/>
 
 <img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/GenericAlarm.png' width="80%">
 
@@ -79,7 +79,7 @@ msg = {
 ```
 
 ```javascript
-// Example of an event from Security System or Radar
+// Example of an event from Radar
 msg = {
 {
     "zone": 1, // This is the zone number that fired the alarm
@@ -226,7 +226,7 @@ This node gets a picture from the camera/NVR, ready to be shown in the dashboard
 You can rotate, resize, crop, overlay with text, zoom the image.<br/>
 The ***overlay text*** is applied directly after the picture's manipulation. This behaves differently than the **text overlay node** (that uses the overlay functionality onboard the camera).<br/> 
 Pass **true** as payload to obtain the image.<br/>
-You can, for example, link the ***Alarm node*** to the ***Picture node*** to get an image whenever an alarm occurs.<br/>
+You can, for example, link the ***Camera Event node*** to the ***Picture node*** to get an image whenever an alarm occurs.<br/>
 **CAUTION**: image handling is a very CPU/GPU consuming job. Use only if you have enough computational resources.<br/>
 
 <img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/picture.png' width="80%">
@@ -501,8 +501,8 @@ If an ***error*** occurs, the XML node will output a msg with the error
 
 ---
 
-## RAW ALARM NODE
-The RAW alarm node reacts to every message sent by the device. You can use this node when the other nodes doesn't fit your needs. It connects to ***NVR, Camera, Alarm system, Radars etc...*** and outputs the alarm received. <br/>
+## RAW CAMERA Event NODE
+The RAW CAMERA Event node reacts to every message sent by the device. You can use this node when the other nodes doesn't fit your needs. It connects to ***NVR, Camera, Radars etc...*** and outputs the event received. <br/>
 
 <img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/RawAlarm.png' width="80%">
 
@@ -646,6 +646,83 @@ msg = {
 
 <br/>
 <br/>
+
+
+
+---
+
+## AX PRO Alarm node (Ax Pro and AX Pro Hybrid)
+This node receives all events sent by your AX Pro alarm.<br/>
+You can also arm, disarm, silence alarm etc...<br/>
+
+
+<img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/axpro.png' width="80%">
+
+**Copy this code and paste it into your flow**
+
+<details><summary>View code</summary>
+
+> Adjust the nodes according to your setup
+
+```javascript
+
+[{"id":"7c370c1cabe6fd89","type":"hikvisionUltimateAxPro","z":"e9a7cd97842ffa10","name":"Ax Pro","topic":"","server":"2dfc48091d46ead3","x":390,"y":200,"wires":[["893818dce1fc2c20"],["01e634bd9098e528"]]},{"id":"893818dce1fc2c20","type":"debug","z":"e9a7cd97842ffa10","name":"Output","active":true,"tosidebar":true,"console":false,"tostatus":false,"complete":"true","targetType":"full","statusVal":"","statusType":"auto","x":610,"y":180,"wires":[]},{"id":"01e634bd9098e528","type":"debug","z":"e9a7cd97842ffa10","name":"Error","active":true,"tosidebar":true,"console":false,"tostatus":false,"complete":"true","targetType":"full","statusVal":"","statusType":"auto","x":610,"y":220,"wires":[]},{"id":"ddc2d752e0c13937","type":"inject","z":"e9a7cd97842ffa10","name":"Disarm Area 1","props":[{"p":"disarmArea","v":"1","vt":"num"}],"repeat":"","crontab":"","once":false,"onceDelay":0.1,"topic":"","x":150,"y":280,"wires":[["7c370c1cabe6fd89"]]},{"id":"b33ec376180a53bc","type":"inject","z":"e9a7cd97842ffa10","name":"Arm Away Area 1","props":[{"p":"armAwayArea","v":"1","vt":"num"}],"repeat":"","crontab":"","once":false,"onceDelay":0.1,"topic":"","x":140,"y":160,"wires":[["7c370c1cabe6fd89"]]},{"id":"6145bfa8991c1831","type":"inject","z":"e9a7cd97842ffa10","name":"Arm Stay Area 1","props":[{"p":"armStayArea","v":"1","vt":"num"}],"repeat":"","crontab":"","once":false,"onceDelay":0.1,"topic":"","x":140,"y":200,"wires":[["7c370c1cabe6fd89"]]},{"id":"189b2eb17cb67a52","type":"inject","z":"e9a7cd97842ffa10","name":"Clear Alarm Area 1","props":[{"p":"clearAlarmArea","v":"1","vt":"num"}],"repeat":"","crontab":"","once":false,"onceDelay":0.1,"topic":"","x":130,"y":240,"wires":[["7c370c1cabe6fd89"]]},{"id":"40ce4b0d34bedf21","type":"comment","z":"e9a7cd97842ffa10","name":"Hikvision AX Pro Alarm Control and Event receiver","info":"","x":230,"y":100,"wires":[]},{"id":"2dfc48091d46ead3","type":"AXPro-config","host":"192.168.1.10","port":"80","name":"AX Pro","authentication":"sha256-salted","protocol":"http","heartbeattimerdisconnectionlimit":"2","deviceinfo":"[object Object]"}]
+
+```
+</details>
+
+<br/>
+<br/>
+
+**Flow Messages**
+
+You can control your AX Pro alarm panel by passing messages to the node.</br>
+
+**Input**
+
+```javascript
+// To Arm Away Area 1
+msg.armAwayArea = 1
+return msg;
+```
+
+```javascript
+// To Arm Stay Area 1
+msg.armStayArea = 1
+return msg;
+```
+
+```javascript
+// To Disarm Area 1
+msg.disarmArea = 1
+return msg;
+```
+
+```javascript
+// To clear alarm on Area 1
+msg.clearAlarmArea = 1
+return msg;
+```
+
+**Output**
+On PIN1, the node will output the Event, on PIN2 it will output connection error messages<br/>
+Example of an Event
+
+```json
+{
+   "code":1401, // This is the reference code of the event. Please see the ISAPI docs or try by yourself, by watching the output while playing with your alarm
+   "name":"Supergiovane",
+   "type":"armAndDisarm",
+   "trigger":"2022-12-22T17:33:56+01:00",
+   "upload":"2022-12-22T17:33:56+01:00",
+   "system":1,
+   "subSystemName":"Casa"
+}
+```
+
+<br/>
+<br/>
+
 
 ![Logo](https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/madeinitaly.png)
 

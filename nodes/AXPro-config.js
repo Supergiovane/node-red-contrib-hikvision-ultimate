@@ -1,7 +1,10 @@
+const { default: fetch } = require('node-fetch')
+const sha256 = require('./utils/Sha256').sha256
+const { parseBooleans, parseNumbers } = require('xml2js/lib/processors')
 
 module.exports = (RED) => {
 
-    const DigestFetch = require('digest-fetch')
+    const DigestFetch = require('digest-fetch'); // 04/6/2022 DO NOT UPGRADE TO NODE-FETCH V3, BECAUSE DIGEST-FETCH DOESN'T SUPPORT IT
     const AbortController = require('abort-controller');
     const xml2js = require('xml2js').Parser({ explicitArray: false }).parseString;
     const readableStr = require('stream').Readable;
@@ -18,10 +21,13 @@ module.exports = (RED) => {
         node.isConnected = true; // Assumes, that is already connected.
         node.timerCheckHeartBeat = null;
         node.errorDescription = ""; // Contains the error description in case of connection error.
-        node.authentication = config.authentication || "digest";
+        node.authentication = config.authentication || "sha256-salted";
         node.deviceinfo = config.deviceinfo || {};
         node.heartBeatTimerDisconnectionCounter = 0;
         node.heartbeattimerdisconnectionlimit = config.heartbeattimerdisconnectionlimit || 2;
+        node.authCookie = '' // Contains the usable cookie for the authenticaded sessione
+        node.optionsAlarmStream = {}
+        node.clientAlarmStream = undefined
         var controller = null; // AbortController
 
         node.setAllClientsStatus = ({ fill, shape, text }) => {
@@ -35,64 +41,7 @@ module.exports = (RED) => {
             rejectUnauthorized: false
         });
 
-        // 14/12/2020 Get the infos from the camera
-        RED.httpAdmin.get("/hikvisionUltimateGetInfoCam", RED.auth.needsPermission('Hikvisionconfig.read'), function (req, res) {
-            var jParams = JSON.parse(decodeURIComponent(req.query.params));// Retrieve node.id of the config node.
-            var _nodeServer = null;
-            var clientInfo;
 
-            if (jParams.password === "__PWRD__") {
-                // The password isn't changed or (the server node was already present, it's only updated)
-                _nodeServer = RED.nodes.getNode(req.query.nodeID);// Retrieve node.id of the config node.
-                if (jParams.authentication === "digest") clientInfo = new DigestFetch(jParams.user, _nodeServer.credentials.password); // Instantiate the fetch client.
-                if (jParams.authentication === "basic") clientInfo = new DigestFetch(jParams.user, _nodeServer.credentials.password, { basic: true }); // Instantiate the fetch client.
-            } else {
-                // The node is NEW
-                if (jParams.authentication === "digest") clientInfo = new DigestFetch(jParams.user, jParams.password); // Instantiate the fetch client.
-                if (jParams.authentication === "basic") clientInfo = new DigestFetch(jParams.user, jParams.password, { basic: true }); // Instantiate the fetch client.
-            }
-
-
-            var opt = {
-                // These properties are part of the Fetch Standard
-                method: "GET",
-                headers: {},        // request headers. format is the identical to that accepted by the Headers constructor (see below)
-                body: null,         // request body. can be null, a string, a Buffer, a Blob, or a Node.js Readable stream
-                redirect: 'follow', // set to `manual` to extract redirect headers, `error` to reject redirect
-                signal: null,       // pass an instance of AbortSignal to optionally abort requests
-
-                // The following properties are node-fetch extensions
-                follow: 20,         // maximum redirect count. 0 to not follow redirect
-                timeout: 5000,         // req/res timeout in ms, it resets on redirect. 0 to disable (OS limit applies). Signal is recommended instead.
-                compress: false,     // support gzip/deflate content encoding. false to disable
-                size: 0,            // maximum response body size in bytes. 0 to disable
-                agent: jParams.protocol === "https" ? customHttpsAgent : null        // http(s).Agent instance or function that returns an instance (see below)
-            };
-            try {
-                (async () => {
-                    try {
-                        const resInfo = await clientInfo.fetch(jParams.protocol + "://" + jParams.host + ":" + jParams.port + "/ISAPI/System/deviceInfo", opt);
-                        const body = await resInfo.text();
-                        xml2js(body, function (err, result) {
-                            if (err) {
-                                res.json(err);
-                                return;
-                            } else {
-                                res.json(result);
-                                return;
-                            }
-                        });
-                    } catch (error) {
-                        RED.log.error("Errore  hikvisionUltimateGetInfoCam " + error.message);
-                        res.json(error);
-                    }
-
-                })();
-
-            } catch (err) {
-                res.json(err);
-            }
-        });
 
         // This function starts the heartbeat timer, to detect the disconnection from the server
         node.resetHeartBeatTimer = () => {
@@ -126,18 +75,36 @@ module.exports = (RED) => {
             }, 40000);
         }
 
+        // 22/12/2022 sha salt password encoder
+        function encodePassword(bodyAuthJsonData, _username, _password) {
+            let result = ''
+            if (bodyAuthJsonData.isIrreversible) {
+                result = sha256(_username + bodyAuthJsonData.salt + _password)
+                result = sha256(_username + bodyAuthJsonData.salt2 + result)
+                result = sha256(result + bodyAuthJsonData.challenge)
+
+                for (let f = 2; bodyAuthJsonData.iterations > f; f++) {
+                    result = sha256(result)
+                }
+            } else {
+                result = sha256(_password) + bodyAuthJsonData.challenge
+                for (let f = 1; bodyAuthJsonData.iterations > f; f++) {
+                    result = sha256(result)
+                }
+            }
+            return result
+        }
+
+
         //#region ALARMSTREAM
         async function startAlarmStream() {
 
             node.resetHeartBeatTimer(); // First thing, start the heartbeat timer.
             node.setAllClientsStatus({ fill: "grey", shape: "ring", text: "Connecting..." });
 
-            var clientAlarmStream;
-            if (node.authentication === "digest") clientAlarmStream = new DigestFetch(node.credentials.user, node.credentials.password); // Instantiate the fetch client.
-            if (node.authentication === "basic") clientAlarmStream = new DigestFetch(node.credentials.user, node.credentials.password, { basic: true }); // Instantiate the fetch client.
-
+            if (node.authentication === "sha256-salted") node.clientAlarmStream = new DigestFetch("", "", { basic: true }); // Instantiate the fetch client.
             controller = new AbortController(); // For aborting the stream request
-            var optionsAlarmStream = {
+            node.optionsAlarmStream = {
                 // These properties are part of the Fetch Standard
                 method: 'GET',
                 headers: {},        // request headers. format is the identical to that accepted by the Headers constructor (see below)
@@ -153,6 +120,118 @@ module.exports = (RED) => {
                 agent: node.protocol === "https" ? customHttpsAgent : null
 
             };
+
+            // 22/12/2022 Start auth process
+            // ##################################
+            // Getting challenge and salt; something like this
+            // <SessionLoginCap xmlns="http://www.hikvision.com/ver20/XMLSchema" version="2.0">
+            // <sessionID>
+            //  bb1eBANANb536161edf6894e5RAMA
+            // </sessionID>
+            // <challenge>2348972394Mychallenge</challenge>
+            // <iterations>100</iterations>
+            // <isSupportRTSPWithSession>true</isSupportRTSPWithSession>
+            // <isIrreversible>true</isIrreversible>
+            // <sessionIDVersion>2.1</sessionIDVersion>
+            // <salt>
+            //  234DFSDFS4564DGDFGDFGD456456
+            // </salt>
+            // <salt2>
+            //  234DFSDFS453453453453453453DFGDFGDFG64DGDFGDFGD456456
+            // </salt2>
+            // </SessionLoginCap>
+            const responseAuth = await node.clientAlarmStream.fetch(node.protocol + "://" + node.host + "/ISAPI/Security/sessionLogin/capabilities?username=" + node.credentials.user, node.optionsAlarmStream)
+
+            if (responseAuth.status >= 200 && responseAuth.status <= 300) {
+                node.setAllClientsStatus({ fill: "green", shape: "ring", text: "Communication established" });
+            } else {
+                node.setAllClientsStatus({ fill: "red", shape: "ring", text: responseAuth.statusText || " unknown response code" });
+                //  if (node.debug)  RED.log.error("BANANA Error response " + response.statusText);
+                node.errorDescription = "StatusResponse problem " + (responseAuth.statusText || " unknown status response code");
+                throw new Error("StatusResponse " + (responseAuth.statusText || " unknown response code"));
+            }
+            // Get the XML Body of the salt and challenge
+            const XMLBody = await responseAuth.text()
+
+            // Wrapping the async xml2js to a sync function, for peace of mind
+            async function xml2jsSync(xml) {
+                return new Promise((resolve, reject) => {
+                    xml2js(xml, function (err, json) {
+                        if (err)
+                            reject(err);
+                        else
+                            resolve(json);
+                    });
+
+                });
+            }
+
+            try {
+                // Transform it into Json
+                const result = await xml2jsSync(XMLBody)
+                const jSon = JSON.parse(JSON.stringify(result))
+                if (node.debug) RED.log.error("BANANA SBANANATO XMLBoduAuth -> JSON " + JSON.stringify(result));
+                if (result !== null && result !== undefined && result.hasOwnProperty("EventNotificationAlert")) {
+                    node.nodeClients.forEach(oClient => {
+                        if (result !== undefined) oClient.sendPayload({ topic: oClient.topic || "", payload: result.EventNotificationAlert });
+                    });
+                }
+                // jSon now contains the body in JSON Format. The simple thing is done. 
+                // Now i need to authenticate
+                let bodyAuth = {
+                    sessionId: jSon.SessionLoginCap.sessionID,
+                    challenge: jSon.SessionLoginCap.challenge,
+                    iterations: jSon.SessionLoginCap.iterations,
+                    isIrreversible: jSon.SessionLoginCap.isIrreversible,
+                    salt: jSon.SessionLoginCap.salt || '',
+                    salt2: jSon.SessionLoginCap.salt2 || ''
+                }
+                // Finally, i've got the encoded salted password
+                // Do not put Spaghetti in the cold water. Please be sure that water is warm and it's boiling.
+                const encodedPassword = encodePassword(bodyAuth, node.credentials.user, node.credentials.password)
+                // Build the XML body to pass to the alarm panel to login.
+                const xml2jsEngine = require('xml2js')
+                const XMLbuilder = new xml2jsEngine.Builder({
+                    headless: true,
+                    renderOpts: {
+                        pretty: false
+                    }
+                })
+                const XMLparser = new xml2jsEngine.Parser({
+                    attrkey: 'attr',
+                    charkey: 'value',
+                    explicitArray: false,
+                    attrValueProcessors: [
+                        parseNumbers, parseBooleans
+                    ],
+                    valueProcessors: [
+                        parseNumbers, parseBooleans
+                    ]
+                })
+                const jSonAuthSendBody = {
+                    SessionLogin: {
+                        userName: node.credentials.user,
+                        password: encodedPassword,
+                        sessionID: jSon.SessionLoginCap.sessionID,
+                        isSessionIDValidLongTerm: false,
+                        sessionIDVersion: 2.1
+                    }
+                }
+                // Send the body to the alarm panel.
+                node.optionsAlarmStream.body = XMLbuilder.buildObject(jSonAuthSendBody)
+                node.optionsAlarmStream.method = 'POST'
+                const responseSessionLogin = await node.clientAlarmStream.fetch(node.protocol + '://' + node.host + '/ISAPI/Security/sessionLogin?timeStamp=' + Date.now(), node.optionsAlarmStream)
+                if (responseSessionLogin.status !== 200) throw Error('AXPro POST Auth: ' + responseSessionLogin.statusText);
+                // Set the coockie session for this authenticated connection
+                node.authCookie = responseSessionLogin.headers.get('set-cookie').split(';')[0]
+
+            } catch (error) {
+                node.setAllClientsStatus({ fill: "red", shape: "ring", text: err.message });
+                node.errorDescription = "XML Body Auth problem " + err.message;
+                throw new Error("StatusResponse XML Body Auth" + err.message);
+            }
+
+
             try {
 
 
@@ -210,7 +289,7 @@ module.exports = (RED) => {
                                             }
                                         } else {
                                             // Invalid body
-                                            if (node.debug) RED.log.info("Hikvision-config: DecodingBody Info only: Invalid Json " + sRet);
+                                            if (node.debug) RED.log.info("AXPro-config: DecodingBody Info only: Invalid Json " + sRet);
                                         }
                                     }
                                     // All is fine. Reset and restart the hearbeat timer
@@ -219,7 +298,7 @@ module.exports = (RED) => {
                                     node.resetHeartBeatTimer();
                                 } catch (error) {
                                     //  if (node.debug) RED.log.error("BANANA startAlarmStream decodifica body: " + error);
-                                    if (node.debug) RED.log.error("Hikvision-config: DecodingBody error: " + (error.message || " unknown error"));
+                                    if (node.debug) RED.log.error("AXPro-config: DecodingBody error: " + (error.message || " unknown error"));
                                     throw (error);
                                 }
                             } else {
@@ -229,7 +308,7 @@ module.exports = (RED) => {
 
 
                     } catch (error) {
-                        if (node.debug) RED.log.info("Hikvision-config: readStream error: " + (error.message || " unknown error"));
+                        if (node.debug) RED.log.info("AXPro-config: readStream error: " + (error.message || " unknown error"));
                         node.errorDescription = "readStream error " + (error.message || " unknown error");
                         throw (error);
 
@@ -238,17 +317,23 @@ module.exports = (RED) => {
                 // ###################################
                 //#endregion
 
-                const response = await clientAlarmStream.fetch(node.protocol + "://" + node.host + "/ISAPI/Event/notification/alertStream", optionsAlarmStream);
 
-                if (response.status >= 200 && response.status <= 300) {
+                node.optionsAlarmStream.method = 'GET'
+                delete (node.optionsAlarmStream.Authorization)
+                delete (node.optionsAlarmStream.body)
+                node.optionsAlarmStream.headers = { Cookie: node.authCookie }
+                const responseFromAxProAlarmStream = await node.clientAlarmStream.fetch(node.protocol + "://" + node.host + "/ISAPI/Event/notification/alertStream", node.optionsAlarmStream);
+
+
+                if (responseFromAxProAlarmStream.status >= 200 && responseFromAxProAlarmStream.status <= 300) {
                     node.setAllClientsStatus({ fill: "green", shape: "ring", text: "Waiting for event." });
                 } else {
-                    node.setAllClientsStatus({ fill: "red", shape: "ring", text: response.statusText || " unknown response code" });
+                    node.setAllClientsStatus({ fill: "red", shape: "ring", text: responseFromAxProAlarmStream.statusText || " unknown response code" });
                     //  if (node.debug)  RED.log.error("BANANA Error response " + response.statusText);
-                    node.errorDescription = "StatusResponse problem " + (response.statusText || " unknown status response code");
-                    throw new Error("StatusResponse " + (response.statusText || " unknown response code"));
+                    node.errorDescription = "StatusResponse problem " + (responseFromAxProAlarmStream.statusText || " unknown status response code");
+                    throw new Error("StatusResponse " + (responseFromAxProAlarmStream.statusText || " unknown response code"));
                 }
-                if (response.ok) {
+                if (responseFromAxProAlarmStream.ok) {
                     if (!node.isConnected) {
                         node.setAllClientsStatus({ fill: "green", shape: "ring", text: "Connected." });
                         node.nodeClients.forEach(oClient => {
@@ -258,8 +343,8 @@ module.exports = (RED) => {
                     }
                     node.isConnected = true;
                     try {
-                        if (node.debug) RED.log.info("Hikvision-config: before Pipelining...");
-                        const oReadable = readableStr.from(response.body, { encoding: 'utf8' });
+                        if (node.debug) RED.log.info("AXPro-config: before Pipelining...");
+                        const oReadable = readableStr.from(responseFromAxProAlarmStream.body, { encoding: 'utf8' });
                         var result = "";
                         oReadable.on('data', (chunk) => {
                             result += chunk;
@@ -279,7 +364,7 @@ module.exports = (RED) => {
                                     try {
                                         handleChunk(result);
                                     } catch (error) {
-                                        if (node.debug) RED.log.info("Hikvision-config: Error handleChunk " + error.message || "");
+                                        if (node.debug) RED.log.info("AXPro-config: Error handleChunk " + error.message || "");
                                     }
                                     result = "";
                                 }
@@ -287,17 +372,17 @@ module.exports = (RED) => {
                         });
                         oReadable.on('end', function () {
                             // For some reason, some NVRs do end the stream. I must restart it.
-                            if (node.debug) RED.log.info("Hikvision-config: streamPipeline: STREAMING HAS ENDED.");
+                            if (node.debug) RED.log.info("AXPro-config: streamPipeline: STREAMING HAS ENDED.");
                             startAlarmStream();
                         });
 
                         oReadable.on('error', function (error) {
-                            if (node.debug) RED.log.error("Hikvision-config: streamPipeline: " + (error.message || " unknown error"));
+                            if (node.debug) RED.log.error("AXPro-config: streamPipeline: " + (error.message || " unknown error"));
                         });
 
                         //await streamPipeline(response.body, readStream);
                     } catch (error) {
-                        if (node.debug) RED.log.error("Hikvision-config: streamPipeline: Please be sure to have the latest Node.JS version installed: " + (error.message || " unknown error"));
+                        if (node.debug) RED.log.error("AXPro-config: streamPipeline: Please be sure to have the latest Node.JS version installed: " + (error.message || " unknown error"));
                     }
 
                 }
@@ -307,112 +392,12 @@ module.exports = (RED) => {
                 // Abort request
                 //node.errorDescription = "Fetch error " + JSON.stringify(error, Object.getOwnPropertyNames(error));
                 node.errorDescription = "Fetch error " + (error.message || " unknown error");
-                if (node.debug) RED.log.error("Hikvision-config: FETCH ERROR: " + (error.message || " unknown error"));
+                if (node.debug) RED.log.error("AXPro-config: FETCH ERROR: " + (error.message || " unknown error"));
             };
 
         };
         setTimeout(startAlarmStream, 10000); // First connection.
         //#endregion
-
-        //#region GENERIC GET OT PUT CALL
-        // Function to get or post generic data on camera
-        node.request = async function (_callerNode, _method, _URL, _body, _fromXMLNode) {
-            if (_fromXMLNode === undefined) _fromXMLNode = false; // 07/10/2021 Does the request come from an XML node?
-            var clientGenericRequest;
-            if (node.authentication === "digest") clientGenericRequest = new DigestFetch(node.credentials.user, node.credentials.password); // Instantiate the fetch client.
-            if (node.authentication === "basic") clientGenericRequest = new DigestFetch(node.credentials.user, node.credentials.password, { basic: true }); // Instantiate the fetch client.
-
-            var reqController = new AbortController(); // For aborting the stream request
-            var options = {
-                // These properties are part of the Fetch Standard
-                method: _method.toString().toUpperCase(),
-                headers: {},        // request headers. format is the identical to that accepted by the Headers constructor (see below)
-                body: _body,         // request body. can be null, a string, a Buffer, a Blob, or a Node.js Readable stream
-                redirect: 'follow', // set to `manual` to extract redirect headers, `error` to reject redirect
-                signal: reqController.signal,       // pass an instance of AbortSignal to optionally abort requests
-
-                // The following properties are node-fetch extensions
-                follow: 20,         // maximum redirect count. 0 to not follow redirect
-                timeout: 8000,         // req/res timeout in ms, it resets on redirect. 0 to disable (OS limit applies). Signal is recommended instead.
-                compress: false,     // support gzip/deflate content encoding. false to disable
-                size: 0,            // maximum response body size in bytes. 0 to disable
-                agent: node.protocol === "https" ? customHttpsAgent : null         // http(s).Agent instance or function that returns an instance (see below)
-            };
-
-            try {
-                if (!_URL.startsWith("/")) _URL = "/" + _URL;
-
-                // 07/10/2021 Strip the body in case of GET and HEAD (otherwise, Fetch thwors an error)
-                if (options.method.toString().toUpperCase() === "GET" || options.method.toString().toUpperCase() === "HEAD") delete (options.body)
-
-                const response = await clientGenericRequest.fetch(node.protocol + "://" + node.host + _URL, options);
-
-                if (response.status >= 200 && response.status < 300) {
-                    //node.setAllClientsStatus({ fill: "green", shape: "ring", text: "Connected." });
-                } else {
-                    // _callerNode.setNodeStatus({ fill: "red", shape: "ring", text: response.statusText || " unknown response code" });
-                    // // 07/04/2021 Wrong URL? Send this and is captured by picture node to try another url
-                    //  _callerNode.sendPayload({ topic: _callerNode.topic || "", payload: false, wrongResponse: response.status });
-                    // throw new Error("Error response: " + response.statusText || " unknown response code");
-                }
-
-                if (response.ok) {
-                    var body = "";
-
-                    // 07/10/2021 If the request comes from XML node, return any response
-                    if (_fromXMLNode) {
-                        body = await response.buffer(); // "data:image/png;base64," +    
-                        //_callerNode.sendPayload({ topic: _callerNode.topic || "", payload:  body.toString("base64")});
-                        xml2js(body.toString(), function (err, result) {
-                            if (err) {
-                                _callerNode.sendPayload({ topic: _callerNode.name || "", payload: body.toString() });
-                            } else {
-                                _callerNode.sendPayload({ topic: _callerNode.name || "", payload: result });
-                            }
-                        });
-
-
-                    } else if (_URL.toLowerCase().includes("/ptzctrl/")) {// Based on URL, will return the appropriate encoded body
-                        _callerNode.sendPayload({ topic: _callerNode.topic || "", payload: true });
-                    } else if (_URL.toLowerCase().includes("/streaming")) {
-                        body = await response.buffer(); // "data:image/png;base64," +    
-                        //_callerNode.sendPayload({ topic: _callerNode.topic || "", payload:  body.toString("base64")});
-                        _callerNode.sendPayload({ topic: _callerNode.topic || "", payload: body });
-                    }
-                } else {
-                    if (_fromXMLNode) {
-                        // 07/10/2021 If the request comes from XML node, return any response
-                        _callerNode.sendPayload({ topic: _callerNode.name || "", wrongResponse: response.status });
-                    } else if (_URL.toLowerCase().includes("/ptzctrl/")) {
-
-                    } else if (_URL.toLowerCase().includes("/streaming/") || _URL.toLowerCase().includes("/streamingproxy/")) {
-                        _callerNode.setNodeStatus({ fill: "red", shape: "ring", text: response.statusText || " unknown response code" });
-                        // 07/04/2021 Wrong URL? Send this and is captured by picture node to try another url
-                        _callerNode.sendPayload({ topic: _callerNode.topic || "", payload: false, wrongResponse: response.status });
-                    } else {
-                        _callerNode.setNodeStatus({ fill: "red", shape: "ring", text: response.statusText || " unknown response code" });
-                    }
-                    throw new Error("Error response: " + response.statusText || " unknown response code");
-
-                }
-
-            } catch (err) {
-                //console.log("ORRORE " + err.message);
-                // Main Error
-                _callerNode.setNodeStatus({ fill: "grey", shape: "ring", text: "clientGenericRequest.fetch error: " + err.message });
-                _callerNode.sendPayload({ topic: _callerNode.topic || "", errorDescription: err.message, payload: true });
-                if (node.debug) RED.log.error("Hikvision-config: clientGenericRequest.fetch error " + err.message);
-                // Abort request
-                if (reqController !== null) {
-                    try {
-                        //if (reqController !== null) reqController.abort().then(ok => { }).catch(err => { });
-                        reqController.abort();
-                    } catch (error) { }
-                }
-            }
-        };
-        //#endregion
-
 
 
 
@@ -451,10 +436,61 @@ module.exports = (RED) => {
             }
         };
         //#endregion
+
+
+        // Disarm Area
+        node.disarmArea = function (_area) {
+            try {
+                _area = Number(_area)
+                let sURL = '/ISAPI/SecurityCP/control/disarm/' + _area + '?format=json'
+                node.optionsAlarmStream.method = 'PUT'
+                delete (node.optionsAlarmStream.body)
+                node.clientAlarmStream.fetch(node.protocol + "://" + node.host + sURL, node.optionsAlarmStream);
+            } catch (error) {
+                console.log(error)
+            }
+        }
+        // Arm Away Area
+        node.armAwayArea = function (_area) {
+            try {
+                _area = Number(_area)
+                let sURL = '/ISAPI/SecurityCP/control/arm/' + _area + '?ways=away&format=json'
+                node.optionsAlarmStream.method = 'PUT'
+                delete (node.optionsAlarmStream.body)
+                node.clientAlarmStream.fetch(node.protocol + "://" + node.host + sURL, node.optionsAlarmStream);
+            } catch (error) {
+                console.log(error)
+            }
+        }
+        // Arm Stay Area
+        node.armStayArea = function (_area) {
+            try {
+                _area = Number(_area)
+                let sURL = '/ISAPI/SecurityCP/control/arm/' + _area + '?ways=stay&format=json'
+                node.optionsAlarmStream.method = 'PUT'
+                delete (node.optionsAlarmStream.body)
+                node.clientAlarmStream.fetch(node.protocol + "://" + node.host + sURL, node.optionsAlarmStream);
+            } catch (error) {
+                console.log(error)
+            }
+        }
+        // Clear Alarm Area
+        node.clearAlarmArea = function (_area) {
+            try {
+                _area = Number(_area)
+                let sURL = '/ISAPI/SecurityCP/control/clearAlarm/' + _area + '?ways=stay&format=json'
+                node.optionsAlarmStream.method = 'PUT'
+                delete (node.optionsAlarmStream.body)
+                node.clientAlarmStream.fetch(node.protocol + "://" + node.host + sURL, node.optionsAlarmStream);
+            } catch (error) {
+                console.log(error)
+            }
+        }
+
     }
 
 
-    RED.nodes.registerType("Hikvision-config", Hikvisionconfig, {
+    RED.nodes.registerType("AXPro-config", Hikvisionconfig, {
         credentials: {
             user: { type: "text" },
             password: { type: "password" }
