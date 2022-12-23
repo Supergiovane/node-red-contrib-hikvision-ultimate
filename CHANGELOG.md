@@ -4,7 +4,12 @@
 [![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square)](https://www.paypal.me/techtoday) 
 
 <p>
-<b>Version 1.0.66</b> September 2022<br/>
+<b>Version 1.0.67</b> Devember 2022<br/>
+- NEW: AX Pro node now outputs alarm events and also zone status (even if the alarm is disarmed).<br/>
+- Updated Ajax Pro Wiki.<br/>
+</p>
+<p>
+<b>Version 1.0.66</b> December 2022<br/>
 - NEW: new AX Pro and AX Pro Hybrid node. These panels require a totally different authentication and handling, so i made another node just for that. You can receive events and also control your security system<br/>
 - EDIT: changed the node name from "Alarm" and "RAW Alarm" to "Event" and "RAW Event" to avoid confusion with the new AX Pro node.<br/>
 - Fixed stability issue with the new AX Pro node.<br/>

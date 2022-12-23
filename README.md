@@ -652,9 +652,13 @@ msg = {
 ---
 
 ## AX PRO Alarm node (Ax Pro and AX Pro Hybrid)
-This node receives all events sent by your AX Pro alarm.<br/>
-You can also arm, disarm, silence alarm etc...<br/>
 
+<img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/axproPicture.jpg' width="80%">
+
+
+This node receives all events sent by your AX Pro alarm.<br/>
+You will receive not only Alarms etc, but also zone status, even if the AX Pro is disarmed.<br/>
+You can also arm, disarm, silence alarm etc...<br/>
 
 <img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/axpro.png' width="80%">
 
@@ -666,7 +670,7 @@ You can also arm, disarm, silence alarm etc...<br/>
 
 ```javascript
 
-[{"id":"7c370c1cabe6fd89","type":"hikvisionUltimateAxPro","z":"e9a7cd97842ffa10","name":"Ax Pro","topic":"","server":"2dfc48091d46ead3","x":390,"y":200,"wires":[["893818dce1fc2c20"],["01e634bd9098e528"]]},{"id":"893818dce1fc2c20","type":"debug","z":"e9a7cd97842ffa10","name":"Output","active":true,"tosidebar":true,"console":false,"tostatus":false,"complete":"true","targetType":"full","statusVal":"","statusType":"auto","x":610,"y":180,"wires":[]},{"id":"01e634bd9098e528","type":"debug","z":"e9a7cd97842ffa10","name":"Error","active":true,"tosidebar":true,"console":false,"tostatus":false,"complete":"true","targetType":"full","statusVal":"","statusType":"auto","x":610,"y":220,"wires":[]},{"id":"ddc2d752e0c13937","type":"inject","z":"e9a7cd97842ffa10","name":"Disarm Area 1","props":[{"p":"disarmArea","v":"1","vt":"num"}],"repeat":"","crontab":"","once":false,"onceDelay":0.1,"topic":"","x":150,"y":280,"wires":[["7c370c1cabe6fd89"]]},{"id":"b33ec376180a53bc","type":"inject","z":"e9a7cd97842ffa10","name":"Arm Away Area 1","props":[{"p":"armAwayArea","v":"1","vt":"num"}],"repeat":"","crontab":"","once":false,"onceDelay":0.1,"topic":"","x":140,"y":160,"wires":[["7c370c1cabe6fd89"]]},{"id":"6145bfa8991c1831","type":"inject","z":"e9a7cd97842ffa10","name":"Arm Stay Area 1","props":[{"p":"armStayArea","v":"1","vt":"num"}],"repeat":"","crontab":"","once":false,"onceDelay":0.1,"topic":"","x":140,"y":200,"wires":[["7c370c1cabe6fd89"]]},{"id":"189b2eb17cb67a52","type":"inject","z":"e9a7cd97842ffa10","name":"Clear Alarm Area 1","props":[{"p":"clearAlarmArea","v":"1","vt":"num"}],"repeat":"","crontab":"","once":false,"onceDelay":0.1,"topic":"","x":130,"y":240,"wires":[["7c370c1cabe6fd89"]]},{"id":"40ce4b0d34bedf21","type":"comment","z":"e9a7cd97842ffa10","name":"Hikvision AX Pro Alarm Control and Event receiver","info":"","x":230,"y":100,"wires":[]},{"id":"2dfc48091d46ead3","type":"AXPro-config","host":"192.168.1.10","port":"80","name":"AX Pro","authentication":"sha256-salted","protocol":"http","heartbeattimerdisconnectionlimit":"2","deviceinfo":"[object Object]"}]
+[{"id":"7c370c1cabe6fd89","type":"hikvisionUltimateAxPro","z":"e9a7cd97842ffa10","name":"Ax Pro","topic":"","server":"2dfc48091d46ead3","x":350,"y":200,"wires":[["bc0f8fdc472511e7"],["01e634bd9098e528"]]},{"id":"893818dce1fc2c20","type":"debug","z":"e9a7cd97842ffa10","name":"Alarm Event","active":true,"tosidebar":true,"console":false,"tostatus":false,"complete":"payload.CIDEvent","targetType":"msg","statusVal":"","statusType":"auto","x":670,"y":180,"wires":[]},{"id":"01e634bd9098e528","type":"debug","z":"e9a7cd97842ffa10","name":"Connection Error","active":true,"tosidebar":true,"console":false,"tostatus":false,"complete":"true","targetType":"full","statusVal":"","statusType":"auto","x":550,"y":280,"wires":[]},{"id":"ddc2d752e0c13937","type":"inject","z":"e9a7cd97842ffa10","name":"Disarm Area 1","props":[{"p":"disarmArea","v":"1","vt":"num"}],"repeat":"","crontab":"","once":false,"onceDelay":0.1,"topic":"","x":150,"y":280,"wires":[["7c370c1cabe6fd89"]]},{"id":"b33ec376180a53bc","type":"inject","z":"e9a7cd97842ffa10","name":"Arm Away Area 1","props":[{"p":"armAwayArea","v":"1","vt":"num"}],"repeat":"","crontab":"","once":false,"onceDelay":0.1,"topic":"","x":140,"y":160,"wires":[["7c370c1cabe6fd89"]]},{"id":"6145bfa8991c1831","type":"inject","z":"e9a7cd97842ffa10","name":"Arm Stay Area 1","props":[{"p":"armStayArea","v":"1","vt":"num"}],"repeat":"","crontab":"","once":false,"onceDelay":0.1,"topic":"","x":140,"y":200,"wires":[["7c370c1cabe6fd89"]]},{"id":"189b2eb17cb67a52","type":"inject","z":"e9a7cd97842ffa10","name":"Clear Alarm Area 1","props":[{"p":"clearAlarmArea","v":"1","vt":"num"}],"repeat":"","crontab":"","once":false,"onceDelay":0.1,"topic":"","x":130,"y":240,"wires":[["7c370c1cabe6fd89"]]},{"id":"40ce4b0d34bedf21","type":"comment","z":"e9a7cd97842ffa10","name":"Hikvision AX Pro Alarm Control and Event receiver","info":"","x":230,"y":100,"wires":[]},{"id":"bc0f8fdc472511e7","type":"switch","z":"e9a7cd97842ffa10","name":"","property":"payload","propertyType":"msg","rules":[{"t":"hask","v":"CIDEvent","vt":"str"},{"t":"hask","v":"zoneUpdate","vt":"str"}],"checkall":"true","repair":false,"outputs":2,"x":510,"y":200,"wires":[["893818dce1fc2c20"],["5c9f382684e6354f"]]},{"id":"5c9f382684e6354f","type":"debug","z":"e9a7cd97842ffa10","name":"Zone Update","active":true,"tosidebar":true,"console":false,"tostatus":false,"complete":"payload.zoneUpdate","targetType":"msg","statusVal":"","statusType":"auto","x":670,"y":220,"wires":[]},{"id":"2dfc48091d46ead3","type":"AXPro-config","host":"192.168.1.10","port":"80","name":"AX Pro","authentication":"sha256-salted","protocol":"http","heartbeattimerdisconnectionlimit":"2","deviceinfo":"[object Object]"}]
 
 ```
 </details>
@@ -706,9 +710,10 @@ return msg;
 
 **Output**
 On PIN1, the node will output the Event, on PIN2 it will output connection error messages<br/>
-Example of an Event
+Example:<br/>
 
 ```json
+// FOR CID EVENTS 
 {
    "code":1401, // This is the reference code of the event. Please see the ISAPI docs or try by yourself, by watching the output while playing with your alarm
    "name":"Supergiovane",
@@ -717,6 +722,36 @@ Example of an Event
    "upload":"2022-12-22T17:33:56+01:00",
    "system":1,
    "subSystemName":"Casa"
+}
+```
+
+```json
+// FOR ZONE UPDATE EVENT
+{
+   "id":1,
+   "name":"Zona cablata 2",
+   "status":"trigger",
+   "sensorStatus":"normal",
+   "magnetOpenStatus":true,
+   "tamperEvident":false,
+   "shielded":false,
+   "bypassed":false,
+   "armed":false,
+   "isArming":false,
+   "alarm":false,
+   "reason":"break",
+   "subSystemNo":1,
+   "linkageSubSystem":[
+      1
+   ],
+   "detectorType":"magneticContact",
+   "stayAway":false,
+   "zoneType":"Instant",
+   "accessModuleType":"localTransmitter",
+   "moduleChannel":2,
+   "zoneAttrib":"wired",
+   "deviceNo":3,
+   "abnormalOrNot":false
 }
 ```
 

@@ -1,4 +1,4 @@
-
+const _ = require('lodash')
 
 module.exports = function (RED) {
 	function hikvisionUltimateAxPro(config) {
@@ -6,6 +6,7 @@ module.exports = function (RED) {
 		var node = this;
 		node.topic = config.topic || config.name;
 		node.server = RED.nodes.getNode(config.server)
+		node.zonesStatus = [] // Contains the status of all zones
 
 		node.setNodeStatus = ({ fill, shape, text }) => {
 			var dDate = new Date();
@@ -17,18 +18,32 @@ module.exports = function (RED) {
 			if (_msg === null || _msg === undefined) return;
 			_msg.topic = node.topic;
 			if (_msg.hasOwnProperty("errorDescription")) { node.send([null, _msg]); return; }; // It's a connection error/restore comunication.
-			if (!_msg.hasOwnProperty("payload") || (_msg.hasOwnProperty("payload") && _msg.payload === undefined)) return;
 			if (_msg.payload.hasOwnProperty('CIDEvent')) {
-				// Move the CID Event out of the payload
-				_msg.CIDEvent = _msg.payload.CIDEvent
-				// Delete the Payload
-				delete (_msg.payload)
+				// ALARM EVENT
+				node.send([{ payload: { CIDEvent: RED.util.cloneMessage(_msg.payload.CIDEvent) } }, null]); // Clone message to avoid adding _msgid
+			} else if (_msg.payload.hasOwnProperty('ZoneList')) {
+				// CHECK ONLY THE CHANGED ZONE STATUS
+				for (let index = 0; index < _msg.payload.ZoneList.length; index++) {
+					try {
+						const receivedZone = _msg.payload.ZoneList[index].Zone;
+						let foundInZoneStatus = node.zonesStatus.find((element) => element.id === receivedZone.id)
+						if (!_.isEqual(foundInZoneStatus, receivedZone)) {
+							if (foundInZoneStatus === undefined) {
+								node.zonesStatus.push(receivedZone) // Add updated
+							} else {
+								node.zonesStatus[node.zonesStatus.findIndex((element) => element.id === receivedZone.id)] = receivedZone
+								//node.zonesStatus.splice(foundInZoneStatus)
+								//node.zonesStatus.push(receivedZone) // Add updated
+							}
+							node.setNodeStatus({ fill: "green", shape: "dot", text: "Zone changed " + receivedZone.name });
+							node.send([{ payload: { zoneUpdate: RED.util.cloneMessage(receivedZone) } }, null]); // Clone message to avoid adding _msgid
+						}
+					} catch (error) { }
+				}
 			} else {
-				node.setNodeStatus({ fill: "green", shape: "ring", text: "Waiting for alarm" });
-				return // Discard Heartbeat
+				node.setNodeStatus({ fill: "green", shape: "ring", text: "Waiting for zone change" });
 			}
-			node.setNodeStatus({ fill: "green", shape: "dot", text: "Alert received" });
-			node.send([_msg, null]);
+
 		}
 
 		// On each deploy, unsubscribe+resubscribe
@@ -55,7 +70,7 @@ module.exports = function (RED) {
 			if (msg.hasOwnProperty("clearAlarmArea")) {
 				node.server.clearAlarmArea(msg.clearAlarmArea)
 			}
-			
+
 
 		});
 

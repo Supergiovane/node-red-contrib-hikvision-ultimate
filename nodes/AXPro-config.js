@@ -20,6 +20,7 @@ module.exports = (RED) => {
         node.nodeClients = []; // Stores the registered clients
         node.isConnected = true; // Assumes, that is already connected.
         node.timerCheckHeartBeat = null;
+        node.timerReadZonesStatus = null;
         node.errorDescription = ""; // Contains the error description in case of connection error.
         node.authentication = config.authentication || "sha256-salted";
         node.deviceinfo = config.deviceinfo || {};
@@ -40,7 +41,6 @@ module.exports = (RED) => {
         const customHttpsAgent = new https.Agent({
             rejectUnauthorized: false
         });
-
 
 
         // This function starts the heartbeat timer, to detect the disconnection from the server
@@ -95,31 +95,29 @@ module.exports = (RED) => {
             return result
         }
 
+        controller = new AbortController(); // For aborting the stream request
+        node.optionsAlarmStream = {
+            // These properties are part of the Fetch Standard
+            method: 'GET',
+            headers: {},        // request headers. format is the identical to that accepted by the Headers constructor (see below)
+            body: null,         // request body. can be null, a string, a Buffer, a Blob, or a Node.js Readable stream
+            redirect: 'follow', // set to `manual` to extract redirect headers, `error` to reject redirect
+            signal: controller.signal,       // pass an instance of AbortSignal to optionally abort requests
+
+            // The following properties are node-fetch extensions
+            follow: 20,         // maximum redirect count. 0 to not follow redirect
+            timeout: 0,         // req/res timeout in ms, it resets on redirect. 0 to disable (OS limit applies). Signal is recommended instead.
+            compress: false,     // support gzip/deflate content encoding. false to disable
+            size: 0,            // maximum response body size in bytes. 0 to disable
+            agent: node.protocol === "https" ? customHttpsAgent : null
+        };
 
         //#region ALARMSTREAM
         async function startAlarmStream() {
 
             node.resetHeartBeatTimer(); // First thing, start the heartbeat timer.
             node.setAllClientsStatus({ fill: "grey", shape: "ring", text: "Connecting..." });
-
             if (node.authentication === "sha256-salted") node.clientAlarmStream = new DigestFetch("", "", { basic: true }); // Instantiate the fetch client.
-            controller = new AbortController(); // For aborting the stream request
-            node.optionsAlarmStream = {
-                // These properties are part of the Fetch Standard
-                method: 'GET',
-                headers: {},        // request headers. format is the identical to that accepted by the Headers constructor (see below)
-                body: null,         // request body. can be null, a string, a Buffer, a Blob, or a Node.js Readable stream
-                redirect: 'follow', // set to `manual` to extract redirect headers, `error` to reject redirect
-                signal: controller.signal,       // pass an instance of AbortSignal to optionally abort requests
-
-                // The following properties are node-fetch extensions
-                follow: 20,         // maximum redirect count. 0 to not follow redirect
-                timeout: 0,         // req/res timeout in ms, it resets on redirect. 0 to disable (OS limit applies). Signal is recommended instead.
-                compress: false,     // support gzip/deflate content encoding. false to disable
-                size: 0,            // maximum response body size in bytes. 0 to disable
-                agent: node.protocol === "https" ? customHttpsAgent : null
-
-            };
 
             // 22/12/2022 Start auth process
             // ##################################
@@ -153,12 +151,11 @@ module.exports = (RED) => {
                                 resolve(json);
                         });
                     });
-                } catch (error) {
-
-                }
+                } catch (error) { }
             }
 
             try {
+                node.optionsAlarmStream.method = 'GET'
                 const responseAuth = await node.clientAlarmStream.fetch(node.protocol + "://" + node.host + "/ISAPI/Security/sessionLogin/capabilities?username=" + node.credentials.user, node.optionsAlarmStream)
                 if (responseAuth.status >= 200 && responseAuth.status <= 300) {
                     node.setAllClientsStatus({ fill: "green", shape: "ring", text: "Communication established" });
@@ -173,12 +170,8 @@ module.exports = (RED) => {
                 const result = await xml2jsSync(XMLBody)
                 const jSon = JSON.parse(JSON.stringify(result))
                 if (node.debug) RED.log.error("BANANA SBANANATO XMLBoduAuth -> JSON " + JSON.stringify(result));
-                if (result !== null && result !== undefined && result.hasOwnProperty("EventNotificationAlert")) {
-                    node.nodeClients.forEach(oClient => {
-                        if (result !== undefined) oClient.sendPayload({ topic: oClient.topic || "", payload: result.EventNotificationAlert });
-                    });
-                }
-                // jSon now contains the body in JSON Format. The simple thing is done. 
+
+                // jSon now contains the body in JSON Format. The simple thing is done.
                 // Now i need to authenticate
                 let bodyAuth = {
                     sessionId: jSon.SessionLoginCap.sessionID,
@@ -391,11 +384,59 @@ module.exports = (RED) => {
                 node.errorDescription = "Fetch error " + (error.message || " unknown error");
                 if (node.debug) RED.log.error("AXPro-config: FETCH ERROR: " + (error.message || " unknown error"));
             };
-
+            // Starts zone polling
+            clearTimeout(node.timerReadZonesStatus)
+            node.timerReadZonesStatus = setTimeout(startZonesStatusReading, 2000)
         };
-        setTimeout(startAlarmStream, 10000); // First connection.
+        // Start login and alamrstream
+        setTimeout(startAlarmStream, 5000)
+        
         //#endregion
 
+        // Read zones status and outputs only changed ones
+        // Wrapping the async xml2js to a sync function, for peace of mind
+        async function startZonesStatusReading() {
+            try {
+
+                let optionsZonesStatusReading = {
+                    // These properties are part of the Fetch Standard
+                    method: 'GET',
+                    headers: { Cookie: node.authCookie },        // request headers. format is the identical to that accepted by the Headers constructor (see below)
+                    body: null,         // request body. can be null, a string, a Buffer, a Blob, or a Node.js Readable stream
+                    redirect: 'follow', // set to `manual` to extract redirect headers, `error` to reject redirect
+                    //signal: controller.signal,       // pass an instance of AbortSignal to optionally abort requests
+
+                    // The following properties are node-fetch extensions
+                    follow: 20,         // maximum redirect count. 0 to not follow redirect
+                    timeout: 0,         // req/res timeout in ms, it resets on redirect. 0 to disable (OS limit applies). Signal is recommended instead.
+                    compress: false,     // support gzip/deflate content encoding. false to disable
+                    size: 0,            // maximum response body size in bytes. 0 to disable
+                    agent: node.protocol === "https" ? customHttpsAgent : null
+                };
+                try {
+                    delete (optionsZonesStatusReading.body)
+                    const responseZonesStatus = await node.clientAlarmStream.fetch(node.protocol + "://" + node.host + "/ISAPI/SecurityCP/status/zones?format=json", optionsZonesStatusReading)
+                    if (responseZonesStatus.status >= 200 && responseZonesStatus.status <= 300) {
+                        // Output only the changed zone
+                        // Get the XML Body of the salt and challenge
+                        const result = await responseZonesStatus.text()
+                        const jSon = JSON.parse(result)
+                        if (node.debug) RED.log.error("BANANA SBANANATO XMLBoduAuth -> JSON " + JSON.stringify(result));
+                        node.nodeClients.forEach(oClient => {
+                            oClient.sendPayload({ topic: oClient.topic || "", payload: { ZoneList: jSon.ZoneList } });
+                        })
+                    } else {
+                        node.setAllClientsStatus({ fill: "red", shape: "ring", text: responseZonesStatus.statusText || " unknown response code" });
+                        //  if (node.debug)  RED.log.error("BANANA Error response " + response.statusText);
+                        node.errorDescription = "StatusResponse problem " + (responseZonesStatus.statusText || " unknown status response code");
+                    }
+
+                } catch (error) {
+                    node.setAllClientsStatus({ fill: "red", shape: "ring", text: "Unable to fetch zone state " + error.message });
+                }
+                node.timerReadZonesStatus = setTimeout(startZonesStatusReading, 2000)
+            } catch (error) { }
+        }
 
 
         //#region "FUNCTIONS"
@@ -425,12 +466,6 @@ module.exports = (RED) => {
             try {
                 node.nodeClients = node.nodeClients.filter(x => x.id !== _Node.id)
             } catch (error) { }
-            //if (node.debug) RED.log.info("AFTER Node " + _Node.id + " has been unsubscribed from receiving KNX messages. " + node.nodeClients.length);
-
-            // If no clien nodes, disconnect from bus.
-            if (node.nodeClients.length === 0) {
-
-            }
         };
         //#endregion
 
@@ -488,7 +523,12 @@ module.exports = (RED) => {
             }
         }
 
+
+
     }
+
+
+
 
 
     RED.nodes.registerType("AXPro-config", Hikvisionconfig, {
@@ -497,4 +537,10 @@ module.exports = (RED) => {
             password: { type: "password" }
         }
     });
+
+
 }
+
+
+
+

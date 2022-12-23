@@ -1,6 +1,6 @@
 {
     "name": "node-red-contrib-hikvision-ultimate",
-    "version": "1.0.66",
+    "version": "1.0.67",
     "description": "A native set of nodes for Hikvision (and compatible) Cameras, Alarms, Radars, NVR, Doorbells, etc.",
     "author": "Supergiovane (https://github.com/Supergiovane)",
     "dependencies": {
@@ -8,7 +8,8 @@
         "node-fetch": "2.6.7", 
         "digest-fetch": "1.2.1",
         "abort-controller": "3.0.0",
-        "jimp": "0.16.1"
+        "jimp": "0.16.1",
+        "lodash": "4.17.21"
     },
     "keywords": [
         "node-red",
