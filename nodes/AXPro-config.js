@@ -140,18 +140,29 @@ module.exports = (RED) => {
             //  234DFSDFS453453453453453453DFGDFGDFG64DGDFGDFGD456456
             // </salt2>
             // </SessionLoginCap>
-            const responseAuth = await node.clientAlarmStream.fetch(node.protocol + "://" + node.host + "/ISAPI/Security/sessionLogin/capabilities?username=" + node.credentials.user, node.optionsAlarmStream)
-
-            if (responseAuth.status >= 200 && responseAuth.status <= 300) {
-                node.setAllClientsStatus({ fill: "green", shape: "ring", text: "Communication established" });
-            } else {
-                node.setAllClientsStatus({ fill: "red", shape: "ring", text: responseAuth.statusText || " unknown response code" });
-                //  if (node.debug)  RED.log.error("BANANA Error response " + response.statusText);
-                node.errorDescription = "StatusResponse problem " + (responseAuth.statusText || " unknown status response code");
-                throw new Error("StatusResponse " + (responseAuth.statusText || " unknown response code"));
+            try {
+                const responseAuth = await node.clientAlarmStream.fetch(node.protocol + "://" + node.host + "/ISAPI/Security/sessionLogin/capabilities?username=" + node.credentials.user, node.optionsAlarmStream)
+                if (responseAuth.status >= 200 && responseAuth.status <= 300) {
+                    node.setAllClientsStatus({ fill: "green", shape: "ring", text: "Communication established" });
+                } else {
+                    node.setAllClientsStatus({ fill: "red", shape: "ring", text: responseAuth.statusText || " unknown response code" });
+                    //  if (node.debug)  RED.log.error("BANANA Error response " + response.statusText);
+                    node.errorDescription = "StatusResponse problem " + (responseAuth.statusText || " unknown status response code");
+                }
+            } catch (error) {
+                node.setAllClientsStatus({ fill: "red", shape: "ring", text: + error.message });
+                node.errorDescription = "const responseAuth = await problem " + + error.message;
             }
+
             // Get the XML Body of the salt and challenge
-            const XMLBody = await responseAuth.text()
+            try {
+                const XMLBody = await responseAuth.text()
+            } catch (error) {
+                node.setAllClientsStatus({ fill: "red", shape: "ring", text: error.message });
+                //  if (node.debug)  RED.log.error("BANANA Error response " + response.statusText);
+                node.errorDescription = "const XMLBody = await " + error.message;
+            }
+
 
             // Wrapping the async xml2js to a sync function, for peace of mind
             async function xml2jsSync(xml) {
@@ -162,7 +173,6 @@ module.exports = (RED) => {
                         else
                             resolve(json);
                     });
-
                 });
             }
 
@@ -226,15 +236,12 @@ module.exports = (RED) => {
                 node.authCookie = responseSessionLogin.headers.get('set-cookie').split(';')[0]
 
             } catch (error) {
-                node.setAllClientsStatus({ fill: "red", shape: "ring", text: err.message });
-                node.errorDescription = "XML Body Auth problem " + err.message;
-                throw new Error("StatusResponse XML Body Auth" + err.message);
+                node.setAllClientsStatus({ fill: "red", shape: "ring", text: error.message });
+                node.errorDescription = "XML Body Auth problem " + error.message;
             }
 
 
             try {
-
-
                 //#region "HANDLE STREAM MESSAGE"
                 // Handle the complete stream message, enclosed into the --boundary stream string
                 // If there is more boundary, process each one separately
@@ -311,7 +318,6 @@ module.exports = (RED) => {
                         if (node.debug) RED.log.info("AXPro-config: readStream error: " + (error.message || " unknown error"));
                         node.errorDescription = "readStream error " + (error.message || " unknown error");
                         throw (error);
-
                     }
                 }
                 // ###################################
@@ -322,9 +328,8 @@ module.exports = (RED) => {
                 delete (node.optionsAlarmStream.Authorization)
                 delete (node.optionsAlarmStream.body)
                 node.optionsAlarmStream.headers = { Cookie: node.authCookie }
+
                 const responseFromAxProAlarmStream = await node.clientAlarmStream.fetch(node.protocol + "://" + node.host + "/ISAPI/Event/notification/alertStream", node.optionsAlarmStream);
-
-
                 if (responseFromAxProAlarmStream.status >= 200 && responseFromAxProAlarmStream.status <= 300) {
                     node.setAllClientsStatus({ fill: "green", shape: "ring", text: "Waiting for event." });
                 } else {
@@ -447,7 +452,8 @@ module.exports = (RED) => {
                 delete (node.optionsAlarmStream.body)
                 node.clientAlarmStream.fetch(node.protocol + "://" + node.host + sURL, node.optionsAlarmStream);
             } catch (error) {
-                console.log(error)
+                node.errorDescription = "control/disarm " + (error.message || " unknown error");
+                if (node.debug) RED.log.error("AXPro-config: control/disarm: " + (error.message || " unknown error"));
             }
         }
         // Arm Away Area
@@ -459,7 +465,8 @@ module.exports = (RED) => {
                 delete (node.optionsAlarmStream.body)
                 node.clientAlarmStream.fetch(node.protocol + "://" + node.host + sURL, node.optionsAlarmStream);
             } catch (error) {
-                console.log(error)
+                node.errorDescription = "control/arm " + (error.message || " unknown error");
+                if (node.debug) RED.log.error("AXPro-config: control/arm: " + (error.message || " unknown error"));
             }
         }
         // Arm Stay Area
@@ -471,7 +478,8 @@ module.exports = (RED) => {
                 delete (node.optionsAlarmStream.body)
                 node.clientAlarmStream.fetch(node.protocol + "://" + node.host + sURL, node.optionsAlarmStream);
             } catch (error) {
-                console.log(error)
+                node.errorDescription = "control/armStay" + (error.message || " unknown error");
+                if (node.debug) RED.log.error("AXPro-config: control/armStay: " + (error.message || " unknown error"));
             }
         }
         // Clear Alarm Area
@@ -483,7 +491,8 @@ module.exports = (RED) => {
                 delete (node.optionsAlarmStream.body)
                 node.clientAlarmStream.fetch(node.protocol + "://" + node.host + sURL, node.optionsAlarmStream);
             } catch (error) {
-                console.log(error)
+                node.errorDescription = "control/clearAlarm" + (error.message || " unknown error");
+                if (node.debug) RED.log.error("AXPro-config: control/clearAlarm: " + (error.message || " unknown error"));
             }
         }
 
