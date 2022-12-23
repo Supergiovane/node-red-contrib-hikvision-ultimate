@@ -140,6 +140,24 @@ module.exports = (RED) => {
             //  234DFSDFS453453453453453453DFGDFGDFG64DGDFGDFGD456456
             // </salt2>
             // </SessionLoginCap>
+
+
+            // Wrapping the async xml2js to a sync function, for peace of mind
+            async function xml2jsSync(xml) {
+                try {
+                    return new Promise((resolve, reject) => {
+                        xml2js(xml, function (err, json) {
+                            if (err)
+                                reject(err);
+                            else
+                                resolve(json);
+                        });
+                    });
+                } catch (error) {
+
+                }
+            }
+
             try {
                 const responseAuth = await node.clientAlarmStream.fetch(node.protocol + "://" + node.host + "/ISAPI/Security/sessionLogin/capabilities?username=" + node.credentials.user, node.optionsAlarmStream)
                 if (responseAuth.status >= 200 && responseAuth.status <= 300) {
@@ -149,34 +167,8 @@ module.exports = (RED) => {
                     //  if (node.debug)  RED.log.error("BANANA Error response " + response.statusText);
                     node.errorDescription = "StatusResponse problem " + (responseAuth.statusText || " unknown status response code");
                 }
-            } catch (error) {
-                node.setAllClientsStatus({ fill: "red", shape: "ring", text: + error.message });
-                node.errorDescription = "const responseAuth = await problem " + + error.message;
-            }
-
-            // Get the XML Body of the salt and challenge
-            try {
+                // Get the XML Body of the salt and challenge
                 const XMLBody = await responseAuth.text()
-            } catch (error) {
-                node.setAllClientsStatus({ fill: "red", shape: "ring", text: error.message });
-                //  if (node.debug)  RED.log.error("BANANA Error response " + response.statusText);
-                node.errorDescription = "const XMLBody = await " + error.message;
-            }
-
-
-            // Wrapping the async xml2js to a sync function, for peace of mind
-            async function xml2jsSync(xml) {
-                return new Promise((resolve, reject) => {
-                    xml2js(xml, function (err, json) {
-                        if (err)
-                            reject(err);
-                        else
-                            resolve(json);
-                    });
-                });
-            }
-
-            try {
                 // Transform it into Json
                 const result = await xml2jsSync(XMLBody)
                 const jSon = JSON.parse(JSON.stringify(result))
@@ -237,7 +229,7 @@ module.exports = (RED) => {
 
             } catch (error) {
                 node.setAllClientsStatus({ fill: "red", shape: "ring", text: error.message });
-                node.errorDescription = "XML Body Auth problem " + error.message;
+                node.errorDescription = "Authentication problem " + error.message;
             }
 
 
