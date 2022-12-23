@@ -288,9 +288,11 @@ module.exports = (RED) => {
 
         //#region "FUNCTIONS"
         node.on('close', function (removed, done) {
-            try {
-                if (controller !== null) controller.abort().then(ok => { }).catch(err => { });
-            } catch (error) { }
+            if (controller !== null) {
+                try {
+                    controller.abort();
+                } catch (error) { }
+            }
             if (node.timerCheckRing !== null) clearTimeout(node.timerCheckRing);
             done();
         });

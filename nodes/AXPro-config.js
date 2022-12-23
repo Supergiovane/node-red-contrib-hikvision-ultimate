@@ -52,9 +52,11 @@ module.exports = (RED) => {
                 if (node.heartBeatTimerDisconnectionCounter < node.heartbeattimerdisconnectionlimit) {
                     // 28/12/2020 Retry again until connection attempt limit reached
                     node.setAllClientsStatus({ fill: "yellow", shape: "ring", text: "Temporary lost connection. Attempt " + node.heartBeatTimerDisconnectionCounter + " of " + node.heartbeattimerdisconnectionlimit });
-                    try {
-                        if (controller !== null) controller.abort().then(ok => { }).catch(err => { });
-                    } catch (error) { }
+                    if (controller !== null) {
+                        try {
+                            controller.abort();
+                        } catch (error) { }
+                    }
                     setTimeout(startAlarmStream, 10000); // Reconnect
                 } else {
                     // 28/12/2020 Connection attempt limit reached
@@ -66,9 +68,11 @@ module.exports = (RED) => {
                         });
                         node.setAllClientsStatus({ fill: "red", shape: "ring", text: "Lost connection...Retry... " + node.errorDescription });
                     }
-                    try {
-                        if (controller !== null) controller.abort().then(ok => { }).catch(err => { });
-                    } catch (error) { }
+                    if (controller !== null) {
+                        try {
+                            controller.abort();
+                        } catch (error) { }
+                    }
                     node.isConnected = false;
                     setTimeout(startAlarmStream, 5000); // Reconnect
                 }
@@ -95,22 +99,8 @@ module.exports = (RED) => {
             return result
         }
 
-        controller = new AbortController(); // For aborting the stream request
-        node.optionsAlarmStream = {
-            // These properties are part of the Fetch Standard
-            method: 'GET',
-            headers: {},        // request headers. format is the identical to that accepted by the Headers constructor (see below)
-            body: null,         // request body. can be null, a string, a Buffer, a Blob, or a Node.js Readable stream
-            redirect: 'follow', // set to `manual` to extract redirect headers, `error` to reject redirect
-            signal: controller.signal,       // pass an instance of AbortSignal to optionally abort requests
+       
 
-            // The following properties are node-fetch extensions
-            follow: 20,         // maximum redirect count. 0 to not follow redirect
-            timeout: 0,         // req/res timeout in ms, it resets on redirect. 0 to disable (OS limit applies). Signal is recommended instead.
-            compress: false,     // support gzip/deflate content encoding. false to disable
-            size: 0,            // maximum response body size in bytes. 0 to disable
-            agent: node.protocol === "https" ? customHttpsAgent : null
-        };
 
         //#region ALARMSTREAM
         async function startAlarmStream() {
@@ -154,8 +144,27 @@ module.exports = (RED) => {
                 } catch (error) { }
             }
 
+            controller = new AbortController(); // For aborting the stream request
+            node.optionsAlarmStream = {
+                // These properties are part of the Fetch Standard
+                method: 'GET',
+                headers: {},        // request headers. format is the identical to that accepted by the Headers constructor (see below)
+                body: null,         // request body. can be null, a string, a Buffer, a Blob, or a Node.js Readable stream
+                redirect: 'follow', // set to `manual` to extract redirect headers, `error` to reject redirect
+                signal: controller.signal,       // pass an instance of AbortSignal to optionally abort requests
+
+                // The following properties are node-fetch extensions
+                follow: 20,         // maximum redirect count. 0 to not follow redirect
+                timeout: 0,         // req/res timeout in ms, it resets on redirect. 0 to disable (OS limit applies). Signal is recommended instead.
+                compress: false,     // support gzip/deflate content encoding. false to disable
+                size: 0,            // maximum response body size in bytes. 0 to disable
+                agent: node.protocol === "https" ? customHttpsAgent : null
+            };
+
+
             try {
-                node.optionsAlarmStream.method = 'GET'
+              
+                
                 const responseAuth = await node.clientAlarmStream.fetch(node.protocol + "://" + node.host + "/ISAPI/Security/sessionLogin/capabilities?username=" + node.credentials.user, node.optionsAlarmStream)
                 if (responseAuth.status >= 200 && responseAuth.status <= 300) {
                     node.setAllClientsStatus({ fill: "green", shape: "ring", text: "Communication established" });
@@ -390,7 +399,7 @@ module.exports = (RED) => {
         };
         // Start login and alamrstream
         setTimeout(startAlarmStream, 5000)
-        
+
         //#endregion
 
         // Read zones status and outputs only changed ones
@@ -441,9 +450,11 @@ module.exports = (RED) => {
 
         //#region "FUNCTIONS"
         node.on('close', function (removed, done) {
-            try {
-                if (controller !== null) controller.abort().then(ok => { }).catch(err => { });
-            } catch (error) { }
+            if (controller !== null) {
+                try {
+                    controller.abort();
+                } catch (error) { }
+            }
             if (node.timerCheckHeartBeat !== null) clearTimeout(node.timerCheckHeartBeat);
             done();
         });
@@ -471,52 +482,52 @@ module.exports = (RED) => {
 
 
         // Disarm Area
-        node.disarmArea = function (_area) {
+        node.disarmArea = async function (_area) {
             try {
                 _area = Number(_area)
                 let sURL = '/ISAPI/SecurityCP/control/disarm/' + _area + '?format=json'
                 node.optionsAlarmStream.method = 'PUT'
                 delete (node.optionsAlarmStream.body)
-                node.clientAlarmStream.fetch(node.protocol + "://" + node.host + sURL, node.optionsAlarmStream);
+                await node.clientAlarmStream.fetch(node.protocol + "://" + node.host + sURL, node.optionsAlarmStream);
             } catch (error) {
                 node.errorDescription = "control/disarm " + (error.message || " unknown error");
                 if (node.debug) RED.log.error("AXPro-config: control/disarm: " + (error.message || " unknown error"));
             }
         }
         // Arm Away Area
-        node.armAwayArea = function (_area) {
+        node.armAwayArea = async function (_area) {
             try {
                 _area = Number(_area)
                 let sURL = '/ISAPI/SecurityCP/control/arm/' + _area + '?ways=away&format=json'
                 node.optionsAlarmStream.method = 'PUT'
                 delete (node.optionsAlarmStream.body)
-                node.clientAlarmStream.fetch(node.protocol + "://" + node.host + sURL, node.optionsAlarmStream);
+                await node.clientAlarmStream.fetch(node.protocol + "://" + node.host + sURL, node.optionsAlarmStream);
             } catch (error) {
                 node.errorDescription = "control/arm " + (error.message || " unknown error");
                 if (node.debug) RED.log.error("AXPro-config: control/arm: " + (error.message || " unknown error"));
             }
         }
         // Arm Stay Area
-        node.armStayArea = function (_area) {
+        node.armStayArea = async function (_area) {
             try {
                 _area = Number(_area)
                 let sURL = '/ISAPI/SecurityCP/control/arm/' + _area + '?ways=stay&format=json'
                 node.optionsAlarmStream.method = 'PUT'
                 delete (node.optionsAlarmStream.body)
-                node.clientAlarmStream.fetch(node.protocol + "://" + node.host + sURL, node.optionsAlarmStream);
+                await node.clientAlarmStream.fetch(node.protocol + "://" + node.host + sURL, node.optionsAlarmStream);
             } catch (error) {
                 node.errorDescription = "control/armStay" + (error.message || " unknown error");
                 if (node.debug) RED.log.error("AXPro-config: control/armStay: " + (error.message || " unknown error"));
             }
         }
         // Clear Alarm Area
-        node.clearAlarmArea = function (_area) {
+        node.clearAlarmArea = async function (_area) {
             try {
                 _area = Number(_area)
-                let sURL = '/ISAPI/SecurityCP/control/clearAlarm/' + _area + '?ways=stay&format=json'
+                let sURL = '/ISAPI/SecurityCP/control/clearAlarm/' + _area + '?format=json'
                 node.optionsAlarmStream.method = 'PUT'
                 delete (node.optionsAlarmStream.body)
-                node.clientAlarmStream.fetch(node.protocol + "://" + node.host + sURL, node.optionsAlarmStream);
+                await node.clientAlarmStream.fetch(node.protocol + "://" + node.host + sURL, node.optionsAlarmStream);
             } catch (error) {
                 node.errorDescription = "control/clearAlarm" + (error.message || " unknown error");
                 if (node.debug) RED.log.error("AXPro-config: control/clearAlarm: " + (error.message || " unknown error"));

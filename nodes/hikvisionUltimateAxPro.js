@@ -53,23 +53,25 @@ module.exports = function (RED) {
 		}
 
 		this.on('input', function (msg) {
+			try {
+				// Disarm Area
+				if (msg.hasOwnProperty("disarmArea")) {
+					node.server.disarmArea(msg.disarmArea)
+				}
+				// Arm Away Area
+				if (msg.hasOwnProperty("armAwayArea")) {
+					node.server.armAwayArea(msg.armAwayArea)
+				}
+				// Arm Stay Area
+				if (msg.hasOwnProperty("armStayArea")) {
+					node.server.armStayArea(msg.armStayArea)
+				}
+				// Clear Alarm Area
+				if (msg.hasOwnProperty("clearAlarmArea")) {
+					node.server.clearAlarmArea(msg.clearAlarmArea)
+				}
 
-			// Disarm Area
-			if (msg.hasOwnProperty("disarmArea")) {
-				node.server.disarmArea(msg.disarmArea)
-			}
-			// Arm Away Area
-			if (msg.hasOwnProperty("armAwayArea")) {
-				node.server.armAwayArea(msg.armAwayArea)
-			}
-			// Arm Stay Area
-			if (msg.hasOwnProperty("armStayArea")) {
-				node.server.armStayArea(msg.armStayArea)
-			}
-			// Clear Alarm Area
-			if (msg.hasOwnProperty("clearAlarmArea")) {
-				node.server.clearAlarmArea(msg.clearAlarmArea)
-			}
+			} catch (error) {}
 
 
 		});

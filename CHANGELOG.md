@@ -4,6 +4,11 @@
 [![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square)](https://www.paypal.me/techtoday) 
 
 <p>
+<b>Version 1.0.69</b> December 2022<br/>
+- Some bugfixes.<br/>
+</p>
+<p>
+<p>
 <b>Version 1.0.67</b> December 2022<br/>
 - NEW: AX Pro node now outputs alarm events and also zone status (even if the alarm is disarmed).<br/>
 - Updated Ajax Pro Wiki.<br/>

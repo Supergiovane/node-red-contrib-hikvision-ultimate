@@ -103,9 +103,11 @@ module.exports = (RED) => {
                 if (node.heartBeatTimerDisconnectionCounter < node.heartbeattimerdisconnectionlimit) {
                     // 28/12/2020 Retry again until connection attempt limit reached
                     node.setAllClientsStatus({ fill: "yellow", shape: "ring", text: "Temporary lost connection. Attempt " + node.heartBeatTimerDisconnectionCounter + " of " + node.heartbeattimerdisconnectionlimit });
-                    try {
-                        if (controller !== null) controller.abort().then(ok => { }).catch(err => { });
-                    } catch (error) { }
+                    if (controller !== null) {
+                        try {
+                            controller.abort();
+                        } catch (error) { }
+                    }
                     setTimeout(startAlarmStream, 10000); // Reconnect
                 } else {
                     // 28/12/2020 Connection attempt limit reached
@@ -117,9 +119,11 @@ module.exports = (RED) => {
                         });
                         node.setAllClientsStatus({ fill: "red", shape: "ring", text: "Lost connection...Retry... " + node.errorDescription });
                     }
-                    try {
-                        if (controller !== null) controller.abort().then(ok => { }).catch(err => { });
-                    } catch (error) { }
+                    if (controller !== null) {
+                        try {
+                            controller.abort();
+                        } catch (error) { }
+                    }
                     node.isConnected = false;
                     setTimeout(startAlarmStream, 5000); // Reconnect
                 }
@@ -418,9 +422,11 @@ module.exports = (RED) => {
 
         //#region "FUNCTIONS"
         node.on('close', function (removed, done) {
-            try {
-                if (controller !== null) controller.abort().then(ok => { }).catch(err => { });
-            } catch (error) { }
+            if (controller !== null) {
+                try {
+                    controller.abort();
+                } catch (error) { }
+            }
             if (node.timerCheckHeartBeat !== null) clearTimeout(node.timerCheckHeartBeat);
             done();
         });
