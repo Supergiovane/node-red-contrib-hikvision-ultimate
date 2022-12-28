@@ -709,8 +709,9 @@ return msg;
 ```
 
 **Output**
-On PIN1, the node will output the Event, on PIN2 it will output connection error messages<br/>
-Example:<br/>
+On PIN1, the node will output the msg</br>
+On PIN2 it will output connection error messages<br/>
+Example PIN 1:<br/>
 
 ```json
 // FOR CID EVENTS 
@@ -754,6 +755,14 @@ Example:<br/>
    "abnormalOrNot":false
 }
 ```
+
+##CID Events common codes
+CID Events refers to a field "code" in the Alarm event output</br>
+<img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/CIDEvents/1.png' width="80%">
+<img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/CIDEvents/2.png' width="80%">
+<img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/CIDEvents/3.png' width="80%">
+<img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/CIDEvents/4.png' width="80%">
+<img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/CIDEvents/51.png' width="80%">
 
 <br/>
 <br/>

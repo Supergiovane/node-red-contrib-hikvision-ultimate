@@ -430,7 +430,6 @@ module.exports = (RED) => {
                         // Get the XML Body of the salt and challenge
                         const result = await responseZonesStatus.text()
                         const jSon = JSON.parse(result)
-                        if (node.debug) RED.log.error("BANANA SBANANATO XMLBoduAuth -> JSON " + JSON.stringify(result));
                         node.nodeClients.forEach(oClient => {
                             oClient.sendPayload({ topic: oClient.topic || "", payload: { ZoneList: jSon.ZoneList } });
                         })
