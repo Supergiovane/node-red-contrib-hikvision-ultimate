@@ -41,7 +41,7 @@ I'm looking for collaborators to develop these nodes. I'm alone. I have other no
 
 ## CAMERA EVENT NODE
 
-<img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/hikcamera.png' width="80%">
+<img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/hikcamera.jpg' width="80%">
 
 The Camera Event node connects to ***NVR, Camera, Radars, etc..*** and outputs true/false in case of an alarm. <br/>
 The node can be configured as **Camera/NVR** (with standard and smart events) or as **Old Security System** and **Radar** (with specific CID events, designed for these type of security devices)<br/>
