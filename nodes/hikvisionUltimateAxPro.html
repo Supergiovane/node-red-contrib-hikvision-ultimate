@@ -6,7 +6,7 @@
 			name: { value: "" },
 			topic: { value: "" },
 			server: { type: "AXPro-config", required: true },
-			topic: { outputtype: 0 },
+			outputtype: { value: 0 },
 		},
 		inputs: 1,
 		outputs: 2,
@@ -82,12 +82,80 @@
 
 </script>
 
-<script type="text/x-red" data-help-name="hikvisionUltimateAxPro">
-	<p>
-        <a href="https://www.paypal.me/techtoday" target="_blank"><img src='https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square' width='30%'></a>
-   </p>
-	<p>
-		The node outputs a JSON with payload containing the data on PIN 1 and a connection ERROR on PIN 2 (true if the node is DISCONNECTED to the server, otherwise false IF IT'S RECONNECTED).
-	</p>
-	
+<script type="text/markdown" data-help-name="hikvisionUltimateAxPro">
+
+
+## AX PRO Alarm node (Ax Pro and AX Pro Hybrid)
+
+<img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/axproPicture.jpg' width="100%">
+
+
+This node receives all events sent by your AX Pro alarm.<br/>
+You will receive not only Alarms etc, but also zone status, even if the AX Pro is disarmed.<br/>
+You can also arm, disarm, silence alarm etc...<br/>
+
+<img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/axpro.png' width="100%">
+
+**Copy this code and paste it into your flow**
+
+<details><summary>View code</summary>
+
+> Adjust the nodes according to your setup
+
+```javascript
+
+[{"id":"7c370c1cabe6fd89","type":"hikvisionUltimateAxPro","z":"e9a7cd97842ffa10","name":"Ax Pro","topic":"","server":"2dfc48091d46ead3","outputtype":"0","x":350,"y":200,"wires":[["893818dce1fc2c20"],["01e634bd9098e528"]]},{"id":"893818dce1fc2c20","type":"debug","z":"e9a7cd97842ffa10","name":"Event","active":true,"tosidebar":true,"console":false,"tostatus":false,"complete":"payload","targetType":"msg","statusVal":"","statusType":"auto","x":530,"y":180,"wires":[]},{"id":"01e634bd9098e528","type":"debug","z":"e9a7cd97842ffa10","name":"Connection Error","active":true,"tosidebar":true,"console":false,"tostatus":false,"complete":"true","targetType":"full","statusVal":"","statusType":"auto","x":570,"y":260,"wires":[]},{"id":"ddc2d752e0c13937","type":"inject","z":"e9a7cd97842ffa10","name":"Disarm Area 1","props":[{"p":"disarmArea","v":"1","vt":"num"}],"repeat":"","crontab":"","once":false,"onceDelay":0.1,"topic":"","x":150,"y":280,"wires":[["7c370c1cabe6fd89"]]},{"id":"b33ec376180a53bc","type":"inject","z":"e9a7cd97842ffa10","name":"Arm Away Area 1","props":[{"p":"armAwayArea","v":"1","vt":"num"}],"repeat":"","crontab":"","once":false,"onceDelay":0.1,"topic":"","x":140,"y":160,"wires":[["7c370c1cabe6fd89"]]},{"id":"6145bfa8991c1831","type":"inject","z":"e9a7cd97842ffa10","name":"Arm Stay Area 1","props":[{"p":"armStayArea","v":"1","vt":"num"}],"repeat":"","crontab":"","once":false,"onceDelay":0.1,"topic":"","x":140,"y":200,"wires":[["7c370c1cabe6fd89"]]},{"id":"189b2eb17cb67a52","type":"inject","z":"e9a7cd97842ffa10","name":"Clear Alarm Area 1","props":[{"p":"clearAlarmArea","v":"1","vt":"num"}],"repeat":"","crontab":"","once":false,"onceDelay":0.1,"topic":"","x":130,"y":240,"wires":[["7c370c1cabe6fd89"]]},{"id":"40ce4b0d34bedf21","type":"comment","z":"e9a7cd97842ffa10","name":"Hikvision AX Pro Alarm Control and Event receiver","info":"","x":230,"y":120,"wires":[]},{"id":"2dfc48091d46ead3","type":"AXPro-config","host":"192.168.1.10","port":"80","name":"AX Pro","authentication":"sha256-salted","protocol":"http","heartbeattimerdisconnectionlimit":"2","deviceinfo":"[object Object]"}]
+
+```
+</details>
+
+<br/>
+
+You can control your AX Pro alarm panel by passing messages to the node.
+
+**Input**
+
+|Property|Parameter|
+|--|--|
+| msg.armAwayArea | Area number (for example 1) |
+| msg.armStayArea | Area number (for example 1) |
+| msg.disarmArea | Area number (for example 1) |
+
+
+Examples:<br/>
+
+```javascript
+// To Arm Away Area 1
+msg.armAwayArea = 1
+return msg;
+```
+
+```javascript
+// To Arm Stay Area 1
+msg.armStayArea = 1
+return msg;
+```
+
+```javascript
+// To Disarm Area 1
+msg.disarmArea = 1
+return msg;
+```
+
+```javascript
+// To clear alarm on Area 1
+msg.clearAlarmArea = 1
+return msg;
+```
+
+**Output**
+
+The node outputs a JSON with payload containing the data on PIN 1 and a connection ERROR on PIN 2 (true if the node is DISCONNECTED to the server, otherwise false IF IT'S RECONNECTED).
+
+
+[SEE THE README FOR FULL HELP AND SAMPLES](https://github.com/Supergiovane/node-red-contrib-hikvision-ultimate)
+
+[Find it useful? Support the project!](https://www.paypal.me/techtoday)
+
+
 </script>

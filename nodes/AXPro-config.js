@@ -29,6 +29,7 @@ module.exports = (RED) => {
         node.authCookie = '' // Contains the usable cookie for the authenticaded sessione
         node.optionsAlarmStream = {}
         node.clientAlarmStream = undefined
+        
         var controller = null; // AbortController
 
         node.setAllClientsStatus = ({ fill, shape, text }) => {
@@ -99,7 +100,7 @@ module.exports = (RED) => {
             return result
         }
 
-       
+
 
 
         //#region ALARMSTREAM
@@ -163,8 +164,8 @@ module.exports = (RED) => {
 
 
             try {
-              
-                
+
+
                 const responseAuth = await node.clientAlarmStream.fetch(node.protocol + "://" + node.host + "/ISAPI/Security/sessionLogin/capabilities?username=" + node.credentials.user, node.optionsAlarmStream)
                 if (responseAuth.status >= 200 && responseAuth.status <= 300) {
                     node.setAllClientsStatus({ fill: "green", shape: "ring", text: "Communication established" });

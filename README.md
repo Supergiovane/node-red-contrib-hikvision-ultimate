@@ -684,7 +684,7 @@ You can also arm, disarm, silence alarm etc...<br/>
 
 ```javascript
 
-[{"id":"7c370c1cabe6fd89","type":"hikvisionUltimateAxPro","z":"e9a7cd97842ffa10","name":"Ax Pro","topic":"","server":"2dfc48091d46ead3","x":350,"y":200,"wires":[["bc0f8fdc472511e7"],["01e634bd9098e528"]]},{"id":"893818dce1fc2c20","type":"debug","z":"e9a7cd97842ffa10","name":"Alarm Event","active":true,"tosidebar":true,"console":false,"tostatus":false,"complete":"payload.CIDEvent","targetType":"msg","statusVal":"","statusType":"auto","x":670,"y":180,"wires":[]},{"id":"01e634bd9098e528","type":"debug","z":"e9a7cd97842ffa10","name":"Connection Error","active":true,"tosidebar":true,"console":false,"tostatus":false,"complete":"true","targetType":"full","statusVal":"","statusType":"auto","x":550,"y":280,"wires":[]},{"id":"ddc2d752e0c13937","type":"inject","z":"e9a7cd97842ffa10","name":"Disarm Area 1","props":[{"p":"disarmArea","v":"1","vt":"num"}],"repeat":"","crontab":"","once":false,"onceDelay":0.1,"topic":"","x":150,"y":280,"wires":[["7c370c1cabe6fd89"]]},{"id":"b33ec376180a53bc","type":"inject","z":"e9a7cd97842ffa10","name":"Arm Away Area 1","props":[{"p":"armAwayArea","v":"1","vt":"num"}],"repeat":"","crontab":"","once":false,"onceDelay":0.1,"topic":"","x":140,"y":160,"wires":[["7c370c1cabe6fd89"]]},{"id":"6145bfa8991c1831","type":"inject","z":"e9a7cd97842ffa10","name":"Arm Stay Area 1","props":[{"p":"armStayArea","v":"1","vt":"num"}],"repeat":"","crontab":"","once":false,"onceDelay":0.1,"topic":"","x":140,"y":200,"wires":[["7c370c1cabe6fd89"]]},{"id":"189b2eb17cb67a52","type":"inject","z":"e9a7cd97842ffa10","name":"Clear Alarm Area 1","props":[{"p":"clearAlarmArea","v":"1","vt":"num"}],"repeat":"","crontab":"","once":false,"onceDelay":0.1,"topic":"","x":130,"y":240,"wires":[["7c370c1cabe6fd89"]]},{"id":"40ce4b0d34bedf21","type":"comment","z":"e9a7cd97842ffa10","name":"Hikvision AX Pro Alarm Control and Event receiver","info":"","x":230,"y":100,"wires":[]},{"id":"bc0f8fdc472511e7","type":"switch","z":"e9a7cd97842ffa10","name":"","property":"payload","propertyType":"msg","rules":[{"t":"hask","v":"CIDEvent","vt":"str"},{"t":"hask","v":"zoneUpdate","vt":"str"}],"checkall":"true","repair":false,"outputs":2,"x":510,"y":200,"wires":[["893818dce1fc2c20"],["5c9f382684e6354f"]]},{"id":"5c9f382684e6354f","type":"debug","z":"e9a7cd97842ffa10","name":"Zone Update","active":true,"tosidebar":true,"console":false,"tostatus":false,"complete":"payload.zoneUpdate","targetType":"msg","statusVal":"","statusType":"auto","x":670,"y":220,"wires":[]},{"id":"2dfc48091d46ead3","type":"AXPro-config","host":"192.168.1.10","port":"80","name":"AX Pro","authentication":"sha256-salted","protocol":"http","heartbeattimerdisconnectionlimit":"2","deviceinfo":"[object Object]"}]
+[{"id":"7c370c1cabe6fd89","type":"hikvisionUltimateAxPro","z":"e9a7cd97842ffa10","name":"Ax Pro","topic":"","server":"2dfc48091d46ead3","outputtype":"0","x":350,"y":200,"wires":[["893818dce1fc2c20"],["01e634bd9098e528"]]},{"id":"893818dce1fc2c20","type":"debug","z":"e9a7cd97842ffa10","name":"Event","active":true,"tosidebar":true,"console":false,"tostatus":false,"complete":"payload","targetType":"msg","statusVal":"","statusType":"auto","x":530,"y":180,"wires":[]},{"id":"01e634bd9098e528","type":"debug","z":"e9a7cd97842ffa10","name":"Connection Error","active":true,"tosidebar":true,"console":false,"tostatus":false,"complete":"true","targetType":"full","statusVal":"","statusType":"auto","x":570,"y":260,"wires":[]},{"id":"ddc2d752e0c13937","type":"inject","z":"e9a7cd97842ffa10","name":"Disarm Area 1","props":[{"p":"disarmArea","v":"1","vt":"num"}],"repeat":"","crontab":"","once":false,"onceDelay":0.1,"topic":"","x":150,"y":280,"wires":[["7c370c1cabe6fd89"]]},{"id":"b33ec376180a53bc","type":"inject","z":"e9a7cd97842ffa10","name":"Arm Away Area 1","props":[{"p":"armAwayArea","v":"1","vt":"num"}],"repeat":"","crontab":"","once":false,"onceDelay":0.1,"topic":"","x":140,"y":160,"wires":[["7c370c1cabe6fd89"]]},{"id":"6145bfa8991c1831","type":"inject","z":"e9a7cd97842ffa10","name":"Arm Stay Area 1","props":[{"p":"armStayArea","v":"1","vt":"num"}],"repeat":"","crontab":"","once":false,"onceDelay":0.1,"topic":"","x":140,"y":200,"wires":[["7c370c1cabe6fd89"]]},{"id":"189b2eb17cb67a52","type":"inject","z":"e9a7cd97842ffa10","name":"Clear Alarm Area 1","props":[{"p":"clearAlarmArea","v":"1","vt":"num"}],"repeat":"","crontab":"","once":false,"onceDelay":0.1,"topic":"","x":130,"y":240,"wires":[["7c370c1cabe6fd89"]]},{"id":"40ce4b0d34bedf21","type":"comment","z":"e9a7cd97842ffa10","name":"Hikvision AX Pro Alarm Control and Event receiver","info":"","x":230,"y":120,"wires":[]},{"id":"2dfc48091d46ead3","type":"AXPro-config","host":"192.168.1.10","port":"80","name":"AX Pro","authentication":"sha256-salted","protocol":"http","heartbeattimerdisconnectionlimit":"2","deviceinfo":"[object Object]"}]
 
 ```
 </details>
@@ -697,6 +697,15 @@ You can also arm, disarm, silence alarm etc...<br/>
 You can control your AX Pro alarm panel by passing messages to the node.</br>
 
 **Input**
+
+|Property|Parameter|
+|--|--|
+| msg.armAwayArea | Area number (for example 1) |
+| msg.armStayArea | Area number (for example 1) |
+| msg.disarmArea | Area number (for example 1) |
+
+
+Examples:<br/>
 
 ```javascript
 // To Arm Away Area 1
@@ -730,7 +739,7 @@ Example PIN 1:<br/>
 
 ```json
 // FOR CID EVENTS 
-{
+CIDEvent: {
    "code":1401, // This is the reference code of the event. Please see the ISAPI docs or try by yourself, by watching the output while playing with your alarm
    "name":"Supergiovane",
    "type":"armAndDisarm",
@@ -743,7 +752,7 @@ Example PIN 1:<br/>
 
 ```json
 // FOR ZONE UPDATE EVENT
-{
+zoneStatus: {
    "id":1,
    "name":"Zona cablata 2",
    "status":"trigger",

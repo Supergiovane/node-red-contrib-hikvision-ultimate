@@ -7,6 +7,7 @@ module.exports = function (RED) {
 		node.topic = config.topic || config.name;
 		node.server = RED.nodes.getNode(config.server)
 		node.zonesStatus = [] // Contains the status of all zones
+		node.outputtype = Number(config.outputtype || 0)
 
 		node.setNodeStatus = ({ fill, shape, text }) => {
 			var dDate = new Date();
@@ -20,10 +21,11 @@ module.exports = function (RED) {
 			if (_msg.hasOwnProperty("errorDescription")) { node.send([null, _msg]); return; }; // It's a connection error/restore comunication.
 			// If heartbeat, return
 			if (_msg.payload.hasOwnProperty("eventType") && _msg.payload.hasOwnProperty("eventState") && _msg.payload.eventType === "cidEvent" && _msg.payload.eventState === "inactive") return
-			if (_msg.payload.hasOwnProperty('CIDEvent')) {
+			if ((node.outputtype === 0 || node.outputtype === 1) && _msg.payload.hasOwnProperty('CIDEvent')) {
 				// ALARM EVENT
 				node.send([{ payload: { CIDEvent: RED.util.cloneMessage(_msg.payload.CIDEvent) } }, null]); // Clone message to avoid adding _msgid
-			} else if (_msg.payload.hasOwnProperty('ZoneList')) {
+			}
+			if ((node.outputtype === 0 || node.outputtype === 2) && _msg.payload.hasOwnProperty('ZoneList')) {
 				// CHECK ONLY THE CHANGED ZONE STATUS
 				for (let index = 0; index < _msg.payload.ZoneList.length; index++) {
 					try {

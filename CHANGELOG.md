@@ -4,6 +4,11 @@
 [![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square)](https://www.paypal.me/techtoday) 
 
 <p>
+<b>Version 1.0.70</b> December 2022<br/>
+- NEW: AX Pro node: you can now filter by Alarm events, Zone status changes, or have both as output.<br/>
+- Begin standardizing help in the "help" panel of node-red, starting with AX Pro node.<br/>
+</p>
+<p>
 <b>Version 1.0.69</b> December 2022<br/>
 - Some bugfixes.<br/>
 </p>
