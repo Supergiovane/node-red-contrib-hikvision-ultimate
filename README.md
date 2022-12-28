@@ -232,6 +232,10 @@ msg = {
 
 
 ## PICTURE NODE
+
+
+<img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/hikcamerasettings.png' width="80%">
+
 This node gets a picture from the camera/NVR, ready to be shown in the dashboard UI.<br/>
 You can rotate, resize, crop, overlay with text, zoom the image.<br/>
 The ***overlay text*** is applied directly after the picture's manipulation. This behaves differently than the **text overlay node** (that uses the overlay functionality onboard the camera).<br/> 
