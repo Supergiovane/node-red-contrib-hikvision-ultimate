@@ -136,6 +136,10 @@ msg = {
 ---
 
 ## ANPR (License Plate) NODE
+
+<img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/hikanprcamera.jpg' width="80%">
+
+
 This node works with Hikvision ANPR cameras.<br/>
 
 <img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/ANPR.png' width="80%">
