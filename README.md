@@ -756,7 +756,7 @@ Example PIN 1:<br/>
 }
 ```
 
-##CID Events common codes
+## CID Events common codes
 CID Events refers to a field "code" in the Alarm event output</br>
 <img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/CIDEvents/1.png' width="100%">
 <img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/CIDEvents/2.png' width="100%">
