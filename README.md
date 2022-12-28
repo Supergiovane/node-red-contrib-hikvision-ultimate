@@ -180,6 +180,9 @@ msg = {
 ---
 
 ## PTZ NODE
+
+<img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/hikptzcamera.png' width="80%">
+
 Recalls a PTZ pre-recorded preset.<br/>
 Just select the preset in the configuration window and recall it by passing ***true*** as payload.<br/>
 You can also set the Camera Number and PTZ preset number by msg.payload.channelID (optional) and msg.payload.PTZPreset. See below.<br/>
