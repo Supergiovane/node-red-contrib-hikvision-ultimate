@@ -40,6 +40,9 @@ I'm looking for collaborators to develop these nodes. I'm alone. I have other no
 
 
 ## CAMERA EVENT NODE
+
+<img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/hikcamera.png' width="80%">
+
 The Camera Event node connects to ***NVR, Camera, Radars, etc..*** and outputs true/false in case of an alarm. <br/>
 The node can be configured as **Camera/NVR** (with standard and smart events) or as **Old Security System** and **Radar** (with specific CID events, designed for these type of security devices)<br/>
 You can optionally filter the alarms by CHANNEL, EVENT and ZONE. <br/>
@@ -758,7 +761,11 @@ Example PIN 1:<br/>
 ```
 
 ### CID Events common codes
-CID Events refers to a field "code" in the Alarm event output</br>
+
+CID Events refers to a field "code" in the Alarm event output<br/>
+The most common event codes are: 3401 (Arm Away), 3441 (Arm Stay), 1401 (Disarmed), 1759 (Intrusion Alarm)<br/>
+For other codes, please see the list below. You can find it [here as well](https://www.hikvisioneurope.com/eu/portal/portal/Technical%20Materials/10%20%20Intrusion%26Alarm/08%20ARC%20Integration/Hik%20IP%20Receiver%20Pro/Hik%20IP%20Receiver%20Pro_V1.6.0.4Build20221110/Hik%20IP%20Receiver%20Pro_User%20Manual_V1.6.0.PDF)<br/>
+
 <img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/CIDEvents/1.png' width="100%">
 <img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/CIDEvents/2.png' width="100%">
 <img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/CIDEvents/3.png' width="100%">
