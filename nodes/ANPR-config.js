@@ -69,7 +69,7 @@ module.exports = (RED) => {
                     try {
                         const resInfo = await clientInfo.fetch(jParams.protocol + "://" + jParams.host + ":" + jParams.port + "/ISAPI/System/deviceInfo", opt);
                         const body = await resInfo.text();
-                        xml2js(body, function (err, result) {
+                        await xml2js(body, function (err, result) {
                             if (err) {
                                 res.json(err);
                                 return;
@@ -154,7 +154,7 @@ module.exports = (RED) => {
                         if (i > -1) {
                             sRet = sRet.substring(i);
                             // By xml2js
-                            xml2js(sRet, function (err, result) {
+                            await xml2js(sRet, function (err, result) {
                                 if (err) {
                                     oPlates = null;
                                 } else {

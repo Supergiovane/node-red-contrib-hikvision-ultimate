@@ -31,7 +31,7 @@ module.exports = (RED) => {
         node.clientAlarmStream = undefined
         
         var controller = null; // AbortController
-
+        var oReadable = new readableStr();
         node.setAllClientsStatus = ({ fill, shape, text }) => {
             function nextStatus(oClient) {
                 oClient.setNodeStatus({ fill: fill, shape: shape, text: text })
@@ -58,7 +58,7 @@ module.exports = (RED) => {
                             controller.abort();
                         } catch (error) { }
                     }
-                    setTimeout(startAlarmStream, 10000); // Reconnect
+                    setTimeout(startAlarmStream, 1000); // Reconnect
                 } else {
                     // 28/12/2020 Connection attempt limit reached
                     node.heartBeatTimerDisconnectionCounter = 0;
@@ -75,7 +75,7 @@ module.exports = (RED) => {
                         } catch (error) { }
                     }
                     node.isConnected = false;
-                    setTimeout(startAlarmStream, 5000); // Reconnect
+                    setTimeout(startAlarmStream, 1000); // Reconnect
                 }
             }, 40000);
         }
@@ -246,7 +246,7 @@ module.exports = (RED) => {
                         // 05/12/2020 process the data
                         var aResults = result.split("--boundary");
                         if (node.debug) RED.log.info("SPLITTATO RESULT COUNT: ####### " + aResults.length + " ###################### FINE SPLITTATO RESULT");
-                        aResults.forEach(sRet => {
+                        aResults.forEach(async sRet => {
                             if (sRet.trim() !== "") {
                                 if (node.debug) RED.log.error("BANANA PROCESSING" + sRet);
                                 try {
@@ -256,7 +256,7 @@ module.exports = (RED) => {
                                         sRet = sRet.substring(i);
                                         // By xml2js
                                         try {
-                                            xml2js(sRet, function (err, result) {
+                                            await xml2js(sRet, function (err, result) {
                                                 if (err) {
                                                     sRet = "";
                                                 } else {
@@ -344,9 +344,10 @@ module.exports = (RED) => {
                     node.isConnected = true;
                     try {
                         if (node.debug) RED.log.info("AXPro-config: before Pipelining...");
-                        const oReadable = readableStr.from(responseFromAxProAlarmStream.body, { encoding: 'utf8' });
+                        if (oReadable !== null) oReadable.removeAllListeners() // 09/01/2023
+                        oReadable = readableStr.from(responseFromAxProAlarmStream.body, { encoding: 'utf8' });
                         var result = "";
-                        oReadable.on('data', (chunk) => {
+                        oReadable.on('data', async (chunk) => {
                             result += chunk;
                             if (result.indexOf("--boundary") > -1) {
 
@@ -362,7 +363,7 @@ module.exports = (RED) => {
 
                                 if (bMessageCanBeHandled) {
                                     try {
-                                        handleChunk(result);
+                                        await handleChunk(result);
                                     } catch (error) {
                                         if (node.debug) RED.log.info("AXPro-config: Error handleChunk " + error.message || "");
                                     }

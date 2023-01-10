@@ -20,7 +20,7 @@ module.exports = (RED) => {
         node.authentication = config.authentication || "digest";
         node.deviceinfo = config.deviceinfo || {};
         node.timerCheckRing = null;
-
+        var oReadable = new readableStr();
         var controller = null; // AbortController
 
         node.setAllClientsStatus = ({ fill, shape, text }) => {
@@ -72,7 +72,7 @@ module.exports = (RED) => {
                     try {
                         const resInfo = await clientInfo.fetch(jParams.protocol + "://" + jParams.host + ":" + jParams.port + "/ISAPI/System/deviceInfo", opt);
                         const body = await resInfo.text();
-                        xml2js(body, function (err, result) {
+                        await xml2js(body, function (err, result) {
                             if (err) {
                                 res.json(err);
                                 return;
@@ -99,7 +99,7 @@ module.exports = (RED) => {
         // Handle the complete stream message, enclosed into the --boundary stream string
         // If there is more boundary, process each one separately
         // ###################################
-        function handleChunk(result) {
+        async function handleChunk(result) {
             try {
                 // 05/12/2020 process the data
                 let jSonStatus = JSON.parse(result);
@@ -164,12 +164,13 @@ module.exports = (RED) => {
                     node.isConnected = true;
                     try {
                         if (node.debug) RED.log.info("Doorbell-config: before Pipelining...");
-                        const oReadable = readableStr.from(response.body, { encoding: 'utf8' });
-                        oReadable.on('data', (chunk) => {
+                        if (oReadable !== null) oReadable.removeAllListeners() // 09/01/2023
+                        oReadable = readableStr.from(response.body, { encoding: 'utf8' });
+                        oReadable.on('data', async (chunk) => {
                             if (node.debug) RED.log.info("Doorbell-config: oReadable.on('data') " + chunk);
                             if (chunk.includes("}")) {
                                 try {
-                                    handleChunk(chunk);
+                                    await handleChunk(chunk);
                                 } catch (error) {
                                     throw (error);
                                 }

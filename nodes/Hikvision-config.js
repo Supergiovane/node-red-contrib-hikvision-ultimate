@@ -23,6 +23,7 @@ module.exports = (RED) => {
         node.heartBeatTimerDisconnectionCounter = 0;
         node.heartbeattimerdisconnectionlimit = config.heartbeattimerdisconnectionlimit || 2;
         var controller = null; // AbortController
+        var oReadable = new readableStr();
 
         node.setAllClientsStatus = ({ fill, shape, text }) => {
             function nextStatus(oClient) {
@@ -108,7 +109,7 @@ module.exports = (RED) => {
                             controller.abort();
                         } catch (error) { }
                     }
-                    setTimeout(startAlarmStream, 10000); // Reconnect
+                    startAlarmStream()
                 } else {
                     // 28/12/2020 Connection attempt limit reached
                     node.heartBeatTimerDisconnectionCounter = 0;
@@ -125,18 +126,18 @@ module.exports = (RED) => {
                         } catch (error) { }
                     }
                     node.isConnected = false;
-                    setTimeout(startAlarmStream, 5000); // Reconnect
+                    setTimeout(startAlarmStream, 2000); // Reconnect
                 }
             }, 40000);
         }
 
         //#region ALARMSTREAM
+        var clientAlarmStream;
         async function startAlarmStream() {
 
             node.resetHeartBeatTimer(); // First thing, start the heartbeat timer.
             node.setAllClientsStatus({ fill: "grey", shape: "ring", text: "Connecting..." });
 
-            var clientAlarmStream;
             if (node.authentication === "digest") clientAlarmStream = new DigestFetch(node.credentials.user, node.credentials.password); // Instantiate the fetch client.
             if (node.authentication === "basic") clientAlarmStream = new DigestFetch(node.credentials.user, node.credentials.password, { basic: true }); // Instantiate the fetch client.
 
@@ -159,89 +160,6 @@ module.exports = (RED) => {
             };
             try {
 
-
-                //#region "HANDLE STREAM MESSAGE"
-                // Handle the complete stream message, enclosed into the --boundary stream string
-                // If there is more boundary, process each one separately
-                // ###################################
-                async function handleChunk(result) {
-                    try {
-                        // 05/12/2020 process the data
-                        var aResults = result.split("--boundary");
-                        if (node.debug) RED.log.info("SPLITTATO RESULT COUNT: ####### " + aResults.length + " ###################### FINE SPLITTATO RESULT");
-                        aResults.forEach(sRet => {
-                            if (sRet.trim() !== "") {
-                                if (node.debug) RED.log.error("BANANA PROCESSING" + sRet);
-                                try {
-                                    //sRet = sRet.replace(/--boundary/g, '');
-                                    var i = sRet.indexOf("<"); // Get only the XML, starting with "<"
-                                    if (i > -1) {
-                                        sRet = sRet.substring(i);
-                                        // By xml2js
-                                        try {
-                                            xml2js(sRet, function (err, result) {
-                                                if (err) {
-                                                    sRet = "";
-                                                } else {
-                                                    if (node.debug) RED.log.error("BANANA SBANANATO XML -> JSON " + JSON.stringify(result));
-                                                    if (result !== null && result !== undefined && result.hasOwnProperty("EventNotificationAlert")) {
-                                                        node.nodeClients.forEach(oClient => {
-                                                            if (result !== undefined) oClient.sendPayload({ topic: oClient.topic || "", payload: result.EventNotificationAlert });
-                                                        });
-                                                    }
-                                                }
-                                            });
-                                        } catch (error) {
-                                            sRet = "";
-                                            if (node.debug) RED.log.error("BANANA ERRORE xml2js(sRet, function (err, result) " + error.message || "");
-                                        }
-
-                                    } else {
-                                        i = sRet.indexOf("{") // It's a Json
-                                        if (i > -1) {
-                                            if (node.debug) RED.log.error("BANANA SBANANATO JSON " + sRet);
-                                            sRet = sRet.substring(i);
-                                            try {
-                                                sRet = JSON.parse(sRet);
-                                                //  if (node.debug)  RED.log.error("BANANA JSONATO: " + sRet);
-                                                if (sRet !== null && sRet !== undefined) {
-                                                    node.nodeClients.forEach(oClient => {
-                                                        oClient.sendPayload({ topic: oClient.topic || "", payload: sRet });
-                                                    })
-                                                }
-                                            } catch (error) {
-                                                sRet = "";
-                                            }
-                                        } else {
-                                            // Invalid body
-                                            if (node.debug) RED.log.info("Hikvision-config: DecodingBody Info only: Invalid Json " + sRet);
-                                        }
-                                    }
-                                    // All is fine. Reset and restart the hearbeat timer
-                                    // Hikvision sends an heartbeat alarm (videoloss), depending on firmware, every 300ms or more.
-                                    // If this HeartBeat isn't received, abort the stream request and restart.
-                                    node.resetHeartBeatTimer();
-                                } catch (error) {
-                                    //  if (node.debug) RED.log.error("BANANA startAlarmStream decodifica body: " + error);
-                                    if (node.debug) RED.log.error("Hikvision-config: DecodingBody error: " + (error.message || " unknown error"));
-                                    throw (error);
-                                }
-                            } else {
-                                if (node.debug) RED.log.info("SPLITTATO RESULT EMPTY: ####### " + sRet + " ###################### FINE SPLITTATO RESULT");
-                            }
-                        });
-
-
-                    } catch (error) {
-                        if (node.debug) RED.log.info("Hikvision-config: readStream error: " + (error.message || " unknown error"));
-                        node.errorDescription = "readStream error " + (error.message || " unknown error");
-                        throw (error);
-
-                    }
-                }
-                // ###################################
-                //#endregion
-
                 const response = await clientAlarmStream.fetch(node.protocol + "://" + node.host + "/ISAPI/Event/notification/alertStream", optionsAlarmStream);
 
                 if (response.status >= 200 && response.status <= 300) {
@@ -263,9 +181,10 @@ module.exports = (RED) => {
                     node.isConnected = true;
                     try {
                         if (node.debug) RED.log.info("Hikvision-config: before Pipelining...");
-                        const oReadable = readableStr.from(response.body, { encoding: 'utf8' });
-                        var result = "";
-                        oReadable.on('data', (chunk) => {
+                        if (oReadable !== null) oReadable.removeAllListeners() // 09/01/2023
+                        oReadable = readableStr.from(response.body, { encoding: 'utf8' });
+                        let result = "";
+                        oReadable.on('data', async (chunk) => {
                             result += chunk;
                             if (result.indexOf("--boundary") > -1) {
 
@@ -281,9 +200,9 @@ module.exports = (RED) => {
 
                                 if (bMessageCanBeHandled) {
                                     try {
-                                        handleChunk(result);
+                                        await handleChunk(result);
                                     } catch (error) {
-                                        if (node.debug) RED.log.info("Hikvision-config: Error handleChunk " + error.message || "");
+                                        if (node.debug) RED.log.error("Hikvision-config: Error handleChunk " + (error.message || "") + node.protocol + "://" + node.host);
                                     }
                                     result = "";
                                 }
@@ -296,10 +215,9 @@ module.exports = (RED) => {
                         });
 
                         oReadable.on('error', function (error) {
-                            if (node.debug) RED.log.error("Hikvision-config: streamPipeline: " + (error.message || " unknown error"));
+                            RED.log.error("Hikvision-config: streamPipeline: " + (error.message || " unknown error") + node.protocol + "://" + node.host);
                         });
 
-                        //await streamPipeline(response.body, readStream);
                     } catch (error) {
                         if (node.debug) RED.log.error("Hikvision-config: streamPipeline: Please be sure to have the latest Node.JS version installed: " + (error.message || " unknown error"));
                     }
@@ -311,10 +229,99 @@ module.exports = (RED) => {
                 // Abort request
                 //node.errorDescription = "Fetch error " + JSON.stringify(error, Object.getOwnPropertyNames(error));
                 node.errorDescription = "Fetch error " + (error.message || " unknown error");
-                if (node.debug) RED.log.error("Hikvision-config: FETCH ERROR: " + (error.message || " unknown error"));
+                RED.log.error("Hikvision-config: FETCH ERROR: " + (error.message || " unknown error"));
             };
 
         };
+        //#region "HANDLE STREAM MESSAGE"
+        // Handle the complete stream message, enclosed into the --boundary stream string
+        // If there is more boundary, process each one separately
+        // ###################################
+        async function handleChunk(result) {
+            try {
+                // 05/12/2020 process the data
+                var aResults = result.split("--boundary");
+                if (node.debug) RED.log.info("SPLITTATO RESULT COUNT: ####### " + aResults.length + " ###################### FINE SPLITTATO RESULT");
+                aResults.forEach(async sRet => {
+                    if (sRet.trim() !== "") {
+                        if (node.debug) RED.log.error("BANANA PROCESSING" + sRet);
+                        try {
+                            //sRet = sRet.replace(/--boundary/g, '');
+                            var i = sRet.indexOf("<"); // Get only the XML, starting with "<"
+                            if (i > -1) {
+                                sRet = sRet.substring(i);
+                                // By xml2js
+                                try {
+                                    await xml2js(sRet, function (err, result) {
+                                        if (err) {
+                                            sRet = "";
+                                        } else {
+                                            if (node.debug) RED.log.error("BANANA SBANANATO XML -> JSON " + JSON.stringify(result));
+                                            if (result !== null && result !== undefined && result.hasOwnProperty("EventNotificationAlert")) {
+                                                node.nodeClients.forEach(oClient => {
+                                                    if (result !== undefined) oClient.sendPayload({ topic: oClient.topic || "", payload: result.EventNotificationAlert });
+                                                });
+                                            }
+                                        }
+                                    });
+                                    // result = xml2js(sRet)
+                                    // if (node.debug) RED.log.error("BANANA SBANANATO XML -> JSON " + JSON.stringify(result));
+                                    // if (result !== null && result !== undefined && result.hasOwnProperty("EventNotificationAlert")) {
+                                    //     node.nodeClients.forEach(oClient => {
+                                    //         if (result !== undefined) oClient.sendPayload({ topic: oClient.topic || "", payload: result.EventNotificationAlert });
+                                    //     });
+                                    // }
+                                } catch (error) {
+                                    sRet = "";
+                                    if (node.debug) RED.log.error("BANANA ERRORE xml2js(sRet, function (err, result) " + error.message || "");
+                                }
+
+                            } else {
+                                i = sRet.indexOf("{") // It's a Json
+                                if (i > -1) {
+                                    if (node.debug) RED.log.error("BANANA SBANANATO JSON " + sRet);
+                                    sRet = sRet.substring(i);
+                                    try {
+                                        sRet = JSON.parse(sRet);
+                                        //  if (node.debug)  RED.log.error("BANANA JSONATO: " + sRet);
+                                        if (sRet !== null && sRet !== undefined) {
+                                            node.nodeClients.forEach(oClient => {
+                                                oClient.sendPayload({ topic: oClient.topic || "", payload: sRet });
+                                            })
+                                        }
+                                    } catch (error) {
+                                        sRet = "";
+                                    }
+                                } else {
+                                    // Invalid body
+                                    if (node.debug) RED.log.info("Hikvision-config: DecodingBody Info only: Invalid Json " + sRet);
+                                }
+                            }
+                            // All is fine. Reset and restart the hearbeat timer
+                            // Hikvision sends an heartbeat alarm (videoloss), depending on firmware, every 300ms or more.
+                            // If this HeartBeat isn't received, abort the stream request and restart.
+                            node.resetHeartBeatTimer();
+                        } catch (error) {
+                            //  if (node.debug) RED.log.error("BANANA startAlarmStream decodifica body: " + error);
+                            if (node.debug) RED.log.error("Hikvision-config: DecodingBody error: " + (error.message || " unknown error"));
+                            throw (error);
+                        }
+                    } else {
+                        if (node.debug) RED.log.info("SPLITTATO RESULT EMPTY: ####### " + sRet + " ###################### FINE SPLITTATO RESULT");
+                    }
+                });
+
+
+            } catch (error) {
+                if (node.debug) RED.log.info("Hikvision-config: readStream error: " + (error.message || " unknown error"));
+                node.errorDescription = "readStream error " + (error.message || " unknown error");
+                throw (error);
+
+            }
+        }
+        // ###################################
+        //#endregion
+
         setTimeout(startAlarmStream, 10000); // First connection.
         //#endregion
 
