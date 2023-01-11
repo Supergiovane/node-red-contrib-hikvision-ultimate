@@ -4,7 +4,7 @@ module.exports = (RED) => {
 
     const DigestFetch = require('digest-fetch')
     const AbortController = require('abort-controller');
-    const xml2js = require('xml2js').Parser({ explicitArray: false }).parseString;
+    const { XMLParser } = require("fast-xml-parser");
     const https = require('https');
 
     function ANPRconfig(config) {
@@ -62,22 +62,22 @@ module.exports = (RED) => {
                 timeout: 5000,         // req/res timeout in ms, it resets on redirect. 0 to disable (OS limit applies). Signal is recommended instead.
                 compress: false,     // support gzip/deflate content encoding. false to disable
                 size: 0,            // maximum response body size in bytes. 0 to disable
-                agent: jParams.protocol === "https" ? customHttpsAgent :null          // http(s).Agent instance or function that returns an instance (see below)
+                agent: jParams.protocol === "https" ? customHttpsAgent : null          // http(s).Agent instance or function that returns an instance (see below)
             };
             try {
                 (async () => {
                     try {
                         const resInfo = await clientInfo.fetch(jParams.protocol + "://" + jParams.host + ":" + jParams.port + "/ISAPI/System/deviceInfo", opt);
                         const body = await resInfo.text();
-                        await xml2js(body, function (err, result) {
-                            if (err) {
-                                res.json(err);
-                                return;
-                            } else {
-                                res.json(result);
-                                return;
-                            }
-                        });
+                        const parser = new XMLParser();
+                        try {
+                            let jObj = parser.parse(body);
+                            res.json(jObj);
+                            return;
+                        } catch (error) {
+                            res.json(error);
+                            return;
+                        }
                     } catch (error) {
                         RED.log.error("Errore  hikvisionUltimateGetInfoCamANPR " + error.message);
                         res.json(error);
@@ -131,7 +131,7 @@ module.exports = (RED) => {
                 timeout: 15000,         // req/res timeout in ms, it resets on redirect. 0 to disable (OS limit applies). Signal is recommended instead.
                 compress: false,     // support gzip/deflate content encoding. false to disable
                 size: 0,            // maximum response body size in bytes. 0 to disable
-                agent: node.protocol === "https" ? customHttpsAgent :null        // http(s).Agent instance or function that returns an instance (see below)
+                agent: node.protocol === "https" ? customHttpsAgent : null        // http(s).Agent instance or function that returns an instance (see below)
             };
             try {
                 const response = await client.fetch(node.protocol + "://" + node.host + "/ISAPI/Traffic/channels/1/vehicleDetect/plates", options);
@@ -153,14 +153,14 @@ module.exports = (RED) => {
                         var i = sRet.indexOf("<"); // Get only the XML, starting with "<"
                         if (i > -1) {
                             sRet = sRet.substring(i);
-                            // By xml2js
-                            await xml2js(sRet, function (err, result) {
-                                if (err) {
-                                    oPlates = null;
-                                } else {
-                                    oPlates = result;
-                                }
-                            });
+                            const parser = new XMLParser();
+                            try {
+                                let result = parser.parse(sRet);
+                                oPlates = result;
+                            } catch (error) {
+                                oPlates = null;
+                            }
+
                         } else {
                             i = sRet.indexOf("{") // It's a Json
                             if (i > -1) {

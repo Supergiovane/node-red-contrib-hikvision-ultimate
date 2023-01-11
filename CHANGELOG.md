@@ -4,6 +4,11 @@
 [![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square)](https://www.paypal.me/techtoday) 
 
 <p>
+<b>Version 1.1.0</b> January 2023<br/>
+- Removed xml2js package and replaced it with fast-xml-parser.<br/>
+- Fixed other memory issues when there are a lot of cameras in the flow.<br/>
+</p>
+<p>
 <b>Version 1.0.71</b> January 2023<br/>
 - FIX: fixed error MaxEventListener, occurring in case of sudden Camera LAN disconnection. This was due to the xml2js function.<br/>
 - AX Pro node is out of the beta phase and has been released.<br/>

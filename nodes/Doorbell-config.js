@@ -3,7 +3,7 @@ module.exports = (RED) => {
 
     const DigestFetch = require('digest-fetch')
     const AbortController = require('abort-controller');
-    const xml2js = require('xml2js').Parser({ explicitArray: false }).parseString;
+    const { XMLParser } = require("fast-xml-parser");
     const readableStr = require('stream').Readable;
     const https = require('https');
 
@@ -72,15 +72,10 @@ module.exports = (RED) => {
                     try {
                         const resInfo = await clientInfo.fetch(jParams.protocol + "://" + jParams.host + ":" + jParams.port + "/ISAPI/System/deviceInfo", opt);
                         const body = await resInfo.text();
-                        await xml2js(body, function (err, result) {
-                            if (err) {
-                                res.json(err);
-                                return;
-                            } else {
-                                res.json(result);
-                                return;
-                            }
-                        });
+                        const parser = new XMLParser();
+                        let result = parser.parse(body);
+                        res.json(result);
+                        return;
                     } catch (error) {
                         RED.log.error("Errore  hikvisionUltimateGetInfoCam " + error.message);
                         res.json(error);

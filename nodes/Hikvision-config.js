@@ -3,7 +3,8 @@ module.exports = (RED) => {
 
     const DigestFetch = require('digest-fetch'); // 04/6/2022 DO NOT UPGRADE TO NODE-FETCH V3, BECAUSE DIGEST-FETCH DOESN'T SUPPORT IT
     const AbortController = require('abort-controller');
-    const xml2js = require('xml2js').Parser({ explicitArray: false }).parseString;
+    const { XMLParser } = require("fast-xml-parser");
+
     const readableStr = require('stream').Readable;
     const https = require('https');
 
@@ -74,15 +75,16 @@ module.exports = (RED) => {
                     try {
                         const resInfo = await clientInfo.fetch(jParams.protocol + "://" + jParams.host + ":" + jParams.port + "/ISAPI/System/deviceInfo", opt);
                         const body = await resInfo.text();
-                        xml2js(body, function (err, result) {
-                            if (err) {
-                                res.json(err);
-                                return;
-                            } else {
-                                res.json(result);
-                                return;
-                            }
-                        });
+                        const parser = new XMLParser();
+                        try {
+                            let jObj = parser.parse(body);
+                            res.json(jObj);
+                            return;
+                        } catch (error) {
+                            res.json(error);
+                            return;
+                        }
+
                     } catch (error) {
                         RED.log.error("Errore  hikvisionUltimateGetInfoCam " + error.message);
                         res.json(error);
@@ -250,30 +252,19 @@ module.exports = (RED) => {
                             var i = sRet.indexOf("<"); // Get only the XML, starting with "<"
                             if (i > -1) {
                                 sRet = sRet.substring(i);
-                                // By xml2js
+                                // 11/01/2023 new parser XML to Json
                                 try {
-                                    await xml2js(sRet, function (err, result) {
-                                        if (err) {
-                                            sRet = "";
-                                        } else {
-                                            if (node.debug) RED.log.error("BANANA SBANANATO XML -> JSON " + JSON.stringify(result));
-                                            if (result !== null && result !== undefined && result.hasOwnProperty("EventNotificationAlert")) {
-                                                node.nodeClients.forEach(oClient => {
-                                                    if (result !== undefined) oClient.sendPayload({ topic: oClient.topic || "", payload: result.EventNotificationAlert });
-                                                });
-                                            }
-                                        }
-                                    });
-                                    // result = xml2js(sRet)
-                                    // if (node.debug) RED.log.error("BANANA SBANANATO XML -> JSON " + JSON.stringify(result));
-                                    // if (result !== null && result !== undefined && result.hasOwnProperty("EventNotificationAlert")) {
-                                    //     node.nodeClients.forEach(oClient => {
-                                    //         if (result !== undefined) oClient.sendPayload({ topic: oClient.topic || "", payload: result.EventNotificationAlert });
-                                    //     });
-                                    // }
+                                    const parser = new XMLParser();
+                                    let result = parser.parse(sRet);
+                                    if (node.debug) RED.log.error("BANANA SBANANATO XML -> JSON " + JSON.stringify(result));
+                                    if (result !== null && result !== undefined && result.hasOwnProperty("EventNotificationAlert")) {
+                                        node.nodeClients.forEach(oClient => {
+                                            if (result !== undefined) oClient.sendPayload({ topic: oClient.topic || "", payload: result.EventNotificationAlert });
+                                        });
+                                    }
                                 } catch (error) {
                                     sRet = "";
-                                    if (node.debug) RED.log.error("BANANA ERRORE xml2js(sRet, function (err, result) " + error.message || "");
+                                    if (node.debug) RED.log.error("BANANA ERRORE fast-xml-parser(sRet, function (err, result) " + error.message || "");
                                 }
 
                             } else {
@@ -374,15 +365,13 @@ module.exports = (RED) => {
                     if (_fromXMLNode) {
                         body = await response.buffer(); // "data:image/png;base64," +    
                         //_callerNode.sendPayload({ topic: _callerNode.topic || "", payload:  body.toString("base64")});
-                        xml2js(body.toString(), function (err, result) {
-                            if (err) {
-                                _callerNode.sendPayload({ topic: _callerNode.name || "", payload: body.toString() });
-                            } else {
-                                _callerNode.sendPayload({ topic: _callerNode.name || "", payload: result });
-                            }
-                        });
-
-
+                        const parser = new XMLParser();
+                        try {
+                            let result = parser.parse(body.toString());
+                            _callerNode.sendPayload({ topic: _callerNode.name || "", payload: result });
+                        } catch (error) {
+                            _callerNode.sendPayload({ topic: _callerNode.name || "", payload: body.toString() });
+                        }
                     } else if (_URL.toLowerCase().includes("/ptzctrl/")) {// Based on URL, will return the appropriate encoded body
                         _callerNode.sendPayload({ topic: _callerNode.topic || "", payload: true });
                     } else if (_URL.toLowerCase().includes("/streaming")) {

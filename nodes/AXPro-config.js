@@ -1,12 +1,11 @@
 const { default: fetch } = require('node-fetch')
 const sha256 = require('./utils/Sha256').sha256
-const { parseBooleans, parseNumbers } = require('xml2js/lib/processors')
+const { XMLParser, XMLBuilder } = require("fast-xml-parser");
 
 module.exports = (RED) => {
 
     const DigestFetch = require('digest-fetch'); // 04/6/2022 DO NOT UPGRADE TO NODE-FETCH V3, BECAUSE DIGEST-FETCH DOESN'T SUPPORT IT
     const AbortController = require('abort-controller');
-    const xml2js = require('xml2js').Parser({ explicitArray: false }).parseString;
     const readableStr = require('stream').Readable;
     const https = require('https');
 
@@ -29,7 +28,7 @@ module.exports = (RED) => {
         node.authCookie = '' // Contains the usable cookie for the authenticaded sessione
         node.optionsAlarmStream = {}
         node.clientAlarmStream = undefined
-        
+
         var controller = null; // AbortController
         var oReadable = new readableStr();
         node.setAllClientsStatus = ({ fill, shape, text }) => {
@@ -131,20 +130,6 @@ module.exports = (RED) => {
             // </SessionLoginCap>
 
 
-            // Wrapping the async xml2js to a sync function, for peace of mind
-            async function xml2jsSync(xml) {
-                try {
-                    return new Promise((resolve, reject) => {
-                        xml2js(xml, function (err, json) {
-                            if (err)
-                                reject(err);
-                            else
-                                resolve(json);
-                        });
-                    });
-                } catch (error) { }
-            }
-
             controller = new AbortController(); // For aborting the stream request
             node.optionsAlarmStream = {
                 // These properties are part of the Fetch Standard
@@ -177,7 +162,8 @@ module.exports = (RED) => {
                 // Get the XML Body of the salt and challenge
                 const XMLBody = await responseAuth.text()
                 // Transform it into Json
-                const result = await xml2jsSync(XMLBody)
+                const parser = new XMLParser();
+                let result = parser.parse(XMLBody);
                 const jSon = JSON.parse(JSON.stringify(result))
                 if (node.debug) RED.log.error("BANANA SBANANATO XMLBoduAuth -> JSON " + JSON.stringify(result));
 
@@ -195,24 +181,25 @@ module.exports = (RED) => {
                 // Do not put Spaghetti in the cold water. Please be sure that water is warm and it's boiling.
                 const encodedPassword = encodePassword(bodyAuth, node.credentials.user, node.credentials.password)
                 // Build the XML body to pass to the alarm panel to login.
-                const xml2jsEngine = require('xml2js')
-                const XMLbuilder = new xml2jsEngine.Builder({
-                    headless: true,
-                    renderOpts: {
-                        pretty: false
-                    }
-                })
-                const XMLparser = new xml2jsEngine.Parser({
-                    attrkey: 'attr',
-                    charkey: 'value',
-                    explicitArray: false,
-                    attrValueProcessors: [
-                        parseNumbers, parseBooleans
-                    ],
-                    valueProcessors: [
-                        parseNumbers, parseBooleans
-                    ]
-                })
+                //const xml2jsEngine = require('xml2js')
+                // const XMLbuilder = new xml2jsEngine.Builder({
+                //     headless: true,
+                //     renderOpts: {
+                //         pretty: false
+                //     }
+                // })
+
+                // const XMLparser = new xml2jsEngine.Parser({
+                //     attrkey: 'attr',
+                //     charkey: 'value',
+                //     explicitArray: false,
+                //     attrValueProcessors: [
+                //         parseNumbers, parseBooleans
+                //     ],
+                //     valueProcessors: [
+                //         parseNumbers, parseBooleans
+                //     ]
+                // })
                 const jSonAuthSendBody = {
                     SessionLogin: {
                         userName: node.credentials.user,
@@ -223,7 +210,10 @@ module.exports = (RED) => {
                     }
                 }
                 // Send the body to the alarm panel.
-                node.optionsAlarmStream.body = XMLbuilder.buildObject(jSonAuthSendBody)
+                //node.optionsAlarmStream.body = XMLbuilder.buildObject(jSonAuthSendBody)
+                const XML_Builder = new XMLBuilder({});
+                node.optionsAlarmStream.body = XML_Builder.build(jSonAuthSendBody);
+
                 node.optionsAlarmStream.method = 'POST'
                 const responseSessionLogin = await node.clientAlarmStream.fetch(node.protocol + '://' + node.host + '/ISAPI/Security/sessionLogin?timeStamp=' + Date.now(), node.optionsAlarmStream)
                 if (responseSessionLogin.status !== 200) throw Error('AXPro POST Auth: ' + responseSessionLogin.statusText);
@@ -254,23 +244,19 @@ module.exports = (RED) => {
                                     var i = sRet.indexOf("<"); // Get only the XML, starting with "<"
                                     if (i > -1) {
                                         sRet = sRet.substring(i);
-                                        // By xml2js
+
                                         try {
-                                            await xml2js(sRet, function (err, result) {
-                                                if (err) {
-                                                    sRet = "";
-                                                } else {
-                                                    if (node.debug) RED.log.error("BANANA SBANANATO XML -> JSON " + JSON.stringify(result));
-                                                    if (result !== null && result !== undefined && result.hasOwnProperty("EventNotificationAlert")) {
-                                                        node.nodeClients.forEach(oClient => {
-                                                            if (result !== undefined) oClient.sendPayload({ topic: oClient.topic || "", payload: result.EventNotificationAlert });
-                                                        });
-                                                    }
-                                                }
-                                            });
+                                            const parser = new XMLParser();
+                                            let result = parser.parse(sRet);
+                                            if (node.debug) RED.log.error("BANANA SBANANATO XML -> JSON " + JSON.stringify(result));
+                                            if (result !== null && result !== undefined && result.hasOwnProperty("EventNotificationAlert")) {
+                                                node.nodeClients.forEach(oClient => {
+                                                    if (result !== undefined) oClient.sendPayload({ topic: oClient.topic || "", payload: result.EventNotificationAlert });
+                                                });
+                                            }
                                         } catch (error) {
                                             sRet = "";
-                                            if (node.debug) RED.log.error("BANANA ERRORE xml2js(sRet, function (err, result) " + error.message || "");
+                                            if (node.debug) RED.log.error("BANANA ERRORE fast-xml-parser(sRet, function (err, result) " + error.message || "");
                                         }
 
                                     } else {
@@ -405,7 +391,7 @@ module.exports = (RED) => {
         //#endregion
 
         // Read zones status and outputs only changed ones
-        // Wrapping the async xml2js to a sync function, for peace of mind
+        // Wrapping the async function, for peace of mind
         async function startZonesStatusReading() {
             try {
 
