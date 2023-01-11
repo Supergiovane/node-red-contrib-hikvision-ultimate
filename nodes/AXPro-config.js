@@ -181,7 +181,7 @@ module.exports = (RED) => {
                 // Do not put Spaghetti in the cold water. Please be sure that water is warm and it's boiling.
                 const encodedPassword = encodePassword(bodyAuth, node.credentials.user, node.credentials.password)
                 // Build the XML body to pass to the alarm panel to login.
-                //const xml2jsEngine = require('xml2js')
+                // const xml2jsEngine = require('xml2js')
                 // const XMLbuilder = new xml2jsEngine.Builder({
                 //     headless: true,
                 //     renderOpts: {
