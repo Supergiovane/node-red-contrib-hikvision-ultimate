@@ -1,5 +1,6 @@
 <script type="text/javascript">
 
+
     RED.nodes.registerType('Hikvision-config', {
         category: 'config',
         defaults: {
@@ -17,6 +18,26 @@
         },
         oneditprepare: function () {
             var node = this;
+
+           
+            // Get the online devices
+            $.getJSON("hikvisionUltimateDiscoverOnlineDevices", (data) => {
+                data.forEach(element => {
+                    $("#node-config-input-discoverOnLineDevices").val(element.DeviceDescription + " IP:" + element.IPv4Address + " " + element.SoftwareVersion + " Port:" + element.HttpPort + "\n" + $("#node-config-input-discoverOnLineDevices").val());
+                });
+
+
+
+            }).error(function (jqXHR, textStatus, errorThrown) {
+                RED.notify("THIS IS YOUR FIRST CAMERA NODE EVER. PLEASE SAVE AND DEPLOY. THEN REOPEN THIS WINDOW AGAIN.",
+                    {
+                        modal: false,
+                        fixed: false,
+                        type: 'warning'
+                    })
+            });
+
+
 
             $("#getinfocam").click(function () {
                 this.value = "Wait...";
@@ -92,7 +113,7 @@
 
         },
         oneditsave: function () {
-           
+
         },
         label: function () {
             return typeof this.name === undefined ? (this.host + ":" + this.port) : this.name + " " + (this.host + ":" + this.port);
@@ -106,6 +127,15 @@
         <br/>
         <br/>        
     </div>
+
+
+    <div class="form-row">
+        <label for="node-config-input-discoverOnLineDevices" >
+            <i class="fa fa-tag"></i> Online Devices
+        </label>
+        <textarea rows="10" id="node-config-input-discoverOnLineDevices" style="width:80%"></textarea>
+    </div>
+
     <div class="form-row">
         <label for="node-config-input-name" >
             <i class="fa fa-tag"></i> Name

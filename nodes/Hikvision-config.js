@@ -1,12 +1,16 @@
 
 module.exports = (RED) => {
 
+    const discoHikvisionDevices = require('./utils/hikDiscovery');
+
     const DigestFetch = require('digest-fetch'); // 04/6/2022 DO NOT UPGRADE TO NODE-FETCH V3, BECAUSE DIGEST-FETCH DOESN'T SUPPORT IT
     const AbortController = require('abort-controller');
     const { XMLParser } = require("fast-xml-parser");
 
     const readableStr = require('stream').Readable;
     const https = require('https');
+
+
 
     function Hikvisionconfig(config) {
         RED.nodes.createNode(this, config)
@@ -25,6 +29,8 @@ module.exports = (RED) => {
         node.heartbeattimerdisconnectionlimit = config.heartbeattimerdisconnectionlimit || 2;
         var controller = null; // AbortController
         var oReadable = new readableStr();
+        node.onLineHikvisionDevicesDiscoverList = null; // 12/01/2023 holds the online devices, used in the HTML
+
 
         node.setAllClientsStatus = ({ fill, shape, text }) => {
             function nextStatus(oClient) {
@@ -96,6 +102,38 @@ module.exports = (RED) => {
                 res.json(err);
             }
         });
+
+        // 14/12/2020 Get the infos from the camera
+        RED.httpAdmin.get("/hikvisionUltimateDiscoverOnlineDevices", RED.auth.needsPermission('Hikvisionconfig.read'), function (req, res) {
+            if (node.onLineHikvisionDevicesDiscoverList === null) {
+                try {
+                    (async () => {
+                        try {
+                            let discoveredDevices = await discoHikvisionDevices.Discover();
+                            try {
+                                res.json(discoveredDevices);
+                                return;
+                            } catch (error) {
+                                res.json(error);
+                                return;
+                            }
+    
+                        } catch (error) {
+                            RED.log.error("Errore hikvisionUltimateDiscoverOnlineDevices " + error.message);
+                            res.json(error);
+                        }
+    
+                    })();
+    
+                } catch (err) {
+                    res.json(err);
+                }
+            } else {
+                res.json(node.onLineHikvisionDevicesDiscoverList)
+            }
+            
+        });
+
 
         // This function starts the heartbeat timer, to detect the disconnection from the server
         node.resetHeartBeatTimer = () => {
