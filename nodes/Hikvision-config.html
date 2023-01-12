@@ -19,14 +19,16 @@
         oneditprepare: function () {
             var node = this;
 
-           
+
             // Get the online devices
             $.getJSON("hikvisionUltimateDiscoverOnlineDevices", (data) => {
-                data.forEach(element => {
-                    $("#node-config-input-discoverOnLineDevices").val(element.DeviceDescription + " IP:" + element.IPv4Address + " " + element.SoftwareVersion + " Port:" + element.HttpPort + "\n" + $("#node-config-input-discoverOnLineDevices").val());
-                });
+                try {
+                    data.forEach(element => {
+                        $("#node-config-input-discoverOnLineDevices").val(element.DeviceDescription + " IP:" + element.IPv4Address + " " + element.SoftwareVersion + " Port:" + element.HttpPort + "\n" + $("#node-config-input-discoverOnLineDevices").val());
+                    });
+                } catch (error) {
 
-
+                }
 
             }).error(function (jqXHR, textStatus, errorThrown) {
                 RED.notify("THIS IS YOUR FIRST CAMERA NODE EVER. PLEASE SAVE AND DEPLOY. THEN REOPEN THIS WINDOW AGAIN.",
