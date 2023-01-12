@@ -4,6 +4,10 @@
 [![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square)](https://www.paypal.me/techtoday) 
 
 <p>
+<b>Version 1.1.1</b> January 2023<br/>
+- NEW: added an online device list in the camera/nvr configuration node, to visually help the user.<br/>
+</p>
+<p>
 <b>Version 1.1.0</b> January 2023<br/>
 - Removed xml2js package and replaced it with fast-xml-parser.<br/>
 - Fixed other memory issues when there are a lot of cameras in the flow.<br/>
