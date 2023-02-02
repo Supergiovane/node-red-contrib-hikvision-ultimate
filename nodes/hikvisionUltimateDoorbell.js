@@ -42,7 +42,7 @@ module.exports = function (RED) {
 			_msg.topic = node.topic;
 			_msg.payload = true;
 			if (_msg.hasOwnProperty("errorDescription")) { node.send([null, _msg]); return; }; // It's a connection error/restore comunication.
-
+			//node.send([_msg, null]);
 			if (_msg.hasOwnProperty("CallerInfo") && _msg.CallerInfo.hasOwnProperty("status")) {
 
 				if (
@@ -54,6 +54,7 @@ module.exports = function (RED) {
 				) {
 					delete _msg._msgid; // To allow objects compare
 					delete node.currentEmittedMSG._msgid; // To allow objects compare
+
 					if (RED.util.compareObjects(node.currentEmittedMSG, _msg)) return; // Omit sending the same notification more than once
 					node.currentEmittedMSG = _msg;
 					// Oputputs only msg that are no "idle"
@@ -116,25 +117,42 @@ module.exports = function (RED) {
 			}
 
 			if (msg.hasOwnProperty("hangUp")) {
-				// Both calls are needed to stop current ring and call
-				
-				// Stop ringing. This stops the APP ringing.
-				// Try with API 2.0
-				node.server.request(node, "DELETE", "/ISAPI/VideoIntercom/ring", "").then(success => {
-					node.setNodeStatus({ fill: "green", shape: "ring", text: "Stop ringing" });
-				}).catch(error => {
-					node.setNodeStatus({ fill: "red", shape: "ring", text: "Error stop ringing " + error.message });
-					RED.log.error("hikvisionUltimateDoorbell: Error stopping ring " + error.message);
-				});
+				try {
+					// Both calls are needed to stop current ring and call
 
-				// Stop current call initiated by the intercom. This stops the intercom call.
-				// Try with API 2.0
-				node.server.request(node, "PUT", "/ISAPI/VideoIntercom/callSignal?format=json", '{"CallSignal":{"cmdType":"hangUp"}}').then(success => {
-					node.setNodeStatus({ fill: "green", shape: "ring", text: "Hang Up" });
-				}).catch(error => {
-					node.setNodeStatus({ fill: "red", shape: "ring", text: "Error hangUp " + error.message });
-					RED.log.error("hikvisionUltimateDoorbell: Error hangUp " + error.message);
-				});
+					// Stop ringing. This stops the APP ringing.
+					// Try with API 2.0, but with some firmware it doesn't work
+					node.server.request(node, "DELETE", "/ISAPI/VideoIntercom/ring", "").then(success => {
+						node.setNodeStatus({ fill: "green", shape: "ring", text: "Stop ringing" });
+					}).catch(error => {
+						node.setNodeStatus({ fill: "red", shape: "ring", text: "Error stop ringing " + error.message });
+						RED.log.error("hikvisionUltimateDoorbell: Error stopping ring " + error.message);
+					});
+
+					// Stop current call initiated by the intercom. This stops the intercom call.
+					// Try with API 2.0
+					setTimeout(() => {
+						//const jHangUp = JSON.stringify(JSON.parse(`{"CallSignal": { "cmdType": "hangUp" } }`));
+						const jHangUp = JSON.parse(JSON.stringify(JSON.parse(`{"CallSignal": {"cmdType": "hangUp"}}`)))
+						node.server.request(node, "PUT", "/ISAPI/VideoIntercom/callSignal?format=json", jHangUp).then(success => {
+							node.setNodeStatus({ fill: "green", shape: "ring", text: "Hang Up" });
+						}).catch(error => {
+							//node.setNodeStatus({ fill: "red", shape: "ring", text: "Error hangUp " + error.message });
+							RED.log.error("hikvisionUltimateDoorbell: Error hangUp " + error.message);
+						});
+						setTimeout(() => {
+							const jReject = JSON.parse(JSON.stringify(JSON.parse(`{"CallSignal": {"cmdType": "reject"}}`)))
+							node.server.request(node, "PUT", "/ISAPI/VideoIntercom/callSignal?format=json", jReject).then(success => {
+								node.setNodeStatus({ fill: "green", shape: "ring", text: "reject" });
+							}).catch(error => {
+								//node.setNodeStatus({ fill: "red", shape: "ring", text: "Error hangUp " + error.message });
+								RED.log.error("hikvisionUltimateDoorbell: Error reject " + error.message);
+							});
+						}, 1000);
+					}, 1000);
+				} catch (error) {
+
+				}
 
 			}
 
