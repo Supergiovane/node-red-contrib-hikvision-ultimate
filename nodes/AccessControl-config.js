@@ -7,7 +7,8 @@ module.exports = (RED) => {
     const https = require('https');
     const fs = require('fs');
     const hikvisionDate = require('./utils/dateManagement');
-
+    const { XMLParser } = require("fast-xml-parser");
+    
     function AccessControlConfig(config) {
         RED.nodes.createNode(this, config)
         var node = this

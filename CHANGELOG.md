@@ -4,7 +4,7 @@
 [![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square)](https://www.paypal.me/techtoday) 
 
 <p>
-<b>Version 1.1.4</b> March 2023<br/>
+<b>Version 1.1.5</b> March 2023<br/>
 - NEW: Added the Access Control Terminal node.<br/>
 </p>
 <p>

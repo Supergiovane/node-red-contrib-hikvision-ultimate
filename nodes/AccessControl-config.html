@@ -31,7 +31,7 @@
                 jManipulate.authentication = $("#node-config-input-authentication").val();
                 sQueryString = "?nodeID=" + node.id + "&params=" + encodeURIComponent(JSON.stringify(jManipulate));
 
-                $.getJSON("hikvisionUltimateGetInfoCamANPR" + sQueryString, (data) => {
+                $.getJSON("hikvisionUltimateAccessControlTerminal" + sQueryString, (data) => {
                     this.value = "Connect";
                     this.disabled = false;
                     if (!data.hasOwnProperty("DeviceInfo")) {
