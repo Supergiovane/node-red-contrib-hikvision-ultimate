@@ -1,0 +1,177 @@
+[
+    {
+        "ShortDescription": "MINOR_ALARMIN_SHORT_CIRCUIT",
+        "Value": "0x400",
+        "Description": "Zone Short Circuit Attempts Alarm"
+    },
+    {
+        "ShortDescription": "MINOR_ALARMIN_BROKEN_CIRCUIT",
+        "Value": "0x401",
+        "Description": "Zone Disconnected Alarm"
+    },
+    {
+        "ShortDescription": "MINOR_ALARMIN_EXCEPTION",
+        "Value": "0x402",
+        "Description": "Zone Exception Alarm"
+    },
+    {
+        "ShortDescription": "MINOR_ALARMIN_RESUME",
+        "Value": "0x403",
+        "Description": "Zone Restored"
+    },
+    {
+        "ShortDescription": "MINOR_HOST_DESMANTLE_ALARM",
+        "Value": "0x404",
+        "Description": "Zone Tampering Alarm"
+    },
+    {
+        "ShortDescription": "MINOR_HOST_DESMANTLE_RESUME",
+        "Value": "0x405",
+        "Description": "Zone Tampering Restored"
+    },
+    {
+        "ShortDescription": "MINOR_CARD_READER_DESMANTLE_ALARM",
+        "Value": "0x406",
+        "Description": "Card Reader Tampering Alarm"
+    },
+    {
+        "ShortDescription": "MINOR_CARD_READER_DESMANTLE_RESUME",
+        "Value": "0x407",
+        "Description": "Card Reader Tampering Restored"
+    },
+    {
+        "ShortDescription": "MINOR_CASE_SENSOR_ALARM",
+        "Value": "0x408",
+        "Description": "Alarm Input Alarm Triggered"
+    },
+    {
+        "ShortDescription": "MINOR_CASE_SENSOR_RESUME",
+        "Value": "0x409",
+        "Description": "Alarm Input Restored"
+    },
+    {
+        "ShortDescription": "MINOR_STRESS_ALARM",
+        "Value": "0x40a",
+        "Description": "Duress Alarm"
+    },
+    {
+        "ShortDescription": "MINOR_OFFLINE_ECENT_NEARLY_FULL",
+        "Value": "0x40b",
+        "Description": "No Memory for Offline Event Storage Alarm"
+    },
+    {
+        "ShortDescription": "MINOR_CARD_MAX_AUTHENTICATE_FAIL",
+        "Value": "0x40c",
+        "Description": "Maximum Failed Card Authentications Alarm"
+    },
+    {
+        "ShortDescription": "MINOR_SD_CARD_FULL",
+        "Value": "0x40d",
+        "Description": "SD Card Full Alarm"
+    },
+    {
+        "ShortDescription": "MINOR_LINKAGE_CAPTURE_PIC",
+        "Value": "0x40e",
+        "Description": "Capture Linkage Alarm"
+    },
+    {
+        "ShortDescription": "MINOR_SECURITY_MODULE_DESMANTLE_ALARM",
+        "Value": "0x40f",
+        "Description": "Secure Door Control Unit Tampering Alarm"
+    },
+    {
+        "ShortDescription": "MINOR_SECURITY_MODULE_DESMANTLE_RESUME",
+        "Value": "0x410",
+        "Description": "Secure Door Control Unit Tampering Restored"
+    },
+    {
+        "ShortDescription": "MINOR_FIRE_IMPORT_SHORT_CIRCUIT",
+        "Value": "0x415",
+        "Description": "Fire Input Short Circuit Attempts Alarm"
+    },
+    {
+        "ShortDescription": "MINOR_FIRE_IMPORT_BROKEN_CIRCUIT",
+        "Value": "0x416",
+        "Description": "Fire Input Open Circuit Attempts Alarm"
+    },
+    {
+        "ShortDescription": "MINOR_FIRE_IMPORT_RESUME",
+        "Value": "0x417",
+        "Description": "Fire Input Restored"
+    },
+    {
+        "ShortDescription": "MINOR_FIRE_BUTTON_TRIGGER",
+        "Value": "0x418",
+        "Description": "Fire Button Triggered"
+    },
+    {
+        "ShortDescription": "MINOR_FIRE_BUTTON_RESUME",
+        "Value": "0x419",
+        "Description": "Fire Button Resumed"
+    },
+    {
+        "ShortDescription": "MINOR_MAINTENANCE_BUTTON_TRIGGER",
+        "Value": "0x41a",
+        "Description": "Maintenance Button Triggered"
+    },
+    {
+        "ShortDescription": "MINOR_MAINTENANCE_BUTTON_RESUME",
+        "Value": "0x41b",
+        "Description": "Maintenance Button Resumed"
+    },
+    {
+        "ShortDescription": "MINOR_EMERGENCY_BUTTON_TRIGGER",
+        "Value": "0x41c",
+        "Description": "Panic Button Triggered"
+    },
+    {
+        "ShortDescription": "MINOR_EMERGENCY_BUTTON_RESUME",
+        "Value": "0x41d",
+        "Description": "Panic Button Resumed"
+    },
+    {
+        "ShortDescription": "MINOR_DISTRACT_CONTROLLER_ALARM",
+        "Value": "0x41e",
+        "Description": "Distributed Elevator Controller Tampering Alarm"
+    },
+    {
+        "ShortDescription": "MINOR_DISTRACT_CONTROLLER_RESUME",
+        "Value": "0x41f",
+        "Description": "Distributed Elevator Controller Tampering Restored"
+    },
+    {
+        "ShortDescription": "MINOR_CHANNEL_CONTROLLER_DESMANTLE_ALARM",
+        "Value": "0x422",
+        "Description": "Lane Controller Tampering Alarm"
+    },
+    {
+        "ShortDescription": "MINOR_CHANNEL_CONTROLLER_DESMANTLE_RESUME",
+        "Value": "0x423",
+        "Description": "Lane Controller Tampering Alarm Restored"
+    },
+    {
+        "ShortDescription": "MINOR_CHANNEL_CONTROLLER_FIRE_IMPORT_ALARM",
+        "Value": "0x424",
+        "Description": "Lane Controller Fire Input Alarm"
+    },
+    {
+        "ShortDescription": "MINOR_CHANNEL_CONTROLLER_FIRE_IMPORT_RESUME",
+        "Value": "0x425",
+        "Description": "Lane Controller Fire Input Alarm Restored"
+    },
+    {
+        "ShortDescription": "MINOR_PRINTER_OUT_OF_PAPER",
+        "Value": "0x440",
+        "Description": "No Paper in Printer Alarm"
+    },
+    {
+        "ShortDescription": "MINOR_LEGAL_EVENT_NEARLY_FULL",
+        "Value": "0x442",
+        "Description": "No Memory Alarm for Valid Offline Event Storage"
+    },
+    {
+        "ShortDescription": "MINOR_ALARM_CUSTOM1 to MINOR_ALARM_CUSTOM64",
+        "Value": "0x900 to 0x93f",
+        "Description": "Access Control: Custom Alarm Event 1 to Custom Alarm Event 64"
+    }
+]

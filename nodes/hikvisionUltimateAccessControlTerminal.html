@@ -1,0 +1,152 @@
+<script type="text/javascript">
+	RED.nodes.registerType('hikvisionUltimateAccessControlTerminal', {
+		category: 'Hikvision Ultimate',
+		color: '#C0C0C0',
+		defaults: {
+			name: { value: "" },
+			topic: { value: "" },
+			server: { type: "AccessControl-config", required: true },
+			filtermajorevent: { value: 0 },
+			filterminorevent: { value: "0" }
+		},
+		inputs: 0,
+		outputs: 2,
+		outputLabels: function (i) {
+			var ret = "";
+			switch (i) {
+				case 0:
+					return "Events";
+					break;
+				case 1:
+					return "Error";
+					break;
+				case 2
+					:
+					return "";
+					break;
+				default:
+					break;
+			}
+		},
+		icon: "font-awesome/fa-user",
+		label:
+			function () {
+				var label = "Access Control Terminal"
+				if (this.name !== undefined && this.name.length > 0) {
+					label = this.name;
+				}
+				return label;
+			},
+		paletteLabel: function () {
+			return "Access Control Terminal";
+		},
+		oneditprepare: function () {
+			var node = this;
+
+			// Filter events
+			// #################################################################
+			function filterReactTo(_val) {
+				var dropdown = $('#node-input-filterminorevent');
+				dropdown.empty();
+
+				// "ALL" main even sets all minor events
+				if (Number(_val) === 0) {
+					dropdown.append(
+						$('<option>', {
+							value: "0",
+							text: "All"
+						}, '</option>'))
+					$('#node-input-filterminorevent').val("0");
+					return;
+				}
+
+				$.getJSON("hikvisionUltimateAccessControlTerminalGetEvents?majorevent=" + _val, (data) => {
+
+					let jEvents = JSON.parse(data);
+					dropdown.append(
+						$('<option>', {
+							value: 0,
+							text: "All"
+						}, '</option>'))
+					for (let index = 0; index < jEvents.length; index++) {
+						const element = jEvents[index];
+						dropdown.append(
+							$('<option>', {
+								value: element.Value,
+								text: element.Description
+							}, '</option>'))
+					}
+					dropdown.val(node.filterminorevent);
+				}).error(function (jqXHR, textStatus, errorThrown) {
+					RED.notify("THIS IS YOUR FIRST ANPR NODE EVER. PLEASE SAVE AND DEPLOY. THEN REOPEN THIS WINDOW AGAIN.",
+						{
+							modal: false,
+							fixed: false,
+							type: 'warning'
+						})
+				});
+			}
+			$("#node-input-filtermajorevent").change(function (e) {
+				filterReactTo(this.value);
+			});
+
+			//filterReactTo($("#node-input-filtermajorevent :selected").val());
+			// #################################################################
+
+		},
+		oneditsave: function () {
+
+		}
+	});
+
+
+</script>
+
+<script type="text/x-red" data-template-name="hikvisionUltimateAccessControlTerminal">
+	<div class="form-row">
+		<b>Access Control Terminal</b>&nbsp&nbsp&nbsp&nbsp<span style="color:red"><i class="fa fa-question-circle"></i>&nbsp<a target="_blank" href="https://github.com/Supergiovane/node-red-contrib-hikvision-ultimate"><u>Help online</u></a></span>
+        <br/>
+		<br/>
+
+		<label for="node-input-server">Server</label>
+		<input type="text" id="node-input-server" />
+	</div>
+	<div class="form-row">
+        <label for="node-input-name"><i class="icon-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+	<div class="form-row">
+        <label for="node-input-topic"><i class="fa fa-tasks"></i> Node topic</label>
+        <input type="text" id="node-input-topic" placeholder="Node's own topic">
+	</div>
+
+	<div class="form-row">
+        <label for="node-input-filtermajorevent"><i class="fa fa-tasks"></i> React to Main Event</label>
+		<select id="node-input-filtermajorevent">
+			<option value=0>All</option>
+			<option value=5>EVENT</option>			
+			<option value=1>ALARM</option>
+			<option value=2>EXCEPTION</option>
+			<option value=3>OPERATION</option>			
+		</select>
+	</div>	
+    <div class="form-row">
+        <label for="node-input-filterminorevent"><i class="fa fa-tasks"></i> and sub Event</label>
+		<select id="node-input-filterminorevent">
+		</select>
+	</div>		
+	
+	
+
+</script>
+
+<script type="text/x-red" data-help-name="hikvisionUltimateAccessControlTerminal">
+	<p>
+        <a href="https://www.paypal.me/techtoday" target="_blank"><img src='https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square' width='30%'></a>
+        
+	</p>
+	<p>
+		The node outputs a JSON with payload containing the events on PIN 1 and a connection ERROR on PIN 2 (true if the node is DISCONNECTED to the server, otherwise false IF IT'S RECONNECTED).
+	</p>
+	
+</script>

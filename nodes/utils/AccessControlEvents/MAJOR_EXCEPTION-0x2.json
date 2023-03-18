@@ -1,0 +1,342 @@
+[
+    {
+        "ShortDescription": "MINOR_NET_BROKEN",
+        "Value": "0x27",
+        "Description": "Network Disconnected"
+    },
+    {
+        "ShortDescription": "MINOR_RS485_DEVICE_ABNORMAL",
+        "Value": "0x3a",
+        "Description": "RS485 Connection Exception"
+    },
+    {
+        "ShortDescription": "MINOR_RS485_DEVICE_REVERT",
+        "Value": "0x3b",
+        "Description": "RS485 Connection Restored"
+    },
+    {
+        "ShortDescription": "MINOR_DEV_POWER_ON",
+        "Value": "0x400",
+        "Description": "Power on"
+    },
+    {
+        "ShortDescription": "MINOR_DEV_POWER_OFF",
+        "Value": "0x401",
+        "Description": "Power off"
+    },
+    {
+        "ShortDescription": "MINOR_WATCH_DOG_RESET",
+        "Value": "0x402",
+        "Description": "Watchdog Reset"
+    },
+    {
+        "ShortDescription": "MINOR_LOW_BATTERY",
+        "Value": "0x403",
+        "Description": "Low Battery Voltage"
+    },
+    {
+        "ShortDescription": "MINOR_BATTERY_RESUME",
+        "Value": "0x404",
+        "Description": "Battery Voltage Restored"
+    },
+    {
+        "ShortDescription": "MINOR_AC_OFF",
+        "Value": "0x405",
+        "Description": "AC Power Disconnected"
+    },
+    {
+        "ShortDescription": "MINOR_AC_RESUME",
+        "Value": "0x406",
+        "Description": "AC Power Restored"
+    },
+    {
+        "ShortDescription": "MINOR_NET_RESUME",
+        "Value": "0x407",
+        "Description": "Network Restored"
+    },
+    {
+        "ShortDescription": "MINOR_FLASH_ABNORMAL",
+        "Value": "0x408",
+        "Description": "Flash Reading and Writing Exception"
+    },
+    {
+        "ShortDescription": "MINOR_CARD_READER_OFFLINE",
+        "Value": "0x409",
+        "Description": "Card Reader Offline"
+    },
+    {
+        "ShortDescription": "MINOR_CAED_READER_RESUME",
+        "Value": "0x40a",
+        "Description": "Card Reader Online"
+    },
+    {
+        "ShortDescription": "MINOR_INDICATOR_LIGHT_OFF",
+        "Value": "0x40b",
+        "Description": "Indicator Turns off"
+    },
+    {
+        "ShortDescription": "MINOR_INDICATOR_LIGHT_RESUME",
+        "Value": "0x40c",
+        "Description": "Indicator Resumed"
+    },
+    {
+        "ShortDescription": "MINOR_CHANNEL_CONTROLLER_OFF",
+        "Value": "0x40d",
+        "Description": "Lane Controller Offline"
+    },
+    {
+        "ShortDescription": "MINOR_CHANNEL_CONTROLLER_RESUME",
+        "Value": "0x40e",
+        "Description": "Lane Controller Online"
+    },
+    {
+        "ShortDescription": "MINOR_SECURITY_MODULE_OFF",
+        "Value": "0x40f",
+        "Description": "Secure Door Control Unit Offline"
+    },
+    {
+        "ShortDescription": "MINOR_SECURITY_MODULE_RESUME",
+        "Value": "0x410",
+        "Description": "Secure Door Control Unit Online"
+    },
+    {
+        "ShortDescription": "MINOR_BATTERY_ELECTRIC_LOW",
+        "Value": "0x411",
+        "Description": "Low Battery Voltage (Only for Face Recognition Terminal)"
+    },
+    {
+        "ShortDescription": "MINOR_BATTERY_ELECTRIC_RESUME",
+        "Value": "0x412",
+        "Description": "Battery Voltage Recovered (Only for Face Recognition Terminal)"
+    },
+    {
+        "ShortDescription": "MINOR_LOCAL_CONTROL_NET_BROKEN",
+        "Value": "0x413",
+        "Description": "Network of Distributed Access Controller Disconnected"
+    },
+    {
+        "ShortDescription": "MINOR_LOCAL_CONTROL_NET_RSUME",
+        "Value": "0x414",
+        "Description": "Network of Distributed Access Controller Restored"
+    },
+    {
+        "ShortDescription": "MINOR_MASTER_RS485_LOOPNODE_BROKEN",
+        "Value": "0x415",
+        "Description": "RS485 Loop of Master Access Controller Disconnected"
+    },
+    {
+        "ShortDescription": "MINOR_MASTER_RS485_LOOPNODE_RESUME",
+        "Value": "0x416",
+        "Description": "RS485 Loop of Master Access Controller Connected"
+    },
+    {
+        "ShortDescription": "MINOR_LOCAL_CONTROL_OFFLINE",
+        "Value": "0x417",
+        "Description": "Distributed Access Controller Offline"
+    },
+    {
+        "ShortDescription": "MINOR_LOCAL_CONTROL_RESUME",
+        "Value": "0x418",
+        "Description": "Distributed Access Controller Online"
+    },
+    {
+        "ShortDescription": "MINOR_LOCAL_DOWNSIDE_RS485_LOOPNODE_BROKEN",
+        "Value": "0x419",
+        "Description": "Downstream RS485 Loop of Distributed Access Control Disconnected"
+    },
+    {
+        "ShortDescription": "MINOR_LOCAL_DOWNSIDE_RS485_LOOPNODE_RESUME",
+        "Value": "0x41a",
+        "Description": "Downstream RS485 Loop of Distributed Access Control Connected"
+    },
+    {
+        "ShortDescription": "MINOR_DISTRACT_CONTROLLER_ONLINE",
+        "Value": "0x41b",
+        "Description": "Distributed Elevator Controller Online"
+    },
+    {
+        "ShortDescription": "MINOR_DISTRACT_CONTROLLER_OFFLINE",
+        "Value": "0x41c",
+        "Description": "Distributed Elevator Controller Offline"
+    },
+    {
+        "ShortDescription": "MINOR_ID_CARD_READER_NOT_CONNECT",
+        "Value": "0x41d",
+        "Description": "ID Card Reader Disconnected"
+    },
+    {
+        "ShortDescription": "MINOR_ID_CARD_READER_RESUME",
+        "Value": "0x41e",
+        "Description": "ID Card Reader Connected"
+    },
+    {
+        "ShortDescription": "MINOR_FINGER_PRINT_MODULE_NOT_CONNECT",
+        "Value": "0x41f",
+        "Description": "Fingerprint Module Disconnected"
+    },
+    {
+        "ShortDescription": "MINOR_FINGER_PRINT_MODULE_RESUME",
+        "Value": "0x420",
+        "Description": "Fingerprint Module Connected"
+    },
+    {
+        "ShortDescription": "MINOR_CAMERA_NOT_CONNECT",
+        "Value": "0x421",
+        "Description": "Camera Disconnected"
+    },
+    {
+        "ShortDescription": "MINOR_CAMERA_RESUME",
+        "Value": "0x422",
+        "Description": "Camera Connected"
+    },
+    {
+        "ShortDescription": "MINOR_COM_NOT_CONNECT",
+        "Value": "0x423",
+        "Description": "COM Port Disconnected"
+    },
+    {
+        "ShortDescription": "MINOR_COM_RESUME",
+        "Value": "0x424",
+        "Description": "COM Port Connected"
+    },
+    {
+        "ShortDescription": "MINOR_DEVICE_NOT_AUTHORIZE",
+        "Value": "0x425",
+        "Description": "Device Unauthorized"
+    },
+    {
+        "ShortDescription": "MINOR_PEOPLE_AND_ID_CARD_DEVICE_ONLINE",
+        "Value": "0x426",
+        "Description": "Face Recognition Terminal Online"
+    },
+    {
+        "ShortDescription": "MINOR_PEOPLE_AND_ID_CARD_DEVICE_OFFLINE",
+        "Value": "0x427",
+        "Description": "Face Recognition Terminal Offline"
+    },
+    {
+        "ShortDescription": "MINOR_LOCAL_LOGIN_LOCK",
+        "Value": "0x428",
+        "Description": "Local Login Lock"
+    },
+    {
+        "ShortDescription": "MINOR_LOCAL_LOGIN_UNLOCK",
+        "Value": "0x429",
+        "Description": "Local Login Unlock"
+    },
+    {
+        "ShortDescription": "MINOR_SUBMARINEBACK_COMM_BREAK",
+        "Value": "0x42a",
+        "Description": "Communication with Anti-passing Back Server Failed"
+    },
+    {
+        "ShortDescription": "MINOR_SUBMARINEBACK_COMM_RESUME",
+        "Value": "0x42b",
+        "Description": "Communication with Anti-passing Back Server Restored"
+    },
+    {
+        "ShortDescription": "MINOR_MOTOR_SENSOR_EXCEPTION",
+        "Value": "0x42c",
+        "Description": "Motor or Sensor Exception"
+    },
+    {
+        "ShortDescription": "MINOR_CAN_BUS_EXCEPTION",
+        "Value": "0x42d",
+        "Description": "CAN Bus Exception"
+    },
+    {
+        "ShortDescription": "MINOR_CAN_BUS_RESUME",
+        "Value": "0x42e",
+        "Description": "CAN Bus Exception Restored"
+    },
+    {
+        "ShortDescription": "MINOR_GATE_TEMPERATURE_OVERRUN",
+        "Value": "0x42f",
+        "Description": "Too High Pedestal Temperature"
+    },
+    {
+        "ShortDescription": "MINOR_IR_EMITTER_EXCEPTION",
+        "Value": "0x430",
+        "Description": "Active Infrared Intrusion Detector Exception"
+    },
+    {
+        "ShortDescription": "MINOR_IR_EMITTER_RESUME",
+        "Value": "0x431",
+        "Description": "Active Infrared Intrusion Detector Restored"
+    },
+    {
+        "ShortDescription": "MINOR_LAMP_BOARD_COMM_EXCEPTION",
+        "Value": "0x432",
+        "Description": "Communication with Light Board Failed"
+    },
+    {
+        "ShortDescription": "MINOR_LAMP_BOARD_COMM_RESUME",
+        "Value": "0x433",
+        "Description": "Communication with Light Board Restored"
+    },
+    {
+        "ShortDescription": "MINOR_IR_ADAPTOR_COMM_EXCEPTION",
+        "Value": "0x434",
+        "Description": "Communication with IR Adaptor Failed"
+    },
+    {
+        "ShortDescription": "MINOR_IR_ADAPTOR_COMM_RESUME",
+        "Value": "0x435",
+        "Description": "Communication with IR Adaptor Restored"
+    },
+    {
+        "ShortDescription": "MINOR_PRINTER_ONLINE",
+        "Value": "0x436",
+        "Description": "Printer Online"
+    },
+    {
+        "ShortDescription": "MINOR_PRINTER_OFFLINE",
+        "Value": "0x437",
+        "Description": "Printer Offline"
+    },
+    {
+        "ShortDescription": "MINOR_4G_MOUDLE_ONLINE",
+        "Value": "0x438",
+        "Description": "4G Module Online"
+    },
+    {
+        "ShortDescription": "MINOR_4G_MOUDLE_OFFLINE",
+        "Value": "0x439",
+        "Description": "4G Module Offline"
+    },
+    {
+        "ShortDescription": "MINOR_AUXILIARY_BOARD_OFFLINE",
+        "Value": "0x43c",
+        "Description": "Auxiliary Board Disconnected"
+    },
+    {
+        "ShortDescription": "MINOR_AUXILIARY_BOARD_RESUME",
+        "Value": "0x43d",
+        "Description": "Auxiliary Board Connected"
+    },
+    {
+        "ShortDescription": "MINOR_IDCARD_SECURITY_MOUDLE_EXCEPTION",
+        "Value": "0x43e",
+        "Description": "Secure ID Card Unit Exception"
+    },
+    {
+        "ShortDescription": "MINOR_IDCARD_SECURITY_MOUDLE_RESUME",
+        "Value": "0x43f",
+        "Description": "Secure ID Card Unit Restored"
+    },
+    {
+        "ShortDescription": "MINOR_FP_PERIPHERAL_EXCEPTION",
+        "Value": "0x440",
+        "Description": "Fingerprint Collection Peripheral Exception"
+    },
+    {
+        "ShortDescription": "MINOR_FP_PERIPHERAL_RESUME",
+        "Value": "0x441",
+        "Description": "Fingerprint Collection Peripheral Restored"
+    },
+    {
+        "ShortDescription": "MINOR_EXCEPTION_CUSTOM1 to MINOR_EXCEPTION_CUSTOM64",
+        "Value": "0x900 to 0x93f",
+        "Description": "Access Control: Custom Exception Event 1 to Custom Exception Event 64"
+    }
+]

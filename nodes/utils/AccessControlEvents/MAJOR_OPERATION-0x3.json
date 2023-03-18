@@ -1,0 +1,262 @@
+[
+    {
+        "ShortDescription": "MINOR_LOCAL_LOGIN",
+        "Value": "0x50",
+        "Description": "Local Login"
+    },
+    {
+        "ShortDescription": "MINOR_LOCAL_LOGOUT",
+        "Value": "0x51",
+        "Description": "Local Logout"
+    },
+    {
+        "ShortDescription": "MINOR_LOCAL_UPGRADE",
+        "Value": "0x5a",
+        "Description": "Local Upgrade"
+    },
+    {
+        "ShortDescription": "MINOR_REMOTE_LOGIN",
+        "Value": "0x70",
+        "Description": "Remote Login"
+    },
+    {
+        "ShortDescription": "MINOR_REMOTE_LOGOUT",
+        "Value": "0x71",
+        "Description": "Remote Logout"
+    },
+    {
+        "ShortDescription": "MINOR_REMOTE_ARM",
+        "Value": "0x79",
+        "Description": "Remote Arming"
+    },
+    {
+        "ShortDescription": "MINOR_REMOTE_DISARM",
+        "Value": "0x7a",
+        "Description": "Remote Disarming"
+    },
+    {
+        "ShortDescription": "MINOR_REMOTE_REBOOT",
+        "Value": "0x7b",
+        "Description": "Remote Reboot"
+    },
+    {
+        "ShortDescription": "MINOR_REMOTE_UPGRADE",
+        "Value": "0x7e",
+        "Description": "Remote Upgrade"
+    },
+    {
+        "ShortDescription": "MINOR_REMOTE_CFGFILE_OUTPUT",
+        "Value": "0x86",
+        "Description": "Remote Operation: Export Configuration File"
+    },
+    {
+        "ShortDescription": "MINOR_REMOTE_CFGFILE_INTPUT",
+        "Value": "0x87",
+        "Description": "Remote Operation: Import Configuration File"
+    },
+    {
+        "ShortDescription": "MINOR_REMOTE_ALARMOUT_OPEN_MAN",
+        "Value": "0xd6",
+        "Description": "Remote Operation: Enable Alarm Output Manually"
+    },
+    {
+        "ShortDescription": "MINOR_REMOTE_ALARMOUT_CLOSE_MAN",
+        "Value": "0xd7",
+        "Description": "Remote Operation: Disable Alarm Output Manually"
+    },
+    {
+        "ShortDescription": "MINOR_REMOTE_OPEN_DOOR",
+        "Value": "0x400",
+        "Description": "Door Remotely Open"
+    },
+    {
+        "ShortDescription": "MINOR_REMOTE_CLOSE_DOOR",
+        "Value": "0x401",
+        "Description": "Door Remotely Closed"
+    },
+    {
+        "ShortDescription": "MINOR_REMOTE_ALWAYS_OPEN",
+        "Value": "0x402",
+        "Description": "Remain Open Remotely"
+    },
+    {
+        "ShortDescription": "MINOR_REMOTE_ALWAYS_CLOSE",
+        "Value": "0x403",
+        "Description": "Remain Closed Remotely"
+    },
+    {
+        "ShortDescription": "MINOR_REMOTE_CHECK_TIME",
+        "Value": "0x404",
+        "Description": "Remote: Manual Time Sync"
+    },
+    {
+        "ShortDescription": "MINOR_NTP_CHECK_TIME",
+        "Value": "0x405",
+        "Description": "Network Time Protocol Synchronization"
+    },
+    {
+        "ShortDescription": "MINOR_REMOTE_CLEAR_CARD",
+        "Value": "0x406",
+        "Description": "Remote Operation: Clear All Card No."
+    },
+    {
+        "ShortDescription": "MINOR_REMOTE_RESTORE_CFG",
+        "Value": "0x407",
+        "Description": "Remote Operation: Restore Defaults"
+    },
+    {
+        "ShortDescription": "MINOR_ALARMIN_ARM",
+        "Value": "0x408",
+        "Description": "Zone Arming"
+    },
+    {
+        "ShortDescription": "MINOR_ALARMIN_DISARM",
+        "Value": "0x409",
+        "Description": "Zone Disarming"
+    },
+    {
+        "ShortDescription": "MINOR_LOCAL_RESTORE_CFG",
+        "Value": "0x40a",
+        "Description": "Local Operation: Restore Defaults"
+    },
+    {
+        "ShortDescription": "MINOR_REMOTE_CAPTURE_PIC",
+        "Value": "0x40b",
+        "Description": "Remote Operation: Capture"
+    },
+    {
+        "ShortDescription": "MINOR_MOD_NET_REPORT_CFG",
+        "Value": "0x40c",
+        "Description": "Edit Network Parameters"
+    },
+    {
+        "ShortDescription": "MINOR_MOD_GPRS_REPORT_PARAM",
+        "Value": "0x40d",
+        "Description": "Edit GPRS Parameters"
+    },
+    {
+        "ShortDescription": "MINOR_MOD_REPORT_GROUP_PARAM",
+        "Value": "0x40e",
+        "Description": "Edit Control Center Parameters"
+    },
+    {
+        "ShortDescription": "MINOR_UNLOCK_PASSWORD_OPEN_DOOR",
+        "Value": "0x40f",
+        "Description": "Enter Dismiss Code"
+    },
+    {
+        "ShortDescription": "MINOR_AUTO_RENUMBER",
+        "Value": "0x410",
+        "Description": "Auto Renumber"
+    },
+    {
+        "ShortDescription": "MINOR_AUTO_COMPLEMENT_NUMBER",
+        "Value": "0x411",
+        "Description": "Auto Supplement Number"
+    },
+    {
+        "ShortDescription": "MINOR_NORMAL_CFGFILE_INPUT",
+        "Value": "0x412",
+        "Description": "Import Configuration File"
+    },
+    {
+        "ShortDescription": "MINOR_NORMAL_CFGFILE_OUTTPUT",
+        "Value": "0x413",
+        "Description": "Export Configuration File"
+    },
+    {
+        "ShortDescription": "MINOR_CARD_RIGHT_INPUT",
+        "Value": "0x414",
+        "Description": "Import Card Permission Parameters"
+    },
+    {
+        "ShortDescription": "MINOR_CARD_RIGHT_OUTTPUT",
+        "Value": "0x415",
+        "Description": "Export Card Permission Parameters"
+    },
+    {
+        "ShortDescription": "MINOR_LOCAL_USB_UPGRADE",
+        "Value": "0x416",
+        "Description": "Upgrade Device via USB flash Drive"
+    },
+    {
+        "ShortDescription": "MINOR_REMOTE_VISITOR_CALL_LADDER",
+        "Value": "0x417",
+        "Description": "Visitor Calling Elevator"
+    },
+    {
+        "ShortDescription": "MINOR_REMOTE_HOUSEHOLD_CALL_LADDER",
+        "Value": "0x418",
+        "Description": "Resident Calling Elevator"
+    },
+    {
+        "ShortDescription": "MINOR_REMOTE_ACTUAL_GUARD",
+        "Value": "0x419",
+        "Description": "Remotely Arming"
+    },
+    {
+        "ShortDescription": "MINOR_REMOTE_ACTUAL_UNGUARD",
+        "Value": "0x41a",
+        "Description": "Remotely Disarming"
+    },
+    {
+        "ShortDescription": "MINOR_REMOTE_CONTROL_NOT_CODE_OPER_FAILED",
+        "Value": "0x41b",
+        "Description": "Operation Failed: Keyfob Not Pairing"
+    },
+    {
+        "ShortDescription": "MINOR_REMOTE_CONTROL_CLOSE_DOOR",
+        "Value": "0x41c",
+        "Description": "Keyfob Operation: Close Door"
+    },
+    {
+        "ShortDescription": "MINOR_REMOTE_CONTROL_OPEN_DOOR",
+        "Value": "0x41d",
+        "Description": "Keyfob Operation: Open Door"
+    },
+    {
+        "ShortDescription": "MINOR_REMOTE_CONTROL_ALWAYS_OPEN_DOOR",
+        "Value": "0x41e",
+        "Description": "Keyfob Operation: Remain Door Open"
+    },
+    {
+        "ShortDescription": "MINOR_M1_CARD_ENCRYPT_VERIFY_OPEN",
+        "Value": "0x41f",
+        "Description": "M1 Card Encryption Verification Enabled"
+    },
+    {
+        "ShortDescription": "MINOR_M1_CARD_ENCRYPT_VERIFY_CLOSE",
+        "Value": "0x420",
+        "Description": "M1 Card Encryption Verification Disabled"
+    },
+    {
+        "ShortDescription": "MINOR_NFC_FUNCTION_OPEN",
+        "Value": "0X421",
+        "Description": "Opening Door with NFC Card Enabled"
+    },
+    {
+        "ShortDescription": "MINOR_NFC_FUNCTION_CLOSE",
+        "Value": "0X422",
+        "Description": "Opening Door with NFC Card Disabled"
+    },
+    {
+        "ShortDescription": "MINOR_OFFLINE_DATA_OUTPUT",
+        "Value": "0x423",
+        "Description": "Export Offline Collected Data"
+    },
+    {
+        "ShortDescription": "MINOR_CREATE_SSH_LINK",
+        "Value": "0x42d",
+        "Description": "Establish SSH Connection"
+    },
+    {
+        "ShortDescription": "MINOR_CLOSE_SSH_LINK",
+        "Value": "0x42e",
+        "Description": "Disconnect SSH Connection"
+    },
+    {
+        "ShortDescription": "MINOR_OPERATION_CUSTOM1 to MINOR_OPERATION_CUSTOM64",
+        "Value": "0x900-0x93f",
+        "Description": "Access Control: Custom Operation Event 1 to Custom Operation Event 64"
+    }
+]

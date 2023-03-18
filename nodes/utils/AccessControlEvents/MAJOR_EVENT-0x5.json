@@ -1,0 +1,647 @@
+[
+    {
+        "ShortDescription": "MINOR_LEGAL_CARD_PASS",
+        "Value": "0x01",
+        "Description": "Valid Card Authentication Completed"
+    },
+    {
+        "ShortDescription": "MINOR_CARD_AND_PSW_PASS",
+        "Value": "0x02",
+        "Description": "Card and Password Authentication Completed"
+    },
+    {
+        "ShortDescription": "MINOR_CARD_AND_PSW_FAIL",
+        "Value": "0x03",
+        "Description": "Card and Password Authentication Failed"
+    },
+    {
+        "ShortDescription": "MINOR_CARD_AND_PSW_TIMEOUT",
+        "Value": "0x04",
+        "Description": "Card and Password Authentication Timed Out"
+    },
+    {
+        "ShortDescription": "MINOR_CARD_AND_PSW_OVER_TIME",
+        "Value": "0x05",
+        "Description": "Card and Password Authentication Timed Out"
+    },
+    {
+        "ShortDescription": "MINOR_CARD_NO_RIGHT",
+        "Value": "0x06",
+        "Description": "No Permission"
+    },
+    {
+        "ShortDescription": "MINOR_CARD_INVALID_PERIOD",
+        "Value": "0x07",
+        "Description": "Invalid Card Swiping Time Period"
+    },
+    {
+        "ShortDescription": "MINOR_CARD_OUT_OF_DATE",
+        "Value": "0x08",
+        "Description": "Expired Card"
+    },
+    {
+        "ShortDescription": "MINOR_INVALID_CARD",
+        "Value": "0x09",
+        "Description": "Card No. Not Exist"
+    },
+    {
+        "ShortDescription": "MINOR_ANTI_SNEAK_FAIL",
+        "Value": "0x0a",
+        "Description": "Anti-passing Back Authentication Failed"
+    },
+    {
+        "ShortDescription": "MINOR_INTERLOCK_DOOR_NOT_CLOSE",
+        "Value": "0x0b",
+        "Description": "Interlocking Door Not Closed"
+    },
+    {
+        "ShortDescription": "MINOR_NOT_BELONG_MULTI_GROUP",
+        "Value": "0x0c",
+        "Description": "Card Not in Multiple Authentication Group"
+    },
+    {
+        "ShortDescription": "MINOR_INVALID_MULTI_VERIFY_PERIOD",
+        "Value": "0x0d",
+        "Description": "Card Not in Multiple Authentication Duration"
+    },
+    {
+        "ShortDescription": "MINOR_MULTI_VERIFY_SUPER_RIGHT_FAIL",
+        "Value": "0x0e",
+        "Description": "Multiple Authentications: Super Password Authentication Failed"
+    },
+    {
+        "ShortDescription": "MINOR_MULTI_VERIFY_REMOTE_RIGHT_FAIL",
+        "Value": "0x0f",
+        "Description": "Multiple Authentication Completed"
+    },
+    {
+        "ShortDescription": "MINOR_MULTI_VERIFY_SUCCESS",
+        "Value": "0x10",
+        "Description": "Multiple Authenticated"
+    },
+    {
+        "ShortDescription": "MINOR_LEADER_CARD_OPEN_BEGIN",
+        "Value": "0x11",
+        "Description": "Open Door with First Card Started"
+    },
+    {
+        "ShortDescription": "MINOR_LEADER_CARD_OPEN_END",
+        "Value": "0x12",
+        "Description": "Open Door with First Card Stopped"
+    },
+    {
+        "ShortDescription": "MINOR_ALWAYS_OPEN_BEGIN",
+        "Value": "0x13",
+        "Description": "Remain Open Started"
+    },
+    {
+        "ShortDescription": "MINOR_ALWAYS_OPEN_END",
+        "Value": "0x14",
+        "Description": "Remain Open Stopped"
+    },
+    {
+        "ShortDescription": "MINOR_LOCK_OPEN",
+        "Value": "0x15",
+        "Description": "Door Unlocked"
+    },
+    {
+        "ShortDescription": "MINOR_LOCK_CLOSE",
+        "Value": "0x16",
+        "Description": "Door Locked"
+    },
+    {
+        "ShortDescription": "MINOR_DOOR_BUTTON_PRESS",
+        "Value": "0x17",
+        "Description": "Exit Button Pressed"
+    },
+    {
+        "ShortDescription": "MINOR_DOOR_BUTTON_RELEASE",
+        "Value": "0x18",
+        "Description": "Exit Button Released"
+    },
+    {
+        "ShortDescription": "MINOR_DOOR_OPEN_NORMAL",
+        "Value": "0x19",
+        "Description": "Door Open (Contact)"
+    },
+    {
+        "ShortDescription": "MINOR_DOOR_CLOSE_NORMAL",
+        "Value": "0x1a",
+        "Description": "Door Closed (Contact)"
+    },
+    {
+        "ShortDescription": "MINOR_DOOR_OPEN_ABNORMAL",
+        "Value": "0x1b",
+        "Description": "Door Abnormally Open (Contact)"
+    },
+    {
+        "ShortDescription": "MINOR_DOOR_OPEN_TIMEOUT",
+        "Value": "0x1c",
+        "Description": "Door Open Timed Out (Contact)"
+    },
+    {
+        "ShortDescription": "MINOR_ALARMOUT_ON",
+        "Value": "0x1d",
+        "Description": "Alarm Output Enabled"
+    },
+    {
+        "ShortDescription": "MINOR_ALARMOUT_OFF",
+        "Value": "0x1e",
+        "Description": "Alarm Output Disabled"
+    },
+    {
+        "ShortDescription": "MINOR_ALWAYS_CLOSE_BEGIN",
+        "Value": "0x1f",
+        "Description": "Remain Closed Started"
+    },
+    {
+        "ShortDescription": "MINOR_ALWAYS_CLOSE_END",
+        "Value": "0x20",
+        "Description": "Remain Closed Stopped"
+    },
+    {
+        "ShortDescription": "MINOR_MULTI_VERIFY_NEED_REMOTE_OPEN",
+        "Value": "0x21",
+        "Description": "Multiple Authentications: Remotely Open Door"
+    },
+    {
+        "ShortDescription": "MINOR_MULTI_VERIFY_SUPERPASSWD_VERIFY_SUCCESS",
+        "Value": "0x22",
+        "Description": "Multiple Authentications: Super Password Authentication Completed"
+    },
+    {
+        "ShortDescription": "MINOR_MULTI_VERIFY_REPEAT_VERIFY",
+        "Value": "0x23",
+        "Description": "Multiple Authentications: Repeated Authentication"
+    },
+    {
+        "ShortDescription": "MINOR_MULTI_VERIFY_TIMEOUT",
+        "Value": "0x24",
+        "Description": "Multiple Authentications Timed Out"
+    },
+    {
+        "ShortDescription": "MINOR_DOORBELL_RINGING",
+        "Value": "0x25",
+        "Description": "Doorbell Ring"
+    },
+    {
+        "ShortDescription": "MINOR_FINGERPRINT_COMPARE_PASS",
+        "Value": "0x26",
+        "Description": "Fingerprint Matched"
+    },
+    {
+        "ShortDescription": "MINOR_FINGERPRINT_COMPARE_FAIL",
+        "Value": "0x27",
+        "Description": "Fingerprint Mismatched"
+    },
+    {
+        "ShortDescription": "MINOR_CARD_FINGERPRINT_VERIFY_PASS",
+        "Value": "0x28",
+        "Description": "Card and Fingerprint Authentication Completed"
+    },
+    {
+        "ShortDescription": "MINOR_CARD_FINGERPRINT_VERIFY_FAIL",
+        "Value": "0x29",
+        "Description": "Card and Fingerprint Authentication Failed"
+    },
+    {
+        "ShortDescription": "MINOR_CARD_FINGERPRINT_VERIFY_TIMEOUT",
+        "Value": "0x2a",
+        "Description": "Card and Fingerprint Authentication Timed Out"
+    },
+    {
+        "ShortDescription": "MINOR_CARD_FINGERPRINT_PASSWD_VERIFY_PASS",
+        "Value": "0x2b",
+        "Description": "Card and Fingerprint and Password Authentication Completed"
+    },
+    {
+        "ShortDescription": "MINOR_CARD_FINGERPRINT_PASSWD_VERIFY_FAIL",
+        "Value": "0x2c",
+        "Description": "Card and Fingerprint and Password Authentication Failed"
+    },
+    {
+        "ShortDescription": "MINOR_CARD_FINGERPRINT_PASSWD_VERIFY_TIMEOUT",
+        "Value": "0x2d",
+        "Description": "Card and Fingerprint and Password Authentication Timed Out"
+    },
+    {
+        "ShortDescription": "MINOR_FINGERPRINT_PASSWD_VERIFY_PASS",
+        "Value": "0x2e",
+        "Description": "Fingerprint and Password Authentication Completed"
+    },
+    {
+        "ShortDescription": "MINOR_FINGERPRINT_PASSWD_VERIFY_FAIL",
+        "Value": "0x2f",
+        "Description": "Fingerprint and Password Authentication Failed"
+    },
+    {
+        "ShortDescription": "MINOR_FINGERPRINT_PASSWD_VERIFY_TIMEOUT",
+        "Value": "0x30",
+        "Description": "Fingerprint and Password Authentication Timed Out"
+    },
+    {
+        "ShortDescription": "MINOR_FINGERPRINT_INEXISTENCE",
+        "Value": "0x31",
+        "Description": "Fingerprint Not Exists"
+    },
+    {
+        "ShortDescription": "MINOR_CARD_PLATFORM_VERIFY",
+        "Value": "0x32",
+        "Description": "Card Platform Authentication"
+    },
+    {
+        "ShortDescription": "MINOR_CALL_CENTER",
+        "Value": "0x33",
+        "Description": "Call Center"
+    },
+    {
+        "ShortDescription": "MINOR_FIRE_RELAY_TURN_ON_DOOR_ALWAYS_OPEN",
+        "Value": "0x34",
+        "Description": "Fire Relay Closed: Door Remains Open"
+    },
+    {
+        "ShortDescription": "MINOR_FIRE_RELAY_RECOVER_DOOR_RECOVER_NORMAL",
+        "Value": "0x35",
+        "Description": "Fire Relay Opened: Door Remains Closed"
+    },
+    {
+        "ShortDescription": "MINOR_EMPLOYEENO_AND_FP_VERIFY_PASS",
+        "Value": "0x45",
+        "Description": "Employee ID and Fingerprint Authentication Completed"
+    },
+    {
+        "ShortDescription": "MINOR_EMPLOYEENO_AND_FP_VERIFY_FAIL",
+        "Value": "0x46",
+        "Description": "Employee ID and Fingerprint Authentication Failed"
+    },
+    {
+        "ShortDescription": "MINOR_EMPLOYEENO_AND_FP_VERIFY_TIMEOUT",
+        "Value": "0x47",
+        "Description": "Employee ID and Fingerprint Authentication Timed Out"
+    },
+    {
+        "ShortDescription": "MINOR_EMPLOYEENO_AND_FP_AND_PW_VERIFY_PASS",
+        "Value": "0x48",
+        "Description": "Employee ID and Fingerprint and Password Authentication Completed"
+    },
+    {
+        "ShortDescription": "MINOR_EMPLOYEENO_AND_FP_AND_PW_VERIFY_FAIL",
+        "Value": "0x49",
+        "Description": "Employee ID and Fingerprint and Password Authentication Failed"
+    },
+    {
+        "ShortDescription": "MINOR_EMPLOYEENO_AND_FP_AND_PW_VERIFY_TIMEOUT",
+        "Value": "0x4a",
+        "Description": "Employee ID and Fingerprint and Password Authentication Timed Out"
+    },
+    {
+        "ShortDescription": "MINOR_FACE_VERIFY_PASS",
+        "Value": "0x4b",
+        "Description": "Face Authentication Completed"
+    },
+    {
+        "ShortDescription": "MINOR_FACE_VERIFY_FAIL",
+        "Value": "0x4c",
+        "Description": "Face Authentication Failed"
+    },
+    {
+        "ShortDescription": "MINOR_EMPLOYEENO_AND_FACE_VERIFY_PASS",
+        "Value": "0x4d",
+        "Description": "Employee ID and Face Authentication Completed"
+    },
+    {
+        "ShortDescription": "MINOR_EMPLOYEENO_AND_FACE_VERIFY_FAIL",
+        "Value": "0x4e",
+        "Description": "Employee ID and Face Authentication Failed"
+    },
+    {
+        "ShortDescription": "MINOR_EMPLOYEENO_AND_FACE_VERIFY_TIMEOUT",
+        "Value": "0x4f",
+        "Description": "Employee ID and Face Authentication Timed Out"
+    },
+    {
+        "ShortDescription": "MINOR_FACE_RECOGNIZE_FAIL",
+        "Value": "0x50",
+        "Description": "Face Recognition Failed"
+    },
+    {
+        "ShortDescription": "MINOR_FIRSTCARD_AUTHORIZE_BEGIN",
+        "Value": "0x51",
+        "Description": "First Card Authorization Started"
+    },
+    {
+        "ShortDescription": "MINOR_FIRSTCARD_AUTHORIZE_END",
+        "Value": "0x52",
+        "Description": "First Card Authorization Ended"
+    },
+    {
+        "ShortDescription": "MINOR_DOORLOCK_INPUT_SHORT_CIRCUIT",
+        "Value": "0x53",
+        "Description": "Lock Input Short Circuit Attempts Alarm"
+    },
+    {
+        "ShortDescription": "MINOR_DOORLOCK_INPUT_BROKEN_CIRCUIT",
+        "Value": "0x54",
+        "Description": "Lock Input Open Circuit Attempts Alarm"
+    },
+    {
+        "ShortDescription": "MINOR_DOORLOCK_INPUT_EXCEPTION",
+        "Value": "0x55",
+        "Description": "Lock Input Exception Alarm"
+    },
+    {
+        "ShortDescription": "MINOR_DOORCONTACT_INPUT_SHORT_CIRCUIT",
+        "Value": "0x56",
+        "Description": "Contact Input Short Circuit Attempts Alarm"
+    },
+    {
+        "ShortDescription": "MINOR_DOORCONTACT_INPUT_BROKEN_CIRCUIT",
+        "Value": "0x57",
+        "Description": "Contact Input Open Circuit Attempts Alarm"
+    },
+    {
+        "ShortDescription": "MINOR_DOORCONTACT_INPUT_EXCEPTION",
+        "Value": "0x58",
+        "Description": "Contact Input Exception Alarm"
+    },
+    {
+        "ShortDescription": "MINOR_OPENBUTTON_INPUT_SHORT_CIRCUIT",
+        "Value": "0x59",
+        "Description": "Exit Button Input Short Circuit Attempts Alarm"
+    },
+    {
+        "ShortDescription": "MINOR_OPENBUTTON_INPUT_BROKEN_CIRCUIT",
+        "Value": "0x5a",
+        "Description": "Exit Button Input Open Circuit Attempts Alarm"
+    },
+    {
+        "ShortDescription": "MINOR_OPENBUTTON_INPUT_EXCEPTION",
+        "Value": "0x5b",
+        "Description": "Exit Button Input Exception Alarm"
+    },
+    {
+        "ShortDescription": "MINOR_DOORLOCK_OPEN_EXCEPTION",
+        "Value": "0x5c",
+        "Description": "Unlocking Exception"
+    },
+    {
+        "ShortDescription": "MINOR_DOORLOCK_OPEN_TIMEOUT",
+        "Value": "0x5d",
+        "Description": "Unlocking Timed Out"
+    },
+    {
+        "ShortDescription": "MINOR_FIRSTCARD_OPEN_WITHOUT_AUTHORIZE",
+        "Value": "0x5e",
+        "Description": "Unauthorized First Card Opening Failed"
+    },
+    {
+        "ShortDescription": "MINOR_CALL_LADDER_RELAY_BREAK",
+        "Value": "0x5f",
+        "Description": "Call Elevator Relay Open"
+    },
+    {
+        "ShortDescription": "MINOR_CALL_LADDER_RELAY_CLOSE",
+        "Value": "0x60",
+        "Description": "Call Elevator Relay Closed"
+    },
+    {
+        "ShortDescription": "MINOR_AUTO_KEY_RELAY_BREAK",
+        "Value": "0x61",
+        "Description": "Auto Button Relay Open"
+    },
+    {
+        "ShortDescription": "MINOR_AUTO_KEY_RELAY_CLOSE",
+        "Value": "0x62",
+        "Description": "Auto Button Relay Closed"
+    },
+    {
+        "ShortDescription": "MINOR_KEY_CONTROL_RELAY_BREAK",
+        "Value": "0x63",
+        "Description": "Button Relay Open"
+    },
+    {
+        "ShortDescription": "MINOR_KEY_CONTROL_RELAY_CLOSE",
+        "Value": "0x64",
+        "Description": "Button Relay Closed"
+    },
+    {
+        "ShortDescription": "MINOR_EMPLOYEENO_AND_PW_PASS",
+        "Value": "0x65",
+        "Description": "Employee ID and Password Authentication Completed"
+    },
+    {
+        "ShortDescription": "MINOR_EMPLOYEENO_AND_PW_FAIL",
+        "Value": "0x66",
+        "Description": "Employee ID and Password Authentication Failed"
+    },
+    {
+        "ShortDescription": "MINOR_EMPLOYEENO_AND_PW_TIMEOUT",
+        "Value": "0x67",
+        "Description": "Employee ID and Password Authentication Timed Out"
+    },
+    {
+        "ShortDescription": "MINOR_CERTIFICATE_BLACK_LIST",
+        "Value": "0x71",
+        "Description": "Blacklist Event"
+    },
+    {
+        "ShortDescription": "MINOR_LEGAL_MESSAGE",
+        "Value": "0x72",
+        "Description": "Valid Message"
+    },
+    {
+        "ShortDescription": "MINOR_ILLEGAL_MESSAGE",
+        "Value": "0x73",
+        "Description": "Invalid Message"
+    },
+    {
+        "ShortDescription": "MINOR_DOOR_OPEN_OR_DORMANT_FAIL",
+        "Value": "0x75",
+        "Description": "Authentication Failed: Door Remain Closed or Door in Sleeping Mode"
+    },
+    {
+        "ShortDescription": "MINOR_AUTH_PLAN_DORMANT_FAIL",
+        "Value": "0x76",
+        "Description": "Authentication Failed: Authentication Schedule in Sleeping Mode"
+    },
+    {
+        "ShortDescription": "MINOR_CARD_ENCRYPT_VERIFY_FAIL",
+        "Value": "0x77",
+        "Description": "Card Encryption Verification Failed"
+    },
+    {
+        "ShortDescription": "MINOR_SUBMARINEBACK_REPLY_FAIL",
+        "Value": "0x78",
+        "Description": "Anti-passing Back Server Response Failed"
+    },
+    {
+        "ShortDescription": "MINOR_DOOR_OPEN_OR_DORMANT_OPEN_FAIL",
+        "Value": "0x82",
+        "Description": "Open Door via Exit Button Failed When Door Remain Closed or in Sleeping Mode"
+    },
+    {
+        "ShortDescription": "MINOR_DOOR_OPEN_OR_DORMANT_LINKAGE_OPEN_FAIL",
+        "Value": "0x84",
+        "Description": "Door Linkage Open Failed During Door Remain Close or Sleeping"
+    },
+    {
+        "ShortDescription": "MINOR_TRAILING",
+        "Value": "0x85",
+        "Description": "Tailgating"
+    },
+    {
+        "ShortDescription": "MINOR_REVERSE_ACCESS",
+        "Value": "0x86",
+        "Description": "Reverse Passing"
+    },
+    {
+        "ShortDescription": "MINOR_FORCE_ACCESS",
+        "Value": "0x87",
+        "Description": "Force Accessing"
+    },
+    {
+        "ShortDescription": "MINOR_CLIMBING_OVER_GATE",
+        "Value": "0x88",
+        "Description": "Climb Over"
+    },
+    {
+        "ShortDescription": "MINOR_PASSING_TIMEOUT",
+        "Value": "0x89",
+        "Description": "Passing Timed Out"
+    },
+    {
+        "ShortDescription": "MINOR_INTRUSION_ALARM",
+        "Value": "0x8a",
+        "Description": "Intrusion Alarm"
+    },
+    {
+        "ShortDescription": "MINOR_FREE_GATE_PASS_NOT_AUTH",
+        "Value": "0x8b",
+        "Description": "Authentication Failed When Free Passing"
+    },
+    {
+        "ShortDescription": "MINOR_DROP_ARM_BLOCK",
+        "Value": "0x8c",
+        "Description": "Barrier Obstructed"
+    },
+    {
+        "ShortDescription": "MINOR_DROP_ARM_BLOCK_RESUME",
+        "Value": "0x8d",
+        "Description": "Barrier Restored"
+    },
+    {
+        "ShortDescription": "MINOR_PASSWORD_MISMATCH",
+        "Value": "0x97",
+        "Description": "Passwords Mismatched"
+    },
+    {
+        "ShortDescription": "MINOR_EMPLOYEE_NO_NOT_EXIST",
+        "Value": "0x98",
+        "Description": "Employee ID Not Exists"
+    },
+    {
+        "ShortDescription": "MINOR_COMBINED_VERIFY_PASS",
+        "Value": "0x99",
+        "Description": "Combined Authentication Completed"
+    },
+    {
+        "ShortDescription": "MINOR_COMBINED_VERIFY_TIMEOUT",
+        "Value": "0x9a",
+        "Description": "Combined Authentication Timed Out"
+    },
+    {
+        "ShortDescription": "MINOR_VERIFY_MODE_MISMATCH",
+        "Value": "0x9b",
+        "Description": "Authentication Type Mismatched"
+    },
+    {
+        "ShortDescription": "MINOR_INFORMAL_MIFARE_CARD_VERIFY_FAIL",
+        "Value": "0xa2",
+        "Description": "Authentication Failed: Invalid Mifare Card"
+    },
+    {
+        "ShortDescription": "MINOR_CPU_CARD_ENCRYPT_VERIFY_FAIL",
+        "Value": "0xa3",
+        "Description": "Verifying CPU Card Encryption Failed"
+    },
+    {
+        "ShortDescription": "MINOR_NFC_DISABLE_VERIFY_FAIL",
+        "Value": "0xa4",
+        "Description": "Disabling NFC Verification Failed"
+    },
+    {
+        "ShortDescription": "MINOR_EM_CARD_RECOGNIZE_NOT_ENABLED",
+        "Value": "0xa8",
+        "Description": "EM Card Recognition Disabled"
+    },
+    {
+        "ShortDescription": "MINOR_M1_CARD_RECOGNIZE_NOT_ENABLED",
+        "Value": "0xa9",
+        "Description": "M1 Card Recognition Disabled"
+    },
+    {
+        "ShortDescription": "MINOR_CPU_CARD_RECOGNIZE_NOT_ENABLED",
+        "Value": "0xaa",
+        "Description": "CPU Card Recognition Disabled"
+    },
+    {
+        "ShortDescription": "MINOR_ID_CARD_RECOGNIZE_NOT_ENABLED",
+        "Value": "0xab",
+        "Description": "ID Card Recognition Disabled"
+    },
+    {
+        "ShortDescription": "MINOR_CARD_SET_SECRET_KEY_FAIL",
+        "Value": "0xac",
+        "Description": "Importing Key to Card Failed"
+    },
+    {
+        "ShortDescription": "MINOR_LOCAL_UPGRADE_FAIL",
+        "Value": "0xad",
+        "Description": "Local Upgrade Failed"
+    },
+    {
+        "ShortDescription": "MINOR_REMOTE_UPGRADE_FAIL",
+        "Value": "0xae",
+        "Description": "Remote Upgrade Failed"
+    },
+    {
+        "ShortDescription": "MINOR_REMOTE_EXTEND_MODULE_UPGRADE_SUCC",
+        "Value": "0xaf",
+        "Description": "Extension Module is Remotely Upgraded"
+    },
+    {
+        "ShortDescription": "MINOR_REMOTE_EXTEND_MODULE_UPGRADE_FAIL",
+        "Value": "0xb0",
+        "Description": "Upgrading Extension Module Remotely Failed"
+    },
+    {
+        "ShortDescription": "MINOR_REMOTE_FINGER_PRINT_MODULE_UPGRADE_SUCC",
+        "Value": "0xb1",
+        "Description": "Fingerprint Module is Remotely Upgraded"
+    },
+    {
+        "ShortDescription": "MINOR_REMOTE_FINGER_PRINT_MODULE_UPGRADE_FAIL",
+        "Value": "0xb2",
+        "Description": "Upgrading Fingerprint Module Remotely Failed"
+    },
+    {
+        "ShortDescription": "MINOR_DYNAMICCODE_VERIFY_PASS",
+        "Value": "0xb3",
+        "Description": "Dynamic Verification Code Authenticated"
+    },
+    {
+        "ShortDescription": "MINOR_DYNAMICCODE_VERIFY_FAIL",
+        "Value": "0xb4",
+        "Description": "Authentication with Verification Code Failed"
+    },
+    {
+        "ShortDescription": "MINOR_PASSWD_VERIFY_PASS",
+        "Value": "0xb5",
+        "Description": "Password Authenticated"
+    },
+    {
+        "ShortDescription": "MINOR_EVENT_CUSTOM1 to MINOR_EVENT_CUSTOM64",
+        "Value": "0x500 to 0x53f",
+        "Description": "Access Control: Custom Event 1 to Custom Event 64"
+    }
+]

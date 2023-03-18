@@ -1,0 +1,152 @@
+<script type="text/javascript">
+    RED.nodes.registerType('AccessControl-config', {
+        category: 'config',
+        defaults: {
+            host: { value: "", required: true },
+            port: { value: 80, required: true, validate: RED.validators.number() },
+            name: { value: "Access Control Terminal" },
+            protocol: { value: "http" },
+            deviceinfo: { value: {} },
+            authentication: { value: "digest" }
+        },
+        credentials: {
+            user: { type: "text" },
+            password: { type: "password" }
+        },
+        oneditprepare: function () {
+            var node = this;
+
+            $("#getinfocam").click(function () {
+                this.value = "Wait...";
+                this.disabled = true;
+                // If the node is newly created, the backend cannot get the infos, so i must pass each parameter back
+                var sQueryString = "";
+                var jManipulate = {};
+                // Read all data needed to backend to call the camera URL
+                jManipulate.host = $("#node-config-input-host").val();
+                jManipulate.port = $("#node-config-input-port").val();
+                jManipulate.protocol = $("#node-config-input-protocol").val();
+                jManipulate.user = $("#node-config-input-user").val();
+                jManipulate.password = $("#node-config-input-password").val();
+                jManipulate.authentication = $("#node-config-input-authentication").val();
+                sQueryString = "?nodeID=" + node.id + "&params=" + encodeURIComponent(JSON.stringify(jManipulate));
+
+                $.getJSON("hikvisionUltimateGetInfoCamANPR" + sQueryString, (data) => {
+                    this.value = "Connect";
+                    this.disabled = false;
+                    if (!data.hasOwnProperty("DeviceInfo")) {
+                        RED.notify("Problem reading the informations from camera: " + JSON.stringify(data) + ". Check your credentials and connection properties.",
+                            {
+                                modal: false,
+                                fixed: false,
+                                type: 'warning'
+                            });
+                        return;
+                    }
+                    $("#node-config-input-name").val(data.DeviceInfo.deviceName);
+                    $("#node-config-input-deviceinfo").val(JSON.stringify(data));
+                    $("#labeldeviceinfo").html("<b>DEVICE INFORMATION</b><br/>Name: <b>" + data.DeviceInfo.deviceName + "</b><br/>Model: <b>" + data.DeviceInfo.model + "</b><br/>Firmware: <b>" + data.DeviceInfo.firmwareVersion + "</b>");
+                    // var myNotification = RED.notify("Can i inform the developer, that the device " + data.DeviceInfo.model + " works with this node? This will help other users.",
+                    //     {
+                    //         modal: true,
+                    //         fixed: true,
+                    //         type: 'info',
+                    //         buttons: [
+                    //             {
+                    //                 text: "YES",
+                    //                 click: function (e) {
+                    //                     // Send the infos to Supergiovane
+                    //                     $.getJSON("http://80.211.147.27:8080?read=false&md=" + encodeURIComponent(data.DeviceInfo.model) + "&fw=" + encodeURIComponent(data.DeviceInfo.firmwareVersion), (data) => {
+
+                    //                     }).error(function (jqXHR, textStatus, errorThrown) {
+
+                    //                     });
+                    //                     myNotification.close();
+                    //                 }
+                    //             },
+                    //             {
+                    //                 text: "NO",
+                    //                 click: function (e) {
+                    //                     myNotification.close();
+                    //                 }
+                    //             }]
+                    //     });
+                }).error(function (jqXHR, textStatus, errorThrown) {
+                    RED.notify("THIS IS YOUR FIRST ANPR NODE EVER. PLEASE SAVE AND DEPLOY. THEN REOPEN THIS WINDOW AGAIN.",
+                        {
+                            modal: false,
+                            fixed: false,
+                            type: 'warning'
+                        })
+                });
+            });
+
+            var dati = JSON.parse(this.deviceinfo);
+            if (dati !== null && dati !== {}) {
+                $("#labeldeviceinfo").html("<b>LAST DEVICE INFORMATION SAVED</b><br/>Name: <b>" + dati.DeviceInfo.deviceName + "</b><br/>Model: <b>" + dati.DeviceInfo.model + "</b><br/>Firmware: <b>" + dati.DeviceInfo.firmwareVersion + "</b>");
+            }
+
+        },
+        oneditsave: function () {
+        },
+        label: function () {
+            return typeof this.name === undefined ? (this.host + ":" + this.port) : this.name + " " + (this.host + ":" + this.port);
+        }
+    });
+</script>
+
+<script type="text/x-red" data-template-name="AccessControl-config">
+    <div class="form-row">
+        <b>ANPR server config</b>&nbsp&nbsp&nbsp&nbsp<span style="color:red"><i class="fa fa-question-circle"></i>&nbsp<a target="_blank" href="https://github.com/Supergiovane/node-red-contrib-hikvision-ultimate"><u>Help online</u></a></span>
+        <br/>
+		<br/>
+    
+    <div class="form-row">
+        <label for="node-config-input-name" >
+            <i class="fa fa-tag"></i> Name
+        </label>
+        <input type="text" id="node-config-input-name" placeholder="Name">
+      
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-host">
+            <i class="fa fa-server"></i> Server IP
+        </label>
+        <input type="text" id="node-config-input-host" placeholder="">
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-port"> Port</label>
+        <input type="text" id="node-config-input-port" placeholder="">
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-protocol"><i class="fa fa-sign-in"></i> Protocol</label>
+        <select type="text" id="node-config-input-protocol">
+        <option value="http">Http</option>
+        <option value="https">Https</option>
+        </select>
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-user"> Username</label>
+        <input type="text" id="node-config-input-user" placeholder="">
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-password"> Password</label>
+        <input type="password" id="node-config-input-password" placeholder="">
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-authentication"><i class="fa fa-sign-in"></i> Authentication</label>
+        <select type="text" id="node-config-input-authentication">
+        <option value="digest">Digest</option>
+        <option value="basic">Basic</option>
+        </select>
+    </div>
+    <div class="form-row">
+        <label><i class="fa fa-sign-in"></i> Get info</label>
+        <input type="button" id="getinfocam" class="ui-button ui-corner-all ui-widget" style="background-color:#AEE1FF;width:150px" value="Connect">
+    </div>
+    <div class="form-row">
+        <img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/info.png' width="10%">
+        <div><p id="labeldeviceinfo">No Device info present. Please click CONNECT to retrieve the infos.</p></div>
+        <input type="hidden" id="node-config-input-deviceinfo" placeholder="">
+    </div>
+</script>

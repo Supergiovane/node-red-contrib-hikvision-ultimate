@@ -4,6 +4,10 @@
 [![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square)](https://www.paypal.me/techtoday) 
 
 <p>
+<b>Version 1.1.4</b> March 2023<br/>
+- NEW: Added the Access Control Terminal node.<br/>
+</p>
+<p>
 <b>Version 1.1.2</b> January 2023<br/>
 - FIX: trying to fix the "reject" and "hangUp" function, sent to Door Station using the new V2 protocol.<br/>
 </p>
