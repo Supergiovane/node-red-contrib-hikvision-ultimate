@@ -4,7 +4,7 @@
 [![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square)](https://www.paypal.me/techtoday) 
 
 <p>
-<b>Version 1.1.7</b> March 2023<br/>
+<b>Version 1.1.8</b> March 2023<br/>
 - Access Control Node: added eventdescription in the payload message.<br/>
 </p>
 <p>

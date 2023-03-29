@@ -306,7 +306,7 @@ module.exports = (RED) => {
                                         oClient.sendPayload({ topic: oClient.topic || "", payload: oACTCurrentEvent, connected: true });
                                     })
                                 } else {
-                                    RED.log.info("AccessControl-config: Discarted old event in oEvents.AcsEvent.InfoList:" + JSON.stringify(oACTCurrentEvent));
+                                    if (node.debug) RED.log.info("AccessControl-config: Discarded old event in oEvents.AcsEvent.InfoList:" + JSON.stringify(oACTCurrentEvent));
                                 }
                             }
                         }
