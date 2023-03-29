@@ -29,12 +29,12 @@ module.exports = function (RED) {
 						if (Number(_msg.payload.minor) === node.filterminorevent) {
 							node.send([_msg, null]);
 							setTimeout(() => {
-								node.setNodeStatus({ fill: "green", shape: "dot", text: "Event " + _msg.payload.major + "-" + _msg.payload.minor });
+								node.setNodeStatus({ fill: "green", shape: "dot", text: "Event " + _msg.payload.eventDescription });
 							}, 1000);
 						} else {
 							try {
 								setTimeout(() => {
-									node.setNodeStatus({ fill: "red", shape: "dot", text: "Filtered " + _msg.payload.major + "-" + _msg.payload.minor });
+									node.setNodeStatus({ fill: "grey", shape: "dot", text: "Filtered " + _msg.payload.eventDescription });
 								}, 500);
 							} catch (error) { }
 							return;
@@ -42,7 +42,7 @@ module.exports = function (RED) {
 					} else {
 						node.send([_msg, null]);
 						setTimeout(() => {
-							node.setNodeStatus({ fill: "green", shape: "dot", text: "Event " + _msg.payload.major + "-" + _msg.payload.minor });
+							node.setNodeStatus({ fill: "green", shape: "dot", text: "Event " + _msg.payload.eventDescription });
 						}, 1000);
 					}
 				}
@@ -50,7 +50,7 @@ module.exports = function (RED) {
 				node.send([_msg, null]);
 				try {
 					setTimeout(() => {
-						node.setNodeStatus({ fill: "green", shape: "dot", text: "Event " + _msg.payload.major + "-" + _msg.payload.minor });
+						node.setNodeStatus({ fill: "green", shape: "dot", text: "Event " + _msg.payload.eventDescription });
 					}, 1000);
 				} catch (error) { }
 			}

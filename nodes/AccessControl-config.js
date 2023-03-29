@@ -18,7 +18,6 @@ module.exports = (RED) => {
         node.protocol = config.protocol || "http";
         node.nodeClients = []; // Stores the registered clients
         node.isConnected = true; // Assume it's connected, to signal the disconnection on start
-        node.lastACTEventTime = ""; // Used for querying the devices for events.
         node.lastACTEventSerialNo = 0; // This contains the evend number. It's an unique counter, that the device gives to the event, to didentify it and check for missing events.
         node.errorDescription = ""; // Contains the error description in case of connection error.
         node.authentication = config.authentication || "digest";
@@ -111,28 +110,26 @@ module.exports = (RED) => {
 
 
         // Function to get the plate list from the camera
-        async function getACTEvents(_lastDateTime) {
-
-            if (_lastDateTime == undefined || _lastDateTime == null || _lastDateTime == "") return null;
+        async function getACTEvents() {
 
             var client;
             if (node.authentication === "digest") client = new DigestFetch(node.credentials.user, node.credentials.password); // Instantiate the fetch client.
             if (node.authentication === "basic") client = new DigestFetch(node.credentials.user, node.credentials.password, { basic: true }); // Instantiate the fetch client.
 
-            // Add 1 second to the last date
-            var dt = new Date(_lastDateTime);
-            dt.setUTCSeconds(dt.getUTCSeconds() + 1);
-            _lastDateTime = hikvisionDate.toHikvisionISODateString(dt);
+            // // Add 1 second to the last date
+            // var dt = new Date(_lastDateTime);
+            // dt.setUTCSeconds(dt.getUTCSeconds() + 1);
+            // _lastDateTime = hikvisionDate.toHikvisionISODateString(dt);
 
 
             var jSonSearch = {
                 "AcsEventCond": {
-                    "searchID": node.id.toString() + _lastDateTime,
+                    "searchID": node.id.toString() + new Date().toISOString(),
                     "searchResultPosition": 0,
-                    "maxResults": 20,
+                    "maxResults": 15,
                     "major": 0,
                     "minor": 0,
-                    "startTime": _lastDateTime,
+                    //"startTime": _lastDateTime,
                     //"endTime": "2023-03-18T23:59:59",
                     "timeReverseOrder": true
                 }
@@ -223,36 +220,31 @@ module.exports = (RED) => {
 
         };
 
-        // 30/01/2021 From a list of plates, returns the most recent picname
-        async function returnMostRecentEventTimeFromList(_ACTEvents) {
-
-            // Sets the default to be returned in case of error
-            // Format: 2023-03-18T00:00:00
-            let d = new Date();
-            let sRet = (d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2) + "-" + ("0" + d.getDate()).slice(-2) + "T" + ("0" + d.getHours()).slice(-2) + ":" + ("0" + d.getMinutes()).slice(-2) + ":" + ("0" + d.getSeconds()).slice(-2)).toString();
-
+        // 29/03/2023 Return the last serialNo (serialNo is the unique event counter received from the device)
+        async function returnMostRecentEventSerialNoFromList(_ACTEvents) {
             // Is there events? 
-            if (_ACTEvents.AcsEvent.InfoList.length > 0) {
-                // No  list
-                node.setAllClientsStatus({ fill: "grey", shape: "ring", text: "Found " + _ACTEvents.AcsEvent.InfoList.length + " old events." });
-                return _ACTEvents.AcsEvent.InfoList[0].time.toString();
-            } else {
-                // Return default today
-                return sRet;
-            };
-
+            try {
+                let iRet = Number(_ACTEvents.AcsEvent.InfoList[0].serialNo || 0);
+                setTimeout(() => {
+                    node.setAllClientsStatus({ fill: "grey", shape: "ring", text: "Last event number: " + iRet });
+                }, 1000);
+                return iRet;
+            } catch (error) {
+                // Return default
+                return 0;
+            }
         }
+
+
 
         // At start, reads the last recognized plate and starts listening from the time last plate was recognized.
         // This avoid output all the previoulsy plate list, stored by the camera.
         node.initACTEventReader = () => {
-
             (async () => {
 
                 var oEvents = null;
                 try {
-                    // Get current time in format 2023-03-18T00:00:00
-                    oEvents = await getACTEvents("2023-03-18T00:00:00");
+                    oEvents = await getACTEvents();
                 } catch (error) {
                     oEvents = null;
                 }
@@ -260,10 +252,8 @@ module.exports = (RED) => {
                 if (oEvents === null) {
                     setTimeout(node.initACTEventReader, 10000); // Restart initPlateReader
                 } else {
-                    // console.log("BANANA STRIGONE " + JSON.stringify(oEvents))
                     try {
-                        node.lastACTEventTime = await returnMostRecentEventTimeFromList(oEvents);
-                        //console.log("lastPicName:" + node.lastACTEventTime);
+                        node.lastACTEventSerialNo = await returnMostRecentEventSerialNoFromList(oEvents);
                     } catch (error) {
                         setTimeout(node.initACTEventReader, 10000); // Restart initPlateReader
                         return;
@@ -275,56 +265,58 @@ module.exports = (RED) => {
         };
 
         node.queryForACTEvents = () => {
-            // console.log("BANANA queryForPlates");
-            if (node.lastACTEventTime === "") {
-                // Should not be here!
-                node.setAllClientsStatus({ fill: "red", shape: "ring", text: "Cacchio, non dovrei essere qui." });
-                if (node.isConnected) {
-                    node.nodeClients.forEach(oClient => {
-                        oClient.sendPayload({ topic: oClient.topic || "", payload: null, connected: false });
-                    })
+            (async () => {
+                var oEvents = null;
+                try {
+                    oEvents = await getACTEvents();
+                } catch (error) {
+                    oEvents = null;
                 }
-                node.isConnected = false;
-                setTimeout(node.initACTEventReader, 10000); // Restart whole process.
-            } else {
-                (async () => {
-                    var oEvents = null;
-                    try {
-                        oEvents = await getACTEvents(node.lastACTEventTime);
-                    } catch (error) {
-                        oEvents = null;
-                    }
 
-                    if (oEvents === null) {
-                        // An error was occurred.
-                        setTimeout(node.initACTEventReader, 10000); // Restart initPlateReader from scratch
-                    } else {
-                        if (oEvents.AcsEvent.hasOwnProperty("InfoList")) {
-                            // If i have have the first item having the same node.lastACTEventTime, then it is the same as previously requested, so exit
-                            if (Array.isArray(oEvents.AcsEvent.InfoList) && oEvents.AcsEvent.InfoList.length > 0 && (Date.parse(node.lastACTEventTime) < Date.parse(oEvents.AcsEvent.InfoList[0].time))) {
-                                // Send the message to the child nodes
-                                for (let index = oEvents.AcsEvent.InfoList.length - 1; index >= 0; index--) {
-                                    const oACTCurrentEvent = oEvents.AcsEvent.InfoList[index];
-                                    if (node.lastACTEventSerialNo < Number(oACTCurrentEvent.serialNo || 0)) {
-                                        // Set the last event time, for querying the device next time
-                                        node.lastACTEventTime = oACTCurrentEvent.time;
-                                        // Set the last serialNo (serialNo is the unique event counter received from the device)
-                                        node.lastACTEventSerialNo = Number(oACTCurrentEvent.serialNo || 0);
-                                        node.nodeClients.forEach(oClient => {
-                                            oClient.sendPayload({ topic: oClient.topic || "", payload: oACTCurrentEvent, connected: true });
-                                        })
-                                    } else {
-                                        RED.log.info("AccessControl-config: Discarted old event in oEvents.AcsEvent.InfoList:" + JSON.stringify(oACTCurrentEvent));
+                if (oEvents === null) {
+                    // An error was occurred.
+                    setTimeout(node.initACTEventReader, 10000); // Restart initPlateReader from scratch
+                } else {
+                    if (oEvents.AcsEvent.hasOwnProperty("InfoList")) {
+                        if (Array.isArray(oEvents.AcsEvent.InfoList) && oEvents.AcsEvent.InfoList.length > 0) {
+                            // Send the message to the child nodes
+                            for (let index = oEvents.AcsEvent.InfoList.length - 1; index >= 0; index--) {
+                                let oACTCurrentEvent = oEvents.AcsEvent.InfoList[index];
+                                if (node.lastACTEventSerialNo < Number(oACTCurrentEvent.serialNo || 0)) { // Get only events past the last
+                                    // Set the last serialNo (serialNo is the unique event counter received from the device)
+                                    node.lastACTEventSerialNo = Number(oACTCurrentEvent.serialNo || 0);
+
+                                    // 29/03/2023 Add event descriptor
+                                    try {
+                                        let majorEvent = Number(oACTCurrentEvent.major);// Retrieve major event id
+                                        let minorEvent = parseInt(oACTCurrentEvent.minor).toString(16);// Retrieve major event id
+                                        let jDesc = {};
+                                        let descMajor = "";
+                                        let descMinor = "";
+                                        if (majorEvent === 1) jDesc = MAJOR_ALARM01; descMajor = "ALARM";
+                                        if (majorEvent === 2) jDesc = MAJOR_EXCEPTION02; descMajor = "EXCEPTION";
+                                        if (majorEvent === 3) jDesc = MAJOR_OPERATION03; descMajor = "OPERATION";
+                                        if (majorEvent === 5) jDesc = MAJOR_EVENT05; descMajor = "EVENT";
+                                        descMinor = jDesc.find(a => a.Value === '0x' + minorEvent).Description;
+                                        oACTCurrentEvent.eventDescription = '(' + descMajor + ') ' + descMinor;
+                                    } catch (error) {
+                                        oACTCurrentEvent.eventDescription = "unknown event: " + error.message;
                                     }
+                                    node.nodeClients.forEach(oClient => {
+                                        oClient.sendPayload({ topic: oClient.topic || "", payload: oACTCurrentEvent, connected: true });
+                                    })
+                                } else {
+                                    RED.log.info("AccessControl-config: Discarted old event in oEvents.AcsEvent.InfoList:" + JSON.stringify(oACTCurrentEvent));
                                 }
                             }
-                        } else {
-                            // No new events found
                         }
-                        setTimeout(node.queryForACTEvents, 2000); // Call the function again.
+                    } else {
+                        // No new events found
                     }
-                })();
-            }
+                    setTimeout(node.queryForACTEvents, 2000); // Call the function again.
+                }
+            })();
+
         };
 
         // Start!

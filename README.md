@@ -830,6 +830,7 @@ This is an example of payload.</br>
       "doorNo":1,
       "type":0,
       "serialNo":735,
+      "eventDescription":"(EVENT) Door Ulock",
       "currentVerifyMode":"faceOrFpOrCardOrPw"
    },
    "connected":true
