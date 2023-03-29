@@ -8,7 +8,7 @@ module.exports = (RED) => {
     const fs = require('fs');
     const hikvisionDate = require('./utils/dateManagement');
     const { XMLParser } = require("fast-xml-parser");
-    
+
     function AccessControlConfig(config) {
         RED.nodes.createNode(this, config)
         var node = this
@@ -18,7 +18,8 @@ module.exports = (RED) => {
         node.protocol = config.protocol || "http";
         node.nodeClients = []; // Stores the registered clients
         node.isConnected = true; // Assume it's connected, to signal the disconnection on start
-        node.lastACTEventTime = "";
+        node.lastACTEventTime = ""; // Used for querying the devices for events.
+        node.lastACTEventSerialNo = 0; // This contains the evend number. It's an unique counter, that the device gives to the event, to didentify it and check for missing events.
         node.errorDescription = ""; // Contains the error description in case of connection error.
         node.authentication = config.authentication || "digest";
         var controller = null; // Abortcontroller
@@ -126,9 +127,9 @@ module.exports = (RED) => {
 
             var jSonSearch = {
                 "AcsEventCond": {
-                    "searchID": node.id.toString(),
+                    "searchID": node.id.toString() + _lastDateTime,
                     "searchResultPosition": 0,
-                    "maxResults": 100,
+                    "maxResults": 20,
                     "major": 0,
                     "minor": 0,
                     "startTime": _lastDateTime,
@@ -304,14 +305,18 @@ module.exports = (RED) => {
                                 // Send the message to the child nodes
                                 for (let index = oEvents.AcsEvent.InfoList.length - 1; index >= 0; index--) {
                                     const oACTCurrentEvent = oEvents.AcsEvent.InfoList[index];
-                                    node.lastACTEventTime = oACTCurrentEvent.time;
-                                    node.nodeClients.forEach(oClient => {
-                                        oClient.sendPayload({ topic: oClient.topic || "", payload: oACTCurrentEvent, connected: true });
-                                    })
+                                    if (node.lastACTEventSerialNo < Number(oACTCurrentEvent.serialNo || 0)) {
+                                        // Set the last event time, for querying the device next time
+                                        node.lastACTEventTime = oACTCurrentEvent.time;
+                                        // Set the last serialNo (serialNo is the unique event counter received from the device)
+                                        node.lastACTEventSerialNo = Number(oACTCurrentEvent.serialNo || 0);
+                                        node.nodeClients.forEach(oClient => {
+                                            oClient.sendPayload({ topic: oClient.topic || "", payload: oACTCurrentEvent, connected: true });
+                                        })
+                                    } else {
+                                        RED.log.info("AccessControl-config: Discarted old event in oEvents.AcsEvent.InfoList:" + JSON.stringify(oACTCurrentEvent));
+                                    }
                                 }
-
-                                // Set the picname of the most recent plate in this filtered list
-                                //node.lastACTEventTime = await returnMostRecentEventTimeFromList(oEvents);
                             }
                         } else {
                             // No new events found

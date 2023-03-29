@@ -4,6 +4,10 @@
 [![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square)](https://www.paypal.me/techtoday) 
 
 <p>
+<b>Version 1.1.6</b> March 2023<br/>
+- Optimization/bugfix to Access Control Terminal, node event handling after NTP time set.<br/>
+</p>
+<p>
 <b>Version 1.1.5</b> March 2023<br/>
 - NEW: Added the Access Control Terminal node.<br/>
 </p>

@@ -28,6 +28,9 @@ module.exports = function (RED) {
 					if (node.filterminorevent > 0) {
 						if (Number(_msg.payload.minor) === node.filterminorevent) {
 							node.send([_msg, null]);
+							setTimeout(() => {
+								node.setNodeStatus({ fill: "green", shape: "dot", text: "Event " + _msg.payload.major + "-" + _msg.payload.minor });
+							}, 1000);
 						} else {
 							try {
 								setTimeout(() => {
@@ -38,16 +41,20 @@ module.exports = function (RED) {
 						}
 					} else {
 						node.send([_msg, null]);
+						setTimeout(() => {
+							node.setNodeStatus({ fill: "green", shape: "dot", text: "Event " + _msg.payload.major + "-" + _msg.payload.minor });
+						}, 1000);
 					}
 				}
 			} else {
 				node.send([_msg, null]);
+				try {
+					setTimeout(() => {
+						node.setNodeStatus({ fill: "green", shape: "dot", text: "Event " + _msg.payload.major + "-" + _msg.payload.minor });
+					}, 1000);
+				} catch (error) { }
 			}
-			try {
-				setTimeout(() => {
-					node.setNodeStatus({ fill: "green", shape: "dot", text: "Event " + _msg.payload.major + "-" + _msg.payload.minor });
-				}, 1000);
-			} catch (error) { }
+
 
 		}
 
