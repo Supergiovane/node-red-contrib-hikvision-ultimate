@@ -168,6 +168,8 @@ module.exports = (RED) => {
                     var body = "";
                     body = await response.text();
                     var oEvents = JSON.parse(body.toString());
+                    // 31/03/2023 Order by serialNo (because the events are not really ordered by the device)
+                    oEvents.AcsEvent.InfoList = oEvents.AcsEvent.InfoList.sort((a, b) => b.serialNo - a.serialNo); // Reverse order
                     // console.log("BANANA AccessControlTerminal: " + sRet);
                     try {
 
