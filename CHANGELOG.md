@@ -4,6 +4,10 @@
 [![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square)](https://www.paypal.me/techtoday) 
 
 <p>
+<b>Version 1.1.10</b> Mai 2023<br/>
+- ANPR Node: workarounded hiccup in some hik firmwares, prematurely aborting the connection.<br/>
+</p>
+<p>
 <b>Version 1.1.9</b> April 2023<br/>
 - FIX: Access Control Node: workarounded bug in some hik firmwares, not correctly sorting the events received.<br/>
 </p>

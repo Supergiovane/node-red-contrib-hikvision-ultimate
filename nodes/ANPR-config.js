@@ -128,7 +128,7 @@ module.exports = (RED) => {
 
                 // The following properties are node-fetch extensions
                 follow: 20,         // maximum redirect count. 0 to not follow redirect
-                timeout: 15000,         // req/res timeout in ms, it resets on redirect. 0 to disable (OS limit applies). Signal is recommended instead.
+                timeout: 5000,         // req/res timeout in ms, it resets on redirect. 0 to disable (OS limit applies). Signal is recommended instead.
                 compress: false,     // support gzip/deflate content encoding. false to disable
                 size: 0,            // maximum response body size in bytes. 0 to disable
                 agent: node.protocol === "https" ? customHttpsAgent : null        // http(s).Agent instance or function that returns an instance (see below)
@@ -156,6 +156,18 @@ module.exports = (RED) => {
                             const parser = new XMLParser();
                             try {
                                 let result = parser.parse(sRet);
+                                try {
+                                    // 21/05/2023 The result must always be an array
+                                    if (!Array.isArray(result.Plates.Plate) && result.Plates.hasOwnProperty("Plate")) {
+                                        // There is 1 element, that i must transform in an array
+                                        let a = new Array(1);
+                                        a[0] = result.Plates.Plate;
+                                        delete result.Plates.Plate;
+                                        result.Plates.Plate = a;
+                                    }
+                                } catch (error) {
+                                    oPlates = result;
+                                }
                                 oPlates = result;
                             } catch (error) {
                                 oPlates = null;
@@ -219,7 +231,7 @@ module.exports = (RED) => {
             } catch (err) {
                 // Main Error
                 node.errorDescription = err.message || " unknown error";
-                node.setAllClientsStatus({ fill: "grey", shape: "ring", text: "Server unreachable: " + node.errorDescription + " Retry..." });
+                node.setAllClientsStatus({ fill: "grey", shape: "ring", text: node.errorDescription + " Retry..." });
                 if (node.isConnected) {
                     node.nodeClients.forEach(oClient => {
                         oClient.sendPayload({ topic: oClient.topic || "", errorDescription: node.errorDescription, payload: true });
@@ -238,7 +250,7 @@ module.exports = (RED) => {
         };
 
         // 30/01/2021 From a list of plates, returns the most recent picname
-        async function returnMostRecentPicnameFromList(_PlatesObject) {
+        async function returnMostRecentPicnameFromList(_PlatesObject, _updateNodeStatusText) {
 
             // Sets the default to be returned in case of error
             let d = new Date();
@@ -248,7 +260,7 @@ module.exports = (RED) => {
             if (!_PlatesObject.Plates.hasOwnProperty("Plate")) {
                 // No plate list
                 // No previously plates found, set a default datetime
-                node.setAllClientsStatus({ fill: "grey", shape: "ring", text: "No previously plates found." });
+                if (_updateNodeStatusText) node.setAllClientsStatus({ fill: "grey", shape: "ring", text: "No previously plates found." });
                 return sRet;
             };
 
@@ -259,7 +271,7 @@ module.exports = (RED) => {
                 // con stessa targa, stesso orario vecchio, ecc..
                 // Ovviamente il picname è diventato quello vecchio lì, quindi, visto che appena 2 targhe prima c'era la mia, mi ha aperto il cancello
                 // Pick up the last plate by the most recent datetime instead of by the last item in the list (format 202001010101010000)
-                node.setAllClientsStatus({ fill: "grey", shape: "ring", text: "Found " + _PlatesObject.Plates.Plate.length + " old plates." });
+                if (_updateNodeStatusText) node.setAllClientsStatus({ fill: "grey", shape: "ring", text: "Found " + _PlatesObject.Plates.Plate.length + " old plates." });
 
                 try {
                     let nMostRecent = 0;
@@ -282,11 +294,11 @@ module.exports = (RED) => {
                 // It's a single plate
                 try {
                     sRet = _PlatesObject.Plates.Plate.picName;
-                    node.setAllClientsStatus({ fill: "grey", shape: "ring", text: "Found 1 ignored plates. It's " + sRet });
+                    if (_updateNodeStatusText) node.setAllClientsStatus({ fill: "grey", shape: "ring", text: "Found 1 ignored plates. It's " + sRet });
                 } catch (error) {
                     // Some sort of error, set the lastpicname with the current dateteim
                     sRet = (d.getFullYear() + ("0" + (d.getMonth() + 1)).slice(-2) + ("0" + d.getDate()).slice(-2) + ("0" + d.getHours()).slice(-2) + ("0" + d.getMinutes()).slice(-2) + ("0" + d.getSeconds()).slice(-2) + "0000").toString();
-                    node.setAllClientsStatus({ fill: "red", shape: "ring", text: "Error in initplates. Set lastPicName to " + sRet });
+                    if (_updateNodeStatusText) node.setAllClientsStatus({ fill: "red", shape: "ring", text: "Error in initplates. Set lastPicName to " + sRet });
                     RED.log.error("Hikvision-Ultimate: ANPR-config: initPlateReader: Error in initplates. Set lastPicName to " + sRet + ". " + error.message);
                 }
             }
@@ -312,14 +324,14 @@ module.exports = (RED) => {
                 } else {
                     // console.log("BANANA STRIGONE " + JSON.stringify(oPlates))
                     try {
-                        node.lastPicName = await returnMostRecentPicnameFromList(oPlates);
+                        node.lastPicName = await returnMostRecentPicnameFromList(oPlates, true);
                         //console.log("lastPicName:" + node.lastPicName);
                     } catch (error) {
                         setTimeout(node.initPlateReader, 10000); // Restart initPlateReader
                         return;
                     }
                     setTimeout(() => node.setAllClientsStatus({ fill: "green", shape: "ring", text: "Waiting for vehicle..." }), 2000);
-                    setTimeout(node.queryForPlates, 2000); // Start main polling thread
+                    setTimeout(node.queryForPlates, 3000); // Start main polling thread
                 }
             })();
         };
@@ -347,7 +359,7 @@ module.exports = (RED) => {
 
                     if (oPlates === null) {
                         // An error was occurred.
-                        setTimeout(node.initPlateReader, 10000); // Restart initPlateReader from scratch
+                        setTimeout(node.initPlateReader, 2000); // Restart initPlateReader from scratch
                     } else {
                         if (oPlates.Plates.hasOwnProperty("Plate")) {
                             // Check wether is an array of plates or a single plate
@@ -359,28 +371,28 @@ module.exports = (RED) => {
                                     })
                                 })
                                 // Set the picname of the most recent plate in this filtered list
-                                node.lastPicName = await returnMostRecentPicnameFromList(oPlates);
-                            } else {
-                                // It's a single plate
-                                try {
-                                    node.lastPicName = oPlates.Plates.Plate.picName;
-                                    var oPlate = oPlates.Plates.Plate;
-                                    node.nodeClients.forEach(oClient => {
-                                        oClient.sendPayload({ topic: oClient.topic || "", plate: oPlate, payload: oPlate.plateNumber, connected: true });
-                                    })
-                                } catch (error) {
-                                    let d = new Date();
-                                    let sRet = (d.getFullYear() + ("0" + (d.getMonth() + 1)).slice(-2) + ("0" + d.getDate()).slice(-2) + ("0" + d.getHours()).slice(-2) + ("0" + d.getMinutes()).slice(-2) + ("0" + d.getSeconds()).slice(-2) + "0000").toString();
-                                    node.lastPicName = sRet;
-                                    RED.log.error("Hikvision-Ultimate: ANPR-config: queryForPlates: Error in It's a single plate. Set lastPicName to " + node.lastPicName + ". " + error.message);
-                                }
+                                node.lastPicName = await returnMostRecentPicnameFromList(oPlates, false);
+                            } // else {
+                            //     // It's a single plate
+                            //     try {
+                            //         node.lastPicName = oPlates.Plates.Plate.picName;
+                            //         var oPlate = oPlates.Plates.Plate;
+                            //         node.nodeClients.forEach(oClient => {
+                            //             oClient.sendPayload({ topic: oClient.topic || "", plate: oPlate, payload: oPlate.plateNumber, connected: true });
+                            //         })
+                            //     } catch (error) {
+                            //         let d = new Date();
+                            //         let sRet = (d.getFullYear() + ("0" + (d.getMonth() + 1)).slice(-2) + ("0" + d.getDate()).slice(-2) + ("0" + d.getHours()).slice(-2) + ("0" + d.getMinutes()).slice(-2) + ("0" + d.getSeconds()).slice(-2) + "0000").toString();
+                            //         node.lastPicName = sRet;
+                            //         RED.log.error("Hikvision-Ultimate: ANPR-config: queryForPlates: Error in It's a single plate. Set lastPicName to " + node.lastPicName + ". " + error.message);
+                            //     }
 
-                                //console.log("BANANA SINGOLA PLATE: " + oPlate.plateNumber);
-                            }
+                            //     //console.log("BANANA SINGOLA PLATE: " + oPlate.plateNumber);
+                            // }
                         } else {
                             // No new plates found
                         }
-                        setTimeout(node.queryForPlates, 1000); // Call the cunction again.
+                        setTimeout(node.queryForPlates, 3000); // Call the cunction again.
                     }
                 })();
             }
