@@ -239,8 +239,7 @@ module.exports = (RED) => {
 
 
 
-        // At start, reads the last recognized plate and starts listening from the time last plate was recognized.
-        // This avoid output all the previoulsy plate list, stored by the camera.
+        // At start, reads the last recognized event and starts listening from the time last event was fired.
         node.initACTEventReader = () => {
             (async () => {
 

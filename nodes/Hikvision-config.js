@@ -250,6 +250,7 @@ module.exports = (RED) => {
                         });
                         oReadable.on('end', function () {
                             // For some reason, some NVRs do end the stream. I must restart it.
+                            console.log(result)
                             if (node.debug) RED.log.info("Hikvision-config: streamPipeline: STREAMING HAS ENDED.");
                             startAlarmStream();
                         });
