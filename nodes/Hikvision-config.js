@@ -270,7 +270,7 @@ module.exports = (RED) => {
                 // Abort request
                 //node.errorDescription = "Fetch error " + JSON.stringify(error, Object.getOwnPropertyNames(error));
                 node.errorDescription = "Fetch error " + (error.message || " unknown error");
-                RED.log.error("Hikvision-config: FETCH ERROR: " + (error.message || " unknown error"));
+                if (node.debug) RED.log.error("Hikvision-config: FETCH ERROR: " + (error.message || " unknown error"));
             };
 
         };

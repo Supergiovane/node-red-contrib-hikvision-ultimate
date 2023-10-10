@@ -4,6 +4,10 @@
 [![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square)](https://www.paypal.me/techtoday) 
 
 <p>
+<b>Version 1.1.12</b> October 2023<br/>
+- Silenced the log error, while error occurs fetching the http socket.<br/>
+</p>
+<p>
 <b>Version 1.1.11</b> August 2023<br/>
 - Bump Jimp.<br/>
 </p>
