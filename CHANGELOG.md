@@ -4,6 +4,11 @@
 [![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square)](https://www.paypal.me/techtoday) 
 
 <p>
+<b>Version 1.1.13</b> October 2023<br/>
+- Refined some function and start to write the help TAB of Node-Red.<br/>
+- Added the debug level option.<br/>
+</p>
+<p>
 <b>Version 1.1.12</b> October 2023<br/>
 - Silenced the log error, while error occurs fetching the http socket.<br/>
 </p>

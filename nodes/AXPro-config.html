@@ -29,7 +29,7 @@
     });
 </script>
 
-<script type="text/x-red" data-template-name="AXPro-config">
+<script type="text/html" data-template-name="AXPro-config">
     <div class="form-row">
         <b>AX Pro config</b>&nbsp&nbsp&nbsp&nbsp<span style="color:red"><i class="fa fa-question-circle"></i>&nbsp<a target="_blank" href="https://github.com/Supergiovane/node-red-contrib-hikvision-ultimate"><u>Help online</u></a></span>
         <br/>
@@ -44,7 +44,7 @@
     </div>
     <div class="form-row">
         <label for="node-config-input-host">
-            <i class="fa fa-server"></i> AX PRo IP
+            <i class="fa fa-server"></i> AX Pro IP
         </label>
         <input type="text" id="node-config-input-host" placeholder="">
     </div>
@@ -68,7 +68,7 @@
         <input type="password" id="node-config-input-password" placeholder="">
     </div>
     <div class="form-row">
-        <label for="node-config-input-authentication"><i class="fa fa-sign-in"></i> Authentication</label>
+        <label for="node-config-input-authentication"><i class="fa fa-sign-in"></i> Auth.</label>
         <select type="text" id="node-config-input-authentication">
         <option value="sha256-salted">sha256-salted</option>
         </select>
@@ -88,8 +88,6 @@
      <br/>
    
     <div class="form-row">
-        <img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/info.png' width="10%">
-        <div><p id="labeldeviceinfo">No Device info present.<br/>Please click CONNECT to retrieve the infos.</p></div>
         <input type="hidden" id="node-config-input-deviceinfo" placeholder="">
     </div>
    

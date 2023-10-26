@@ -1,8 +1,6 @@
 
 module.exports = (RED) => {
-
     const discoHikvisionDevices = require('./utils/hikDiscovery');
-
     const DigestFetch = require('digest-fetch'); // 04/6/2022 DO NOT UPGRADE TO NODE-FETCH V3, BECAUSE DIGEST-FETCH DOESN'T SUPPORT IT
     const AbortController = require('abort-controller');
     const { XMLParser } = require("fast-xml-parser");
@@ -10,14 +8,12 @@ module.exports = (RED) => {
     const readableStr = require('stream').Readable;
     const https = require('https');
 
-
-
     function Hikvisionconfig(config) {
         RED.nodes.createNode(this, config)
         var node = this
         node.port = config.port || 80;
-        node.debug = config.host.toString().toLowerCase().indexOf("banana") > -1;
-        node.host = config.host.toString().toLowerCase().replace("banana", "") + ":" + node.port;
+        node.debug = (config.debuglevel === undefined || config.debuglevel === "no") ? false : true;
+        node.host = config.host + ":" + node.port;
         node.protocol = config.protocol || "http";
         node.nodeClients = []; // Stores the registered clients
         node.isConnected = true; // Assumes, that is already connected.
@@ -104,38 +100,39 @@ module.exports = (RED) => {
         });
 
         // 14/12/2020 Get the infos from the camera
-        RED.httpAdmin.get("/hikvisionUltimateDiscoverOnlineDevices", RED.auth.needsPermission('Hikvisionconfig.read'), function (req, res) {
-            if (node.onLineHikvisionDevicesDiscoverList === null) {
-                try {
-                    (async () => {
-                        try {
-                            let discoveredDevices = await discoHikvisionDevices.Discover();
-                            try {
-                                res.json(discoveredDevices);
-                                return;
-                            } catch (error) {
-                                res.json(error);
-                                return;
-                            }
-    
-                        } catch (error) {
-                            RED.log.error("Errore hikvisionUltimateDiscoverOnlineDevices " + error.message);
-                            res.json(error);
-                        }
-    
-                    })();
-    
-                } catch (err) {
-                    res.json(err);
-                }
-            } else {
-                res.json(node.onLineHikvisionDevicesDiscoverList)
-            }
-            
-        });
+        // RED.httpAdmin.get("/hikvisionUltimateDiscoverOnlineDevices", RED.auth.needsPermission('Hikvisionconfig.read'), function (req, res) {
+        //     if (node.onLineHikvisionDevicesDiscoverList === null) {
+        //         try {
+        //             (async () => {
+        //                 try {
+        //                     let discoveredDevices = await discoHikvisionDevices.Discover();
+        //                     try {
+        //                         res.json(discoveredDevices);
+        //                         return;
+        //                     } catch (error) {
+        //                         res.json(error);
+        //                         return;
+        //                     }
+
+        //                 } catch (error) {
+        //                     RED.log.error("Errore hikvisionUltimateDiscoverOnlineDevices " + error.message);
+        //                     res.json(error);
+        //                 }
+
+        //             })();
+
+        //         } catch (err) {
+        //             res.json(err);
+        //         }
+        //     } else {
+        //         res.json(node.onLineHikvisionDevicesDiscoverList)
+        //     }
+
+        // });
 
 
         // This function starts the heartbeat timer, to detect the disconnection from the server
+
         node.resetHeartBeatTimer = () => {
             // Reset node.timerCheckHeartBeat
             if (node.timerCheckHeartBeat !== null) clearTimeout(node.timerCheckHeartBeat);
@@ -198,6 +195,7 @@ module.exports = (RED) => {
                 agent: node.protocol === "https" ? customHttpsAgent : null
 
             };
+
             try {
 
                 const response = await clientAlarmStream.fetch(node.protocol + "://" + node.host + "/ISAPI/Event/notification/alertStream", optionsAlarmStream);
@@ -288,7 +286,7 @@ module.exports = (RED) => {
                         if (node.debug) RED.log.error("BANANA PROCESSING" + sRet);
                         try {
                             //sRet = sRet.replace(/--boundary/g, '');
-                            var i = sRet.indexOf("<"); // Get only the XML, starting with "<"
+                            var i = sRet.includes("Content-Type: application/xml");
                             if (i > -1) {
                                 sRet = sRet.substring(i);
                                 // 11/01/2023 new parser XML to Json
@@ -306,26 +304,24 @@ module.exports = (RED) => {
                                     if (node.debug) RED.log.error("BANANA ERRORE fast-xml-parser(sRet, function (err, result) " + error.message || "");
                                 }
 
-                            } else {
-                                i = sRet.indexOf("{") // It's a Json
-                                if (i > -1) {
-                                    if (node.debug) RED.log.error("BANANA SBANANATO JSON " + sRet);
-                                    sRet = sRet.substring(i);
-                                    try {
-                                        sRet = JSON.parse(sRet);
-                                        //  if (node.debug)  RED.log.error("BANANA JSONATO: " + sRet);
-                                        if (sRet !== null && sRet !== undefined) {
-                                            node.nodeClients.forEach(oClient => {
-                                                oClient.sendPayload({ topic: oClient.topic || "", payload: sRet });
-                                            })
-                                        }
-                                    } catch (error) {
-                                        sRet = "";
+                            } else if (sRet.includes("Content-Type: application/json")) {
+                                i = sRet.indexOf("{") // It's a Json                                
+                                if (node.debug) RED.log.error("BANANA SBANANATO JSON " + sRet);
+                                sRet = sRet.substring(i);
+                                try {
+                                    sRet = JSON.parse(sRet);
+                                    //  if (node.debug)  RED.log.error("BANANA JSONATO: " + sRet);
+                                    if (sRet !== null && sRet !== undefined) {
+                                        node.nodeClients.forEach(oClient => {
+                                            oClient.sendPayload({ topic: oClient.topic || "", payload: sRet });
+                                        })
                                     }
-                                } else {
-                                    // Invalid body
-                                    if (node.debug) RED.log.info("Hikvision-config: DecodingBody Info only: Invalid Json " + sRet);
+                                } catch (error) {
+                                    sRet = "";
                                 }
+                            } else {
+                                // Invalid body
+                                if (node.debug) RED.log.info("Hikvision-config: DecodingBody Info only: Invalid Json " + sRet);
                             }
                             // All is fine. Reset and restart the hearbeat timer
                             // Hikvision sends an heartbeat alarm (videoloss), depending on firmware, every 300ms or more.

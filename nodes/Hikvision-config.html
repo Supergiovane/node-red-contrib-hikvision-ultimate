@@ -10,7 +10,9 @@
             authentication: { value: "digest" },
             protocol: { value: "http" },
             heartbeattimerdisconnectionlimit: { value: 2 },
-            deviceinfo: { value: {} }
+            deviceinfo: { value: {} },
+            debuglevel: { value: "no"}
+
         },
         credentials: {
             user: { type: "text" },
@@ -20,24 +22,24 @@
             var node = this;
 
 
-            // Get the online devices
-            $.getJSON("hikvisionUltimateDiscoverOnlineDevices", (data) => {
-                try {
-                    data.forEach(element => {
-                        $("#node-config-input-discoverOnLineDevices").val(element.DeviceDescription + " IP:" + element.IPv4Address + " " + element.SoftwareVersion + " Port:" + element.HttpPort + "\n" + $("#node-config-input-discoverOnLineDevices").val());
-                    });
-                } catch (error) {
+            // // Get the online devices
+            // $.getJSON("hikvisionUltimateDiscoverOnlineDevices", (data) => {
+            //     try {
+            //         data.forEach(element => {
+            //             $("#node-config-input-discoverOnLineDevices").val(element.DeviceDescription + " IP:" + element.IPv4Address + " " + element.SoftwareVersion + " Port:" + element.HttpPort + "\n" + $("#node-config-input-discoverOnLineDevices").val());
+            //         });
+            //     } catch (error) {
 
-                }
+            //     }
 
-            }).error(function (jqXHR, textStatus, errorThrown) {
-                RED.notify("THIS IS YOUR FIRST CAMERA NODE EVER. PLEASE SAVE AND DEPLOY. THEN REOPEN THIS WINDOW AGAIN.",
-                    {
-                        modal: false,
-                        fixed: false,
-                        type: 'warning'
-                    })
-            });
+            // }).error(function (jqXHR, textStatus, errorThrown) {
+            //     RED.notify("THIS IS YOUR FIRST CAMERA NODE EVER. PLEASE SAVE AND DEPLOY. THEN REOPEN THIS WINDOW AGAIN.",
+            //         {
+            //             modal: false,
+            //             fixed: false,
+            //             type: 'warning'
+            //         })
+            // });
 
 
 
@@ -72,32 +74,6 @@
                     $("#node-config-input-deviceinfo").val(JSON.stringify(data));
                     $("#labeldeviceinfo").html("<b>DEVICE INFORMATION</b><br/>Name: <b>" + data.DeviceInfo.deviceName + "</b><br/>Model: <b>" + data.DeviceInfo.model + "</b><br/>Firmware: <b>" + data.DeviceInfo.firmwareVersion + "</b>");
 
-                    // var myNotification = RED.notify("Can i inform the developer, that the device " + data.DeviceInfo.model + " works with this node? This will help other users.",
-                    //     {
-                    //         modal: true,
-                    //         fixed: true,
-                    //         type: 'info',
-                    //         buttons: [
-                    //             {
-                    //                 text: "YES",
-                    //                 click: function (e) {
-                    //                     // Send the infos to Supergiovane
-                    //                     $.getJSON("http://80.211.147.27:8080?read=false&md=" + encodeURIComponent(data.DeviceInfo.model) + "&fw=" + encodeURIComponent(data.DeviceInfo.firmwareVersion), (data) => {
-
-                    //                     }).error(function (jqXHR, textStatus, errorThrown) {
-
-                    //                     });
-                    //                     myNotification.close();
-                    //                 }
-                    //             },
-                    //             {
-                    //                 text: "NO",
-                    //                 click: function (e) {
-                    //                     myNotification.close();
-                    //                 }
-                    //             }]
-                    //     });
-
                 }).error(function (jqXHR, textStatus, errorThrown) {
                     RED.notify("THIS IS YOUR FIRST CAMERA NODE EVER. PLEASE SAVE AND DEPLOY. THEN REOPEN THIS WINDOW AGAIN.",
                         {
@@ -109,8 +85,10 @@
             });
 
             var dati = JSON.parse(this.deviceinfo);
-            if (dati !== null && dati !== {}) {
-                $("#labeldeviceinfo").html("<b>LAST DEVICE INFORMATION SAVED</b><br/>Name: <b>" + dati.DeviceInfo.deviceName + "</b><br/>Model: <b>" + dati.DeviceInfo.model + "</b><br/>Firmware: <b>" + dati.DeviceInfo.firmwareVersion + "</b>");
+            if (dati !== null) {
+                try {
+                    $("#labeldeviceinfo").html("<b>LAST DEVICE INFORMATION SAVED</b><br/>Name: <b>" + dati.DeviceInfo.deviceName + "</b><br/>Model: <b>" + dati.DeviceInfo.model + "</b><br/>Firmware: <b>" + dati.DeviceInfo.firmwareVersion + "</b>");
+                } catch (error) { }
             }
 
         },
@@ -123,20 +101,20 @@
     });
 </script>
 
-<script type="text/x-red" data-template-name="Hikvision-config">
+<script type="text/html" data-template-name="Hikvision-config">
     <div class="form-row">
         <b>Server config</b>&nbsp&nbsp&nbsp&nbsp<span style="color:red"><i class="fa fa-question-circle"></i>&nbsp<a target="_blank" href="https://github.com/Supergiovane/node-red-contrib-hikvision-ultimate"><u>Help online</u></a></span>
         <br/>
         <br/>        
     </div>
 
-
+<!-- 
     <div class="form-row">
         <label for="node-config-input-discoverOnLineDevices" >
             <i class="fa fa-tag"></i> Online Devices
         </label>
-        <textarea rows="10" id="node-config-input-discoverOnLineDevices" style="width:80%"></textarea>
-    </div>
+        <textarea style='font-family:"Times New Roman", Times, serif; font-size: 12px;' rows="10" id="node-config-input-discoverOnLineDevices"></textarea>
+    </div> -->
 
     <div class="form-row">
         <label for="node-config-input-name" >
@@ -171,7 +149,7 @@
         <input type="password" id="node-config-input-password" placeholder="">
     </div>
     <div class="form-row">
-        <label for="node-config-input-authentication"><i class="fa fa-sign-in"></i> Authentication</label>
+        <label for="node-config-input-authentication"><i class="fa fa-sign-in"></i> Auth.</label>
         <select type="text" id="node-config-input-authentication">
         <option value="digest">Digest</option>
         <option value="basic">Basic</option>
@@ -186,10 +164,13 @@
         <option value=4>after 4 failed reconnection attempts</option>
         </select>
     </div>
-    <div class="form-tips" style="margin-top:11px">
-        Above option: after connection error, the node try to reconnect for the number of times selected, then emits a connection error on PIN 2. Increase this number for slow LANs, like VPN
-     </div>
-     <br/>
+    <div class="form-row">
+        <label for="node-config-input-debuglevel"><i class="fa fa-exclamation-triangle"></i> Debug level</label>
+        <select type="text" id="node-config-input-debuglevel">
+            <option value="no">No. No debug text please.</option>
+            <option value="yes">Turn on the debug mode.</option>           
+        </select>
+    </div>
     <div class="form-row">
         <label><i class="fa fa-sign-in"></i> Get info</label>
         <input type="button" id="getinfocam" class="ui-button ui-corner-all ui-widget" style="background-color:#AEE1FF;width:150px" value="Connect">
@@ -200,4 +181,28 @@
         <input type="hidden" id="node-config-input-deviceinfo" placeholder="">
     </div>
    
+</script>
+
+<script type="text/markdown" data-help-name="Hikvision-config">
+This node connects your camera/nvr to node-red.  
+    
+**Properties**
+|Property|Description|
+|--|--|
+| Name | The node name. |
+| Server IP | The IP address of your camera/nvr. |
+| Port | The ip's port of your camera/nvr. |
+| Protocol | Protocol used to connect to the camera/nvr. |
+| Username | The username you use to conect. |
+| Password | The passowrd you use to connect. |
+| Auth. | The authentication to be used. Must be the same as your camera/nvr |
+| Emit error | Number of failed connection from the node to the camera/nvr, after than an error on PIN 2 is emitted. After connection error, the node try to reconnect for the number of times selected, then emits a connection error on PIN 2. Increase this number for slow LANs, like VPN |
+| Debug level | Outputs all errors in Node-Red. Useful for debugging. Default is *false*. Node-Red must be restarted.|
+| Get Info | Click "Connect" button to retrieve some info. This is not mandatory, but helps you understand, wether the camera/nvr is reachable. |
+
+
+[Find it useful?](https://www.paypal.me/techtoday)
+
+<br/>
+
 </script>
