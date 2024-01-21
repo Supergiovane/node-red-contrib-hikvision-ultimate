@@ -4,6 +4,10 @@
 [![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square)](https://www.paypal.me/techtoday) 
 
 <p>
+<b>Version 1.1.14</b> January 2024<br/>
+- Fixed sintax errors in some dropdown list. Thanks to @pmattia90<br/>
+</p>
+<p>
 <b>Version 1.1.13</b> October 2023<br/>
 - Refined some function and start to write the help TAB of Node-Red.<br/>
 - Added the debug level option.<br/>
