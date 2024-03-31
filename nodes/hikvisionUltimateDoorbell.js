@@ -133,21 +133,27 @@ module.exports = function (RED) {
 					// Try with API 2.0
 					setTimeout(() => {
 						//const jHangUp = JSON.stringify(JSON.parse(`{"CallSignal": { "cmdType": "hangUp" } }`));
-						const jHangUp = JSON.parse(JSON.stringify(JSON.parse(`{"CallSignal": {"cmdType": "hangUp"}}`)))
-						node.server.request(node, "PUT", "/ISAPI/VideoIntercom/callSignal?format=json", jHangUp).then(success => {
-							node.setNodeStatus({ fill: "green", shape: "ring", text: "Hang Up" });
-						}).catch(error => {
-							//node.setNodeStatus({ fill: "red", shape: "ring", text: "Error hangUp " + error.message });
-							RED.log.error("hikvisionUltimateDoorbell: Error hangUp " + error.message);
-						});
-						setTimeout(() => {
-							const jReject = JSON.parse(JSON.stringify(JSON.parse(`{"CallSignal": {"cmdType": "reject"}}`)))
-							node.server.request(node, "PUT", "/ISAPI/VideoIntercom/callSignal?format=json", jReject).then(success => {
-								node.setNodeStatus({ fill: "green", shape: "ring", text: "reject" });
+						try {
+							const jHangUp = JSON.parse(JSON.stringify(JSON.parse(`{"CallSignal": {"cmdType": "hangUp"}}`)))
+							node.server.request(node, "PUT", "/ISAPI/VideoIntercom/callSignal?format=json", jHangUp).then(success => {
+								node.setNodeStatus({ fill: "green", shape: "ring", text: "Hang Up" });
 							}).catch(error => {
-								//node.setNodeStatus({ fill: "red", shape: "ring", text: "Error hangUp " + error.message });
-								RED.log.error("hikvisionUltimateDoorbell: Error reject " + error.message);
+								RED.log.error("hikvisionUltimateDoorbell: Error hangUp " + error.message);
 							});
+						} catch (error) {
+						}
+
+						setTimeout(() => {
+							try {
+								const jReject = JSON.parse(JSON.stringify(JSON.parse(`{"CallSignal": {"cmdType": "reject"}}`)))
+								node.server.request(node, "PUT", "/ISAPI/VideoIntercom/callSignal?format=json", jReject).then(success => {
+									node.setNodeStatus({ fill: "green", shape: "ring", text: "reject" });
+								}).catch(error => {
+									RED.log.error("hikvisionUltimateDoorbell: Error reject " + error.message);
+								});
+							} catch (error) {
+							}
+
 						}, 1000);
 					}, 1000);
 				} catch (error) {

@@ -4,6 +4,10 @@
 [![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square)](https://www.paypal.me/techtoday) 
 
 <p>
+<b>Version 1.1.15</b> April 2024<br/>
+- Doorbel node: fixed a crash if you send msg.hangUp = true, when the doorbell cannot be reached.<br/>
+</p>
+<p>
 <b>Version 1.1.14</b> January 2024<br/>
 - Fixed sintax errors in some dropdown list. Thanks to @pmattia90<br/>
 </p>
