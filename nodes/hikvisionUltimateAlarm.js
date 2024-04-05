@@ -348,8 +348,8 @@ module.exports = function (RED) {
 				},
 				"isDataRetransmission": "false"
 			  }`;
-			  // TEST VERSION 1.0
-			  msg.payload = `{
+			// TEST VERSION 1.0
+			msg.payload = `{
 				   "$":{
 					  "version":"1.0",
 					  "xmlns":"http://www.hikvision.com/ver20/XMLSchema"
@@ -366,14 +366,24 @@ module.exports = function (RED) {
 				   "eventDescription":"Motion alarm"
 				}`;
 
-			msg.payload = JSON.parse(msg.payload);
-			node.sendPayload(msg);
-
-			setTimeout(() => {
-				msg.payload = `{"$":{"version":"2.0","xmlns":"http://www.hikvision.com/ver20/XMLSchema"},"ipAddress":"10.0.0.2","ipv6Address":"::ffff:10.0.0.2","portNo":"80","protocol":"HTTP","macAddress":"08:a1:89:6a:3d:59","channelID":"1","dateTime":"2021-04-24T16:59:56+08:00","activePostCount":"1","eventType":"fielddetection","eventState":"inactive","eventDescription":"fielddetection alarm","channelName":"Hik"}`;
+			try {
 				msg.payload = JSON.parse(msg.payload);
 				node.sendPayload(msg);
-			}, 5000);
+
+				setTimeout(() => {
+					msg.payload = `{"$":{"version":"2.0","xmlns":"http://www.hikvision.com/ver20/XMLSchema"},"ipAddress":"10.0.0.2","ipv6Address":"::ffff:10.0.0.2","portNo":"80","protocol":"HTTP","macAddress":"08:a1:89:6a:3d:59","channelID":"1","dateTime":"2021-04-24T16:59:56+08:00","activePostCount":"1","eventType":"fielddetection","eventState":"inactive","eventDescription":"fielddetection alarm","channelName":"Hik"}`;
+					try {
+						msg.payload = JSON.parse(msg.payload);
+						node.sendPayload(msg);
+					} catch (error) {
+					}
+
+				}, 5000);
+			} catch (error) {
+
+			}
+
+
 		});
 
 		node.on("close", function (done) {
