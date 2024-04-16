@@ -6,7 +6,7 @@
 			name: { value: "" },
 			topic: { value: "" },
 			server: { type: "ANPR-config", required: true },
-			avoidsameplatetime: { value:20, validate:RED.validators.number()}
+			avoidsameplatetime: { value: 20, validate: RED.validators.number() }
 		},
 		inputs: 0,
 		outputs: 2,
@@ -27,7 +27,7 @@
 					break;
 			}
 		},
-		icon: "node-anpr-icon.png",
+		icon: "node-anpr-icon.svg",
 		label:
 			function () {
 				var label = "ANPR"

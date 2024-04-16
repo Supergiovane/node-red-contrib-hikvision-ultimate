@@ -4,6 +4,11 @@
 [![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square)](https://www.paypal.me/techtoday) 
 
 <p>
+<b>Version 1.1.17</b> April 2024<br/>
+- ANPR: fixed an issue it the plate's list parser. Thanks @jpgnz.<br/>
+- Fixed the node icons not showing up.<br/>
+</p>
+<p>
 <b>Version 1.1.16</b> April 2024<br/>
 - Fixed somme try-catch functions.<br/>
 </p>

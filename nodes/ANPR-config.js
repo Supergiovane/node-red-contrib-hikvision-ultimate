@@ -280,9 +280,12 @@ module.exports = (RED) => {
                         const element = _PlatesObject.Plates.Plate[index];
                         if (node.debug) RED.log.info("BANANA nMostRecent:" + nMostRecent + " nCurPicName:" + nCurPicName);
                         try {
-                            nCurPicName = Number(element.picName);
-                            if (nCurPicName > nMostRecent) nMostRecent = nCurPicName;
+                            if (element.hasOwnProperty("picName")) {
+                                nCurPicName = BigInt(element.picName);
+                                if (nCurPicName > nMostRecent) nMostRecent = nCurPicName;
+                            }
                         } catch (error) {
+                            console.log(error);
                         }
                     }
                     sRet = nMostRecent.toString();
