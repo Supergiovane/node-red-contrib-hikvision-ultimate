@@ -281,7 +281,12 @@ module.exports = (RED) => {
                         if (node.debug) RED.log.info("BANANA nMostRecent:" + nMostRecent + " nCurPicName:" + nCurPicName);
                         try {
                             if (element.hasOwnProperty("picName")) {
-                                nCurPicName = BigInt(element.picName);
+                                if (typeof element.picName === 'string') {
+                                    nCurPicName = BigInt(element.picName);
+                                } else {
+                                    nCurPicName = element.picName;
+                                }
+
                                 if (nCurPicName > nMostRecent) nMostRecent = nCurPicName;
                             }
                         } catch (error) {
@@ -296,7 +301,7 @@ module.exports = (RED) => {
             } else {
                 // It's a single plate
                 try {
-                    sRet = _PlatesObject.Plates.Plate.picName;
+                    sRet = _PlatesObject.Plates.Plate.picName.toString();
                     if (_updateNodeStatusText) node.setAllClientsStatus({ fill: "grey", shape: "ring", text: "Found 1 ignored plates. It's " + sRet });
                 } catch (error) {
                     // Some sort of error, set the lastpicname with the current dateteim

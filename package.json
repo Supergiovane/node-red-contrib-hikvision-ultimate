@@ -1,6 +1,6 @@
 {
     "name": "node-red-contrib-hikvision-ultimate",
-    "version": "1.1.17",
+    "version": "1.1.18",
     "description": "A native set of nodes for Hikvision (and compatible) Cameras, Alarms, Radars, NVR, Doorbells, etc.",
     "author": "Supergiovane (https://github.com/Supergiovane)",
     "dependencies": {
@@ -34,10 +34,6 @@
     },
     "node-red": {
         "nodes": {
-            "Hikvision-config": "nodes/Hikvision-config.js",
-            "AXPro-config": "nodes/AXPro-config.js",
-            "Doorbell-config": "nodes/Doorbell-config.js",
-            "ANPR-config": "nodes/ANPR-config.js",
             "AccessControl-config": "nodes/AccessControl-config.js",
             "hikvisionUltimateText": "nodes/hikvisionUltimateText.js",
             "hikvisionUltimateAlarm": "nodes/hikvisionUltimateAlarm.js",
@@ -48,7 +44,13 @@
             "hikvisionUltimateXML": "nodes/hikvisionUltimateXML.js",
             "hikvisionUltimateDoorbell": "nodes/hikvisionUltimateDoorbell.js",
             "hikvisionUltimateAxPro": "nodes/hikvisionUltimateAxPro.js",
-            "hikvisionUltimateAccessControlTerminal": "nodes/hikvisionUltimateAccessControlTerminal.js"
+            "hikvisionUltimateAccessControlTerminal": "nodes/hikvisionUltimateAccessControlTerminal.js",
+            "hikvisionUltimateSpeaker": "/nodes/hikvisionUltimateSpeaker.js",
+            "Hikvision-config": "nodes/Hikvision-config.js",
+            "AXPro-config": "nodes/AXPro-config.js",
+            "Doorbell-config": "nodes/Doorbell-config.js",
+            "ANPR-config": "nodes/ANPR-config.js",
+            "Speaker-config": "/nodes/Speaker-config.js"
         }
     }
 }

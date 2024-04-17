@@ -4,6 +4,10 @@
 [![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square)](https://www.paypal.me/techtoday) 
 
 <p>
+<b>Version 1.1.18</b> April 2024<br/>
+- ANPR: fixed an issue it the plate's list parser in cameras having ISAPI protocol 1.0.<br/>
+</p>
+<p>
 <b>Version 1.1.17</b> April 2024<br/>
 - ANPR: fixed an issue it the plate's list parser. Thanks @jpgnz.<br/>
 - Fixed the node icons not showing up.<br/>

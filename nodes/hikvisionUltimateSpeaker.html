@@ -1,0 +1,125 @@
+<script type="text/javascript">
+	RED.nodes.registerType('hikvisionUltimateSpeaker', {
+		category: 'Hikvision Ultimate',
+		color: '#C0C0C0',
+		defaults: {
+			name: { value: "" },
+			topic: { value: "" },
+			server: { type: "Speaker-config", required: true },
+			selectedfiletoplay: { value: "" }
+		},
+		inputs: 0,
+		outputs: 2,
+		outputLabels: function (i) {
+			var ret = "";
+			switch (i) {
+				case 0:
+					return "Play";
+					break;
+				case 1:
+					return "Error";
+					break;
+				case 2
+					:
+					return "";
+					break;
+				default:
+					break;
+			}
+		},
+		icon: "node-Speaker-icon.svg",
+		label:
+			function () {
+				var label = "Speaker"
+				if (this.name !== undefined && this.name.length > 0) {
+					label = this.name;
+				}
+				return label;
+			},
+		paletteLabel: function () {
+			return "License Plate Speaker";
+		},
+		oneditprepare: function () {
+			$("#node-input-server").change(function () {
+				try {
+					let oNodeServer = RED.nodes.node($(this).val());
+					$.getJSON("hikvisionUltimateGetSpeakerFiles?nodeID=" + oNodeServer.id, (data) => {
+						response($.map(data, function (value, key) {
+							$("#node-config-input-selectedfiletoplay").append($("<option></option>")
+								.attr("value", value.customAudioID)
+								.text(value.customAudioName)
+							);
+							// return {
+							// 	label: value.customAudioName + " # " + value.customAudioID, // Label for Display
+							// 	value: value.customAudioID // Value
+							// }
+						}));
+					});
+				} catch (error) { }
+			});
+
+		},
+		oneditsave: function () {
+
+		}
+	});
+
+
+</script>
+
+<script type="text/html" data-template-name="hikvisionUltimateSpeaker">
+	<div class="form-row">
+		<b>License plate node</b>&nbsp&nbsp&nbsp&nbsp<span style="color:red"><i class="fa fa-question-circle"></i>&nbsp<a target="_blank" href="https://github.com/Supergiovane/node-red-contrib-hikvision-ultimate"><u>Help online</u></a></span>
+        <br/>
+		<br/>
+
+		<label for="node-input-server">Server</label>
+		<input type="text" id="node-input-server" />
+	</div>
+	<div class="form-row">
+        <label for="node-input-name"><i class="icon-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+	<div class="form-row">
+        <label for="node-input-topic"><i class="fa fa-tasks"></i> Node topic</label>
+        <input type="text" id="node-input-topic" placeholder="Node's own topic">
+	</div>
+    <div class="form-row">
+        <label for="node-input-selectedfiletoplay"><i class="fa fa-tasks"></i> File</label>
+		<select id="node-input-selectedfiletoplay">
+	</div>
+	
+	
+
+</script>
+
+<script type="text/markdown" data-help-name="hikvisionUltimateSpeaker">
+This node lets you play through the Speaker, the audio files that are loaded in the Hikvision Speaker.  
+
+The audio files must be already be uploaded to the speaker.<br/>
+
+**General**
+|Property|Description|
+|--|--|
+| Server | Select the Speaker to be used. |
+| Name | The node name. |
+| Topic | The msg.topic.|
+| File | This is the speaker's audio file list. If you see nothing, upload the audio files into your speaker, via the speaker web interface, via IVMS, etc...|
+
+
+### Outputs
+
+1. Standard output
+: payload (integer) : the standard output of the command.
+
+### Details
+
+`msg.payload` is used as the payload of the published message.  
+It contains the detailed event sent by your Hue devicem so you can use it for whatever you want.  
+
+<br/>
+
+[DONATE HERE, THANK YOU!](https://www.paypal.me/techtoday)
+
+<br/>
+</script>
