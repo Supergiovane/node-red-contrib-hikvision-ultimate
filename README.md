@@ -846,41 +846,9 @@ This is an example of payload.</br>
 <img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/speaker.jpg' >
 
 
-This node receives all events sent by your access control terminal, like, for example the DS-K1T502DBFWX-C.<br/>
-The node emits the payload as soon as it receives the event.<br/>
-You can filter by any type of event, alarm, exception, etc, or you can accept all incoming events<br/>
+This node connects to your Hikvision Speaker and broadcast a selected audio file, that must be already been uploaded to the speaker.<br/>
+Please see the help into the Node-Red help tab for further infos.
 
-<img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/accesscontrol.png' >
-
-<br/>
-<br/>
-
-**Flow Messages**
-
-This is an example of payload.</br>
-
-**Output**
-
-
-```json
-
-{
-   "topic":"",
-   "payload":{
-      "major":5,
-      "minor":21,
-      "time":"2023-03-18T18:37:54+01:00",
-      "netUser":"",
-      "doorNo":1,
-      "type":0,
-      "serialNo":735,
-      "eventDescription":"(EVENT) Door Ulock",
-      "currentVerifyMode":"faceOrFpOrCardOrPw"
-   },
-   "connected":true
-}
-
-```
 
 
 
