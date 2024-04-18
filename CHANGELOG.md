@@ -5,7 +5,7 @@
 
 <p>
 <b>Version 1.1.19</b> April 2024<br/>
-- NEW: Speaker node.<br/>
+- NEW: Speaker node. Still in BETA, that means, test it and please report any issue.<br/>
 </p>
 <p>
 <b>Version 1.1.18</b> April 2024<br/>

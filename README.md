@@ -1,7 +1,7 @@
 
 <p align="center"><img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/logo.png'></p>
 
-A native set of nodes for Hikvision (and compatible) Cameras, Alarms, Radars, NVR, Doorbells etc.
+A native set of nodes for Hikvision (and compatible) Camera, Alarm, Radar, NVR, Doorbell, Speaker etc.
 
 [![NPM version][npm-version-image]][npm-url]
 [![NPM downloads per month][npm-downloads-month-image]][npm-url]
@@ -26,8 +26,6 @@ Due to the many models and firmware versions out there, not all **cams/NVR/Door 
 For NVR/DVR, pleas remember to select "Notify Alarm Center" in the event window, otherwise the NVR won't emit any alarm event.<br/>
 <img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/NotifyCenter.png'>
 
-## COLLABORATORS NEEDED
-I'm looking for collaborators to develop these nodes. I'm alone. I have other nodes to mantain, and too many help to give to the users. Very little time is remaining for me and my family, so i need someone joining this project and starting active development! Thanks!<br/>
 
 <br/>
 <br/>
