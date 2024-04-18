@@ -24,7 +24,7 @@
                 // If the node is newly created, the backend cannot get the infos, so i must pass each parameter back
                 var sQueryString = "";
                 var jManipulate = {};
-                // Read all data needed to backend to call the camera URL
+                // Read all data needed to backend to call the URL
                 jManipulate.host = $("#node-config-input-host").val();
                 jManipulate.port = $("#node-config-input-port").val();
                 jManipulate.protocol = $("#node-config-input-protocol").val();
@@ -76,7 +76,7 @@
                     //     });
 
                 }).error(function (jqXHR, textStatus, errorThrown) {
-                    RED.notify("THIS IS YOUR FIRST CAMERA NODE EVER. PLEASE SAVE AND DEPLOY. THEN REOPEN THIS WINDOW AGAIN.",
+                    RED.notify("THIS IS YOUR FIRST SPEAKER NODE EVER. PLEASE SAVE AND DEPLOY. THEN REOPEN THIS WINDOW AGAIN.",
                         {
                             modal: false,
                             fixed: false,
@@ -86,7 +86,7 @@
             });
 
             var dati = JSON.parse(this.deviceinfo);
-            if (dati !== null && dati !== {}) {
+            if (dati !== null) {
                 $("#labeldeviceinfo").html("<b>LAST DEVICE INFORMATION SAVED</b><br/>Name: <b>" + dati.DeviceInfo.deviceName + "</b><br/>Model: <b>" + dati.DeviceInfo.model + "</b><br/>Firmware: <b>" + dati.DeviceInfo.firmwareVersion + "</b>");
             }
 
@@ -110,7 +110,7 @@
         <label for="node-config-input-name" >
             <i class="fa fa-tag"></i> Name
         </label>
-        <input type="text" id="node-config-input-name" placeholder="Click Connect to automatically get the camera name">
+        <input type="text" id="node-config-input-name" placeholder="Click Connect to automatically get the speaker name">
       
     </div>
     <div class="form-row">

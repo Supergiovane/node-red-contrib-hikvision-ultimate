@@ -9,7 +9,7 @@ module.exports = (RED) => {
 
     function Speakerconfig(config) {
         RED.nodes.createNode(this, config)
-        var node = this
+        var node = this;
         node.port = config.port || 80;
         node.debug = config.host.toString().toLowerCase().indexOf("banana") > -1;
         node.host = config.host.toString().toLowerCase().replace("banana", "") + ":" + node.port;
@@ -19,7 +19,6 @@ module.exports = (RED) => {
         node.errorDescription = ""; // Contains the error description in case of connection error.
         node.authentication = config.authentication || "digest";
         node.deviceinfo = config.deviceinfo || {};
-        node.timerCheckRing = null;
         var oReadable = new readableStr();
         var controller = null; // AbortController
 
@@ -126,8 +125,60 @@ module.exports = (RED) => {
                     try {
                         // const resInfo = await clientInfo.fetch(jParams.protocol + "://" + jParams.host + ":" + jParams.port + "/ISAPI/AccessControl/EventCardLinkageCfg/CustomAudio?format=json", opt);
                         const resInfo = await clientInfo.fetch(jParams.protocol + "://" + jParams.host + "/ISAPI/AccessControl/EventCardLinkageCfg/CustomAudio?format=json", opt);
-                        const body = await resInfo.text();
-                        res.json(body);
+                        const body = await resInfo.json();
+                        res.json(body.CustomAudioInfoList);
+                        return;
+                    } catch (error) {
+                        RED.log.error("Errore hikvisionUltimateGetInfoSpeaker " + error.message);
+                        res.json(error);
+                    }
+                })();
+
+            } catch (err) {
+                res.json(err);
+            }
+        });
+
+        // 17/94/2024 Get the files
+        RED.httpAdmin.get("/hikvisionUltimateSpeakerTest", RED.auth.needsPermission('Speakerconfig.read'), function (req, res) {
+            var jParams = RED.nodes.getNode(req.query.nodeID).server;// Retrieve node.id of the config node.
+            let customAudioID = req.query.customAudioID;
+            var _nodeServer = null;
+            var clientInfo;
+            if (jParams.credentials.password === "__PWRD__") {
+                // The password isn't changed or (the server node was already present, it's only updated)
+                _nodeServer = RED.nodes.getNode(req.query.nodeID);// Retrieve node.id of the config node.
+                if (jParams.authentication === "digest") clientInfo = new DigestFetch(jParams.credentials.user, _nodeServer.credentials.password); // Instantiate the fetch client.
+                if (jParams.authentication === "basic") clientInfo = new DigestFetch(jParams.credentials.user, _nodeServer.credentials.password, { basic: true }); // Instantiate the fetch client.
+            } else {
+                // The node is NEW
+                if (jParams.authentication === "digest") clientInfo = new DigestFetch(jParams.credentials.user, jParams.credentials.password); // Instantiate the fetch client.
+                if (jParams.authentication === "basic") clientInfo = new DigestFetch(jParams.credentials.user, jParams.credentials.password, { basic: true }); // Instantiate the fetch client.
+            }
+
+
+            var opt = {
+                // These properties are part of the Fetch Standard
+                method: "PUT",
+                headers: {},        // request headers. format is the identical to that accepted by the Headers constructor (see below)
+                body: null,         // request body. can be null, a string, a Buffer, a Blob, or a Node.js Readable stream
+                redirect: 'follow', // set to `manual` to extract redirect headers, `error` to reject redirect
+                signal: null,       // pass an instance of AbortSignal to optionally abort requests
+
+                // The following properties are node-fetch extensions
+                follow: 20,         // maximum redirect count. 0 to not follow redirect
+                timeout: 5000,         // req/res timeout in ms, it resets on redirect. 0 to disable (OS limit applies). Signal is recommended instead.
+                compress: false,     // support gzip/deflate content encoding. false to disable
+                size: 0,            // maximum response body size in bytes. 0 to disable
+                agent: jParams.protocol === "https" ? customHttpsAgent : null        // http(s).Agent instance or function that returns an instance (see below)
+            };
+            try {
+                (async () => {
+                    try {
+                        // const resInfo = await clientInfo.fetch(jParams.protocol + "://" + jParams.host + ":" + jParams.port + "/ISAPI/AccessControl/EventCardLinkageCfg/CustomAudio?format=json", opt);
+                        const resInfo = await clientInfo.fetch(jParams.protocol + "://" + jParams.host + "/ISAPI/Event/triggers/notifications/AudioAlarm/AudioOut/1/PlayCustomAudioFile?format=json&customAudioID=" + customAudioID + "&audioVolume=2&loopPlaybackTimes=1", opt);
+                        const body = await resInfo.json();
+                        res.json({});
                         return;
                     } catch (error) {
                         RED.log.error("Errore hikvisionUltimateGetInfoSpeaker " + error.message);
@@ -141,6 +192,86 @@ module.exports = (RED) => {
             }
         });
 
+        // PLAY THE FILE ALOUD VIA THE SPEAKER
+        node.playAloud = async function (_customAudioID, _volume) {
+            var jParams = node;
+            var clientInfo;
+
+            // Set Auth
+            if (jParams.authentication === "digest") clientInfo = new DigestFetch(jParams.credentials.user, jParams.credentials.password); // Instantiate the fetch client.
+            if (jParams.authentication === "basic") clientInfo = new DigestFetch(jParams.credentials.user, jParams.credentials.password, { basic: true }); // Instantiate the fetch client.
+
+            var opt = {
+                // These properties are part of the Fetch Standard
+                method: "PUT",
+                headers: {},        // request headers. format is the identical to that accepted by the Headers constructor (see below)
+                body: JSON.stringify({ "audioOutID": [1] }),       // request body.
+                redirect: 'follow', // set to `manual` to extract redirect headers, `error` to reject redirect
+                signal: null,       // pass an instance of AbortSignal to optionally abort requests
+
+                // The following properties are node-fetch extensions
+                follow: 20,         // maximum redirect count. 0 to not follow redirect
+                timeout: 5000,         // req/res timeout in ms, it resets on redirect. 0 to disable (OS limit applies). Signal is recommended instead.
+                compress: false,     // support gzip/deflate content encoding. false to disable
+                size: 0,            // maximum response body size in bytes. 0 to disable
+                agent: jParams.protocol === "https" ? customHttpsAgent : null        // http(s).Agent instance or function that returns an instance (see below)
+            };
+
+            try {
+                // STOP PLAYING PREVIOUS FILE, IF ANY
+                const resInfoStop = await clientInfo.fetch(jParams.protocol + "://" + jParams.host + "/ISAPI/AccessControl/EventCardLinkageCfg/CustomAudio/" + _customAudioID + "/stop?format=json", opt);
+                // PLAY THE FILE
+                const resInfo = await clientInfo.fetch(jParams.protocol + "://" + jParams.host + "/ISAPI/Event/triggers/notifications/AudioAlarm/AudioOut/1/PlayCustomAudioFile?format=json&customAudioID=" + _customAudioID + "&audioVolume=" + _volume + "&loopPlaybackTimes=1", opt);
+                const body = await resInfo.json();
+                if (body.statusCode === 1) {
+                    return true;
+                } else {
+                    return false;
+                }
+            } catch (error) {
+                RED.log.error("Errore playAloud Stop " + error.message);
+                return false;
+            }
+        };
+
+        node.stopFile = async function (_customAudioID) {
+            var jParams = node;
+            var clientInfo;
+
+            // Set Auth
+            if (jParams.authentication === "digest") clientInfo = new DigestFetch(jParams.credentials.user, jParams.credentials.password); // Instantiate the fetch client.
+            if (jParams.authentication === "basic") clientInfo = new DigestFetch(jParams.credentials.user, jParams.credentials.password, { basic: true }); // Instantiate the fetch client.
+
+            var opt = {
+                // These properties are part of the Fetch Standard
+                method: "PUT",
+                headers: {},        // request headers. format is the identical to that accepted by the Headers constructor (see below)
+                body: JSON.stringify({ "audioOutID": [1] }),         // request body.
+                redirect: 'follow', // set to `manual` to extract redirect headers, `error` to reject redirect
+                signal: null,       // pass an instance of AbortSignal to optionally abort requests
+
+                // The following properties are node-fetch extensions
+                follow: 20,         // maximum redirect count. 0 to not follow redirect
+                timeout: 5000,         // req/res timeout in ms, it resets on redirect. 0 to disable (OS limit applies). Signal is recommended instead.
+                compress: false,     // support gzip/deflate content encoding. false to disable
+                size: 0,            // maximum response body size in bytes. 0 to disable
+                agent: jParams.protocol === "https" ? customHttpsAgent : null        // http(s).Agent instance or function that returns an instance (see below)
+            };
+            // STOP PLAYING PREVIOUS FILE
+            try {
+                // const resInfo = await clientInfo.fetch(jParams.protocol + "://" + jParams.host + ":" + jParams.port + "/ISAPI/AccessControl/EventCardLinkageCfg/CustomAudio?format=json", opt);
+                const resInfo = await clientInfo.fetch(jParams.protocol + "://" + jParams.host + "/ISAPI/AccessControl/EventCardLinkageCfg/CustomAudio/" + _customAudioID + "/stop?format=json", opt);
+                const body = await resInfo.json();
+                if (body.statusCode === 1) {
+                    return true;
+                } else {
+                    return false;
+                }
+            } catch (error) {
+                RED.log.error("Errore stopFile Stop " + error.message);
+                return false;
+            }
+        }
 
         //#region "HANDLE STREAM MESSAGE"
         // Handle the complete stream message, enclosed into the --boundary stream string
@@ -289,57 +420,9 @@ module.exports = (RED) => {
         node.timerCheckRing = setTimeout(queryCallStatus, 6000); // First connection.
         //#endregion
 
-        //#region GENERIC GET OT PUT CALL
-        // Function to get or post generic data on device
-        node.request = async function (_callerNode, _method, _URL, _body) {
-            var clientGenericRequest;
-            if (node.authentication === "digest") clientGenericRequest = new DigestFetch(node.credentials.user, node.credentials.password); // Instantiate the fetch client.
-            if (node.authentication === "basic") clientGenericRequest = new DigestFetch(node.credentials.user, node.credentials.password, { basic: true }); // Instantiate the fetch client.
-
-            var reqController = new AbortController(); // For aborting the stream request
-            var options = {
-                // These properties are part of the Fetch Standard
-                method: _method.toString().toUpperCase(),
-                headers: {},        // request headers. format is the identical to that accepted by the Headers constructor (see below)
-                body: _body,         // request body. can be null, a string, a Buffer, a Blob, or a Node.js Readable stream
-                redirect: 'follow', // set to `manual` to extract redirect headers, `error` to reject redirect
-                signal: reqController.signal,       // pass an instance of AbortSignal to optionally abort requests
-
-                // The following properties are node-fetch extensions
-                follow: 20,         // maximum redirect count. 0 to not follow redirect
-                timeout: 8000,         // req/res timeout in ms, it resets on redirect. 0 to disable (OS limit applies). Signal is recommended instead.
-                compress: false,     // support gzip/deflate content encoding. false to disable
-                size: 0,            // maximum response body size in bytes. 0 to disable
-                agent: node.protocol === "https" ? customHttpsAgent : null         // http(s).Agent instance or function that returns an instance (see below)
-            };
-            try {
-                if (!_URL.startsWith("/")) _URL = "/" + _URL;
-                const response = await clientGenericRequest.fetch(node.protocol + "://" + node.host + _URL, options);
-                if (response.ok) {
-                    try {
-                        const oReadable = readableStr.from(response.body, { encoding: 'utf8' });
-                        oReadable.on('data', (chunk) => {
-                            if (node.debug) RED.log.error(chunk);
-                        });
-                    } catch (error) {
-                        throw new Error("Error readableStream: " + error.message || "");
-                    }
-                } else {
-                    throw new Error("Error response: " + response.statusText || " unknown response code");
-                }
-
-            } catch (error) {
-                // Main Error
-                if (node.debug) RED.log.error("Speaker-config: clientGenericRequest.fetch error " + error.message);
-                throw (new Error("clientGenericRequest.fetch error:" + error.message));
-            }
-        };
-        //#endregion
 
 
-
-
-        //#region "FUNCTIONS"
+        //#region "Base FUNCTIONS"
         node.on('close', function (removed, done) {
             if (controller !== null) {
                 try {

@@ -6,9 +6,10 @@
 			name: { value: "" },
 			topic: { value: "" },
 			server: { type: "Speaker-config", required: true },
-			selectedfiletoplay: { value: "" }
+			customAudioID: { value: "" },
+			volume: { value: "2" }
 		},
-		inputs: 0,
+		inputs: 1,
 		outputs: 2,
 		outputLabels: function (i) {
 			var ret = "";
@@ -34,29 +35,66 @@
 				if (this.name !== undefined && this.name.length > 0) {
 					label = this.name;
 				}
-				return label;
+				return label + " (BETA)";
 			},
 		paletteLabel: function () {
-			return "License Plate Speaker";
+			return "Speaker (BETA)";
 		},
 		oneditprepare: function () {
+
+			let node = this;
+
+			// File to be played
+			$("#node-input-customAudioID").empty();
 			$("#node-input-server").change(function () {
 				try {
 					let oNodeServer = RED.nodes.node($(this).val());
-					$.getJSON("hikvisionUltimateGetSpeakerFiles?nodeID=" + oNodeServer.id, (data) => {
-						response($.map(data, function (value, key) {
-							$("#node-config-input-selectedfiletoplay").append($("<option></option>")
-								.attr("value", value.customAudioID)
-								.text(value.customAudioName)
-							);
-							// return {
-							// 	label: value.customAudioName + " # " + value.customAudioID, // Label for Display
-							// 	value: value.customAudioID // Value
-							// }
-						}));
+					$.getJSON("hikvisionUltimateGetSpeakerFiles?nodeID=" + oNodeServer.id, {}).done(function (data) {
+						$.each(data, function (i, item) {
+							$("#node-input-customAudioID").append($("<option>").val(item.customAudioID).text(item.customAudioName + " #" + item.customAudioID))
+						});
 					});
 				} catch (error) { }
 			});
+			$("#node-input-customAudioID").val(this.customAudioID)
+
+			// Volume
+			$("#node-input-volume").empty();
+			for (let index = 1; index < 100; index++) {
+				$("#node-input-volume").append($("<option>").val(index.toString()).text(index + "%"))
+			}
+			$("#node-input-volume").val(this.volume)
+
+			$("#testFile").click(function () {
+				this.value = "Wait...";
+				this.disabled = true;
+				// If the node is newly created, the backend cannot get the infos, so i must pass each parameter back
+				var sQueryString = "";
+				var jManipulate = {};
+				// Read all data needed to backend to call the camera URL
+				jManipulate.host = $("#node-input-host").val();
+				jManipulate.port = $("#node-input-port").val();
+				jManipulate.protocol = $("#node-input-protocol").val();
+				jManipulate.user = $("#node-input-user").val();
+				jManipulate.password = $("#node-input-password").val();
+				jManipulate.authentication = $("#node-input-authentication").val();
+				sQueryString = "?nodeID=" + node.id + "&customAudioID=" + $("#node-input-customAudioID").find(":selected").val() + "&params=" + encodeURIComponent(JSON.stringify(jManipulate));
+
+				$.getJSON("hikvisionUltimateSpeakerTest" + sQueryString, (data) => {
+					this.value = "Connect";
+					this.disabled = false;
+
+				}).error(function (jqXHR, textStatus, errorThrown) {
+					RED.notify("THIS IS YOUR FIRST CAMERA NODE EVER. PLEASE SAVE AND DEPLOY. THEN REOPEN THIS WINDOW AGAIN.",
+						{
+							modal: false,
+							fixed: false,
+							type: 'warning'
+						})
+				});
+			});
+
+
 
 		},
 		oneditsave: function () {
@@ -69,7 +107,7 @@
 
 <script type="text/html" data-template-name="hikvisionUltimateSpeaker">
 	<div class="form-row">
-		<b>License plate node</b>&nbsp&nbsp&nbsp&nbsp<span style="color:red"><i class="fa fa-question-circle"></i>&nbsp<a target="_blank" href="https://github.com/Supergiovane/node-red-contrib-hikvision-ultimate"><u>Help online</u></a></span>
+		<b>Speaker node</b>
         <br/>
 		<br/>
 
@@ -85,11 +123,14 @@
         <input type="text" id="node-input-topic" placeholder="Node's own topic">
 	</div>
     <div class="form-row">
-        <label for="node-input-selectedfiletoplay"><i class="fa fa-tasks"></i> File</label>
-		<select id="node-input-selectedfiletoplay">
-	</div>
-	
-	
+        <label for="node-input-customAudioID"><i class="fa fa-tasks"></i> File</label>
+		<select id="node-input-customAudioID">
+		<input type="button" id="testFile" class="ui-button ui-corner-all ui-widget" style="background-color:#AEE1FF;width:100px" value="Play">
+	</div>	
+	<div class="form-row">
+        <label for="node-input-volume"><i class="fa fa-tasks"></i> Volume</label>
+		<select id="node-input-volume">
+	</div>	
 
 </script>
 
@@ -104,18 +145,26 @@ The audio files must be already be uploaded to the speaker.<br/>
 | Server | Select the Speaker to be used. |
 | Name | The node name. |
 | Topic | The msg.topic.|
+| Volume | The speaker's volume from 1% to 100%. CAUTION, THE SPEAKER IS VERY LOUD. CHECK FOR PEOPLE AROUND AND PROTECT YOUR EARS! |
 | File | This is the speaker's audio file list. If you see nothing, upload the audio files into your speaker, via the speaker web interface, via IVMS, etc...|
-
+| Play button | Broadcasts the audio file you selected, to your speaker with volume set to 2%. Caution needed, protect your ear in any case! |
 
 ### Outputs
 
-1. Standard output
-: payload (integer) : the standard output of the command.
+1. Standard output PIN 1
+: payload (boolean) : the standard output of the command. It contains the status of the message being sent, as true/false.
+2. Error output PIN 2
+: msg (json) : the connection status. An error will be published in case of connection error
+
+### Inputs
+
+1. Standard input
+: payload (boolean) : *true* for broadcasting the audio file on the speaker, *false* to stop playing.
 
 ### Details
 
-`msg.payload` is used as the payload of the published message.  
-It contains the detailed event sent by your Hue devicem so you can use it for whatever you want.  
+CAUTION, THE SPEAKER IS VERY LOUD. CHECK FOR PEOPLE AROUND AND PROTECT YOUR EARS!
+  
 
 <br/>
 
