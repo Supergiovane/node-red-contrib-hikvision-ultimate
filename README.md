@@ -1,5 +1,5 @@
 
-<p align="center"><img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/logo.png' width="60%"></p>
+<p align="center"><img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/logo.png'></p>
 
 A native set of nodes for Hikvision (and compatible) Cameras, Alarms, Radars, NVR, Doorbells etc.
 
@@ -24,7 +24,7 @@ Due to the many models and firmware versions out there, not all **cams/NVR/Door 
 
 ## ENABLE NOFITICATIONS 
 For NVR/DVR, pleas remember to select "Notify Alarm Center" in the event window, otherwise the NVR won't emit any alarm event.<br/>
-<img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/NotifyCenter.png' width="30%">
+<img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/NotifyCenter.png'>
 
 ## COLLABORATORS NEEDED
 I'm looking for collaborators to develop these nodes. I'm alone. I have other nodes to mantain, and too many help to give to the users. Very little time is remaining for me and my family, so i need someone joining this project and starting active development! Thanks!<br/>
@@ -41,7 +41,7 @@ I'm looking for collaborators to develop these nodes. I'm alone. I have other no
 
 ## CAMERA EVENT NODE
 
-<img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/hikcamera.jpg' width="80%">
+<img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/hikcamera.jpg' >
 
 The Camera Event node connects to ***NVR, Camera, Radars, etc..*** and outputs true/false in case of an alarm. <br/>
 The node can be configured as **Camera/NVR** (with standard and smart events) or as **Old Security System** and **Radar** (with specific CID events, designed for these type of security devices)<br/>
@@ -50,7 +50,7 @@ For NVR/DVR, the ***Channel*** property is the CAMERA number, while for Cameras,
 The ***Zone*** property is the alarm zone (RADARS), or the alert region number (CAMERAS AND NVR/DVR).<br/>
 For RADAR device types, you can filter improper/false alams as well.<br/>
 
-<img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/GenericAlarm.png' width="80%">
+<img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/GenericAlarm.png' >
 
 You can choose from many different alarms, including: <br/>
 - Video Motion Alarm (When motion is detected)
@@ -137,12 +137,12 @@ msg = {
 
 ## ANPR (License Plate) NODE
 
-<img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/hikanprcamera.jpg' width="80%">
+<img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/hikanprcamera.jpg' >
 
 
 This node works with Hikvision ANPR cameras.<br/>
 
-<img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/ANPR.png' width="80%">
+<img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/ANPR.png' >
 
 **Flow Messages**
 
@@ -181,13 +181,13 @@ msg = {
 
 ## PTZ NODE
 
-<img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/hikptzcamera.png' width="80%">
+<img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/hikptzcamera.png' >
 
 Recalls a PTZ pre-recorded preset.<br/>
 Just select the preset in the configuration window and recall it by passing ***true*** as payload.<br/>
 You can also set the Camera Number and PTZ preset number by msg.payload.channelID (optional) and msg.payload.PTZPreset. See below.<br/>
 
-<img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/PTZ.png' width="80%">
+<img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/PTZ.png' >
 
 **Flow Messages**
 
@@ -234,7 +234,7 @@ msg = {
 ## PICTURE NODE
 
 
-<img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/hikcamerasettings.png' width="80%">
+<img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/hikcamerasettings.png' >
 
 This node gets a picture from the camera/NVR, ready to be shown in the dashboard UI.<br/>
 You can rotate, resize, crop, overlay with text, zoom the image.<br/>
@@ -243,7 +243,7 @@ Pass **true** as payload to obtain the image.<br/>
 You can, for example, link the ***Camera Event node*** to the ***Picture node*** to get an image whenever an alarm occurs.<br/>
 **CAUTION**: image handling is a very CPU/GPU consuming job. Use only if you have enough computational resources.<br/>
 
-<img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/picture.png' width="80%">
+<img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/picture.png' >
 
 <br/>
 For the picture to show up directly into the flow, you can use this node developed by @riku 
@@ -273,7 +273,7 @@ For the picture to show up directly into the flow, you can use this node develop
 
 **PROPERTY WINDOW**
 
-<img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/pictureproperties.png' width="30%">
+<img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/pictureproperties.png'>
 
 **Flow Messages**
 
@@ -331,7 +331,7 @@ You can set the camera's text overlay. This node uses the camera's onboard text 
 There are 4 rows avaiable, to be set from the configuration window or dinamically via msg input from flow.<br/>
 Please note that not all cameras nor NVR/DVR (especially with old firmware) suppor setting the overlay text.<br/>
 
-<img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/Text.png' width="80%">
+<img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/Text.png' >
 
 **Copy this code and paste it into your flow**
 
@@ -400,7 +400,7 @@ This node allow you to send any XML you want to your devices.<br/>
 Every device has own firmware, capabilities etc. so i decided to allow you to cover all your needs by adding this universal node.<br/>
 Please read the ISAPI Hikvision documentation or dig into the Internet to learn what XML you can send. The limit is only your fantasy.<br/>
 
-<img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/XML.png' width="80%">
+<img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/XML.png' >
 
 
 <br/>
@@ -518,7 +518,7 @@ If an ***error*** occurs, the XML node will output a msg with the error
 ## RAW CAMERA Event NODE
 The RAW CAMERA Event node reacts to every message sent by the device. You can use this node when the other nodes doesn't fit your needs. It connects to ***NVR, Camera, Radars etc...*** and outputs the event received. <br/>
 
-<img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/RawAlarm.png' width="80%">
+<img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/RawAlarm.png' >
 
 **Flow Messages**
 
@@ -582,7 +582,7 @@ The doorbell node allow you to receive ring/call progress events, open the doors
 Everytime ad intercom sends a message to the node, this message is validated using the filters you selected in the configuration window. In case of a match, it emits a msg to the flow. 
 <br/>There are many filters you can apply (ringStatus (ring or on call), floor number, unit number, building number and so on.).
 
-<img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/Doorbell.png' width="80%">
+<img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/Doorbell.png' >
 
 **Copy this code and paste it into your flow**
 
@@ -667,14 +667,14 @@ msg = {
 
 ## AX PRO Alarm node (Ax Pro and AX Pro Hybrid)
 
-<img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/axproPicture.jpg' width="80%">
+<img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/axproPicture.jpg' >
 
 
 This node receives all events sent by your AX Pro alarm.<br/>
 You will receive not only Alarms etc, but also zone status, even if the AX Pro is disarmed.<br/>
 You can also arm, disarm, silence alarm etc...<br/>
 
-<img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/axpro.png' width="80%">
+<img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/axpro.png' >
 
 **Copy this code and paste it into your flow**
 
@@ -786,11 +786,11 @@ CID Events refers to a field "code" in the Alarm event output<br/>
 The most common event codes are: 3401 (Arm Away), 3441 (Arm Stay), 1401 (Disarmed), 1759 (Intrusion Alarm)<br/>
 For other codes, please see the list below. You can find it [here as well](https://www.hikvisioneurope.com/eu/portal/portal/Technical%20Materials/10%20%20Intrusion%26Alarm/08%20ARC%20Integration/Hik%20IP%20Receiver%20Pro/Hik%20IP%20Receiver%20Pro_V1.6.0.4Build20221110/Hik%20IP%20Receiver%20Pro_User%20Manual_V1.6.0.PDF)<br/>
 
-<img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/CIDEvents/1.png' width="100%">
-<img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/CIDEvents/2.png' width="100%">
-<img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/CIDEvents/3.png' width="100%">
-<img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/CIDEvents/4.png' width="100%">
-<img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/CIDEvents/5.png' width="100%">
+<img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/CIDEvents/1.png' >>
+<img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/CIDEvents/2.png' >>
+<img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/CIDEvents/3.png' >>
+<img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/CIDEvents/4.png' >>
+<img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/CIDEvents/5.png' >>
 
 <br/>
 <br/>
@@ -799,14 +799,14 @@ For other codes, please see the list below. You can find it [here as well](https
 
 ## Access Control Terminal node
 
-<img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/accesscontrolterminal.jpg' width="10%">
+<img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/accesscontrolterminal.jpg'>
 
 
 This node receives all events sent by your access control terminal, like, for example the DS-K1T502DBFWX-C.<br/>
 The node emits the payload as soon as it receives the event.<br/>
 You can filter by any type of event, alarm, exception, etc, or you can accept all incoming events<br/>
 
-<img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/accesscontrol.png' width="80%">
+<img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/accesscontrol.png' >
 
 <br/>
 <br/>
@@ -841,16 +841,16 @@ This is an example of payload.</br>
 <br/>
 <br/>
 
-## Access Control Terminal node
+## Speaker node
 
-<img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/speaker.jpg' width="30%">
+<img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/speaker.jpg' >
 
 
 This node receives all events sent by your access control terminal, like, for example the DS-K1T502DBFWX-C.<br/>
 The node emits the payload as soon as it receives the event.<br/>
 You can filter by any type of event, alarm, exception, etc, or you can accept all incoming events<br/>
 
-<img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/accesscontrol.png' width="80%">
+<img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/accesscontrol.png' >
 
 <br/>
 <br/>
