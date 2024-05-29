@@ -111,8 +111,6 @@ You can also arm, disarm, silence alarm etc...<br/>
 
 <br/>
 
-You can control your AX Pro alarm panel by passing messages to the node.
-
 **Configuration**
 
 |Property|Description|
@@ -120,44 +118,96 @@ You can control your AX Pro alarm panel by passing messages to the node.
 | Output msg | - "All": Outputs both Alarm events and Zone status changes <br/>- "Alarm related events": Outputs only alarm related events <br/>- "Zone status change events": Outputs only status changes in zones, even if the alarm is disarmed|
 
 
-**Input**
 
-|Property|Parameter|
-|--|--|
-| msg.armAwayArea | Area number (for example 1) |
-| msg.armStayArea | Area number (for example 1) |
-| msg.disarmArea | Area number (for example 1) |
+### Inputs
+
+: armAwayArea (number) :  Area number (for example 1). Arm Away the selected area.
+: armStayArea (number) :  Area number (for example 1). Arm Stay the selected area.
+: disarmArea (number):  Area number (for example 1).  Disarm the selected area.
+: disarmAllAreas (boolean): **true** to disarm all areas at once.
+: clearAlarmArea (number):  Area number (for example 1). Clear alarm of the selected area.
+: clearAllAlarmAreas (boolean):  **true** to clear the alarm of all areas at once.
 
 
 Examples:<br/>
 
 ```javascript
-// To Arm Away Area 1
-msg.armAwayArea = 1
+msg.armAwayArea = 1 // To Arm Away Area 1
+msg.armStayArea = 1 // To Arm Stay Area 1
+msg.disarmArea = 1 // To Disarm Area 1
+msg.disarmAllAreas = true // To disarm all areas at once
+msg.clearAlarmArea = 1 // To clear alarm on Area 1
+msg.clearAllAlarmAreas = true // To clear alarm of all areas at once
 return msg;
 ```
 
-```javascript
-// To Arm Stay Area 1
-msg.armStayArea = 1
-return msg;
+### Outputs
+
+1. Standard output
+: payload (string) : the standard output of the command.
+
+2. Standard error
+: payload (string) : the standard error of the command, **true** if the node is DISCONNECTED to the server, otherwise **false** ONCE RECONNECTED
+
+### Details
+
+The pin 1 emits a msg with the following JSON object's priperties  
+
+
+```json
+// FOR CID EVENTS 
+CIDEvent: {
+   "code":1401, // This is the reference code of the event. Please see the ISAPI docs or try by yourself, by watching the output while playing with your alarm
+   "name":"Supergiovane",
+   "type":"armAndDisarm",
+   "trigger":"2022-12-22T17:33:56+01:00",
+   "upload":"2022-12-22T17:33:56+01:00",
+   "system":1,
+   "subSystemName":"Casa"
+}
 ```
 
-```javascript
-// To Disarm Area 1
-msg.disarmArea = 1
-return msg;
+```json
+// FOR ZONE UPDATE EVENT
+zoneStatus: {
+   "id":1,
+   "name":"Zona cablata 2",
+   "status":"trigger",
+   "sensorStatus":"normal",
+   "magnetOpenStatus":true,
+   "tamperEvident":false,
+   "shielded":false,
+   "bypassed":false,
+   "armed":false,
+   "isArming":false,
+   "alarm":false,
+   "reason":"break",
+   "subSystemNo":1,
+   "linkageSubSystem":[
+      1
+   ],
+   "detectorType":"magneticContact",
+   "stayAway":false,
+   "zoneType":"Instant",
+   "accessModuleType":"localTransmitter",
+   "moduleChannel":2,
+   "zoneAttrib":"wired",
+   "deviceNo":3,
+   "abnormalOrNot":false
+}
 ```
 
-```javascript
-// To clear alarm on Area 1
-msg.clearAlarmArea = 1
-return msg;
-```
+***CID Events common codes***
 
-**Output**
+CID Events refers to a field "code" in the Alarm event output<br/>
+The most common event codes are: 3401 (Arm Away), 3441 (Arm Stay), 1401 (Disarmed), 1759 (Intrusion Alarm)<br/>
+For other codes, please see the list below. Click to view it larger.
 
-The node outputs a JSON with payload containing the data on PIN 1 and a connection ERROR on PIN 2 (true if the node is DISCONNECTED to the server, otherwise false IF IT'S RECONNECTED).
+<a href='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/CIDEvents/1.png' _target='blank'> <img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/CIDEvents/1.png' ></a>
+<a href='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/CIDEvents/2.png' _target='blank'><img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/CIDEvents/2.png' ></a>
+<a href='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/CIDEvents/3.png' _target='blank'><img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/CIDEvents/3.png' ></a>
+<a href='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/CIDEvents/4.png' _target='blank'><img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/CIDEvents/4.png' ></a>
+<a href='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/CIDEvents/5.png' _target='blank'><img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/CIDEvents/5.png' ></a>
 
 
 [SEE THE README FOR FULL HELP AND SAMPLES](https://github.com/Supergiovane/node-red-contrib-hikvision-ultimate)

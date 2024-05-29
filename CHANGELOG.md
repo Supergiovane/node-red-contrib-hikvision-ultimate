@@ -3,12 +3,13 @@
 
 [![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square)](https://www.paypal.me/techtoday) 
 
+
 <p>
-<b>Version 1.1.19</b> April 2024<br/>
-- NEW: Speaker node. Still in BETA, that means, test it and please report any issue.<br/>
+<b>Version 1.1.20</b> Mai 2024<br/>
+- AX Pro node: added msg.disarmAllAreas, msg.clearAlarmArea and msg.clearAllAlarmAreas. See the help tab in node-red for fuhrter infos<br/>
 </p>
 <p>
-<b>Version 1.1.18</b> April 2024<br/>
+<b>Version 1.1.19</b> April 2024<br/>
 - ANPR: fixed an issue it the plate's list parser in cameras having ISAPI protocol 1.0.<br/>
 </p>
 <p>

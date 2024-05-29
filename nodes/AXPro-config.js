@@ -520,6 +520,30 @@ module.exports = (RED) => {
                 if (node.debug) RED.log.error("AXPro-config: control/clearAlarm: " + (error.message || " unknown error"));
             }
         }
+        // Disarm All Areas
+        node.disarmAllAreas = async function () {
+            try {
+                let sURL = '/ISAPI/SecurityCP/control/disarm?format=json'
+                node.optionsAlarmStream.method = 'PUT'
+                delete (node.optionsAlarmStream.body)
+                await node.clientAlarmStream.fetch(node.protocol + "://" + node.host + sURL, node.optionsAlarmStream);
+            } catch (error) {
+                node.errorDescription = "control/disarmAllArea " + (error.message || " unknown error");
+                if (node.debug) RED.log.error("AXPro-config: control/disarmAllArea: " + (error.message || " unknown error"));
+            }
+        }
+        // Clear Alarm of all areas
+        node.clearAllAlarmAreas = async function () {
+            try {
+                let sURL = '/ISAPI/SecurityCP/control/clearAlarm?format=json'
+                node.optionsAlarmStream.method = 'PUT'
+                delete (node.optionsAlarmStream.body)
+                await node.clientAlarmStream.fetch(node.protocol + "://" + node.host + sURL, node.optionsAlarmStream);
+            } catch (error) {
+                node.errorDescription = "control/clearAllAlarmArea" + (error.message || " unknown error");
+                if (node.debug) RED.log.error("AXPro-config: control/clearAllAlarmArea: " + (error.message || " unknown error"));
+            }
+        }
 
 
 

@@ -687,53 +687,6 @@ You can also arm, disarm, silence alarm etc...<br/>
 ```
 </details>
 
-<br/>
-<br/>
-
-**Flow Messages**
-
-You can control your AX Pro alarm panel by passing messages to the node.</br>
-
-**Input**
-
-|Property|Parameter|
-|--|--|
-| msg.armAwayArea | Area number (for example 1) |
-| msg.armStayArea | Area number (for example 1) |
-| msg.disarmArea | Area number (for example 1) |
-
-
-Examples:<br/>
-
-```javascript
-// To Arm Away Area 1
-msg.armAwayArea = 1
-return msg;
-```
-
-```javascript
-// To Arm Stay Area 1
-msg.armStayArea = 1
-return msg;
-```
-
-```javascript
-// To Disarm Area 1
-msg.disarmArea = 1
-return msg;
-```
-
-```javascript
-// To clear alarm on Area 1
-msg.clearAlarmArea = 1
-return msg;
-```
-
-**Output**
-
-On PIN1, the node will output the msg</br>
-On PIN2 it will output connection error messages<br/>
-Example PIN 1:<br/>
 
 ```json
 // FOR CID EVENTS 
