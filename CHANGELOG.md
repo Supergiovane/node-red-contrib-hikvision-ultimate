@@ -5,6 +5,10 @@
 
 
 <p>
+<b>Version 1.1.21</b> August 2024<br/>
+- NEW: IP Speaker node: play preloaded audio files from an IP Speaker.<br/>
+</p>
+<p>
 <b>Version 1.1.20</b> Mai 2024<br/>
 - AX Pro node: added msg.disarmAllAreas, msg.clearAlarmArea and msg.clearAllAlarmAreas. See the help tab in node-red for fuhrter infos<br/>
 </p>

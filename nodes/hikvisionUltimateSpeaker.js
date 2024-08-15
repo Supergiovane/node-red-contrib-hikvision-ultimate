@@ -23,7 +23,7 @@ module.exports = function (RED) {
 
 			node.send([_msg, null]);
 			try {
-				node.setNodeStatus({ fill: "green", shape: "dot", text: "Plate " + _msg.payload });
+				//node.setNodeStatus({ fill: "green", shape: "dot", text: "Plate " + _msg.payload });
 			} catch (error) { }
 		}
 
@@ -37,13 +37,15 @@ module.exports = function (RED) {
 			if (msg.payload === true) {
 				(async () => {
 					msg.payload = await node.server.playAloud(config.customAudioID, config.volume);
-					node.send([msg, null])
+					node.send([msg, null]);
+					node.setNodeStatus({ fill: "green", shape: "dot", text: "Play" });
 				})();
 			}
 			if (msg.payload === false) {
 				(async () => {
 					msg.payload = await node.server.stopFile(config.customAudioID);
-					node.send([msg, null])
+					node.send([msg, null]);
+					node.setNodeStatus({ fill: "grey", shape: "dot", text: "Stop" });
 				})();
 			}
 		});

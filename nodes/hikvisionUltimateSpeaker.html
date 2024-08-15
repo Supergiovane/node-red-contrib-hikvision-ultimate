@@ -28,7 +28,7 @@
 					break;
 			}
 		},
-		icon: "node-Speaker-icon.svg",
+		icon: "bridge.svg",
 		label:
 			function () {
 				var label = "Speaker"
@@ -38,25 +38,25 @@
 				return label;
 			},
 		paletteLabel: function () {
-			return "Speaker;
+			return "Speaker";
 		},
 		oneditprepare: function () {
 
 			let node = this;
 
 			// File to be played
-			$("#node-input-customAudioID").empty();
 			$("#node-input-server").change(function () {
+				$("#node-input-customAudioID").empty();
 				try {
 					let oNodeServer = RED.nodes.node($(this).val());
 					$.getJSON("hikvisionUltimateGetSpeakerFiles?nodeID=" + oNodeServer.id, {}).done(function (data) {
 						$.each(data, function (i, item) {
-							$("#node-input-customAudioID").append($("<option>").val(item.customAudioID).text(item.customAudioName + " #" + item.customAudioID))
+							$("#node-input-customAudioID").append($("<option>").val(item.customAudioID.toString()).text(item.customAudioName + " #" + item.customAudioID))
 						});
+						$("#node-input-customAudioID").val(node.customAudioID)
 					});
 				} catch (error) { }
 			});
-			$("#node-input-customAudioID").val(this.customAudioID)
 
 			// Volume
 			$("#node-input-volume").empty();
@@ -98,7 +98,9 @@
 
 		},
 		oneditsave: function () {
-
+			if ($("#node-input-name").val() === undefined || $("#node-input-name").val() === '') {
+				$("#node-input-name").val($("#node-input-customAudioID option:selected").text());
+			}
 		}
 	});
 
