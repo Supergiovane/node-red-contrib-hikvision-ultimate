@@ -5,6 +5,10 @@
 
 
 <p>
+<b>Version 1.1.22</b> August 2024<br/>
+- IP Speaker node: added help.<br/>
+</p>
+<p>
 <b>Version 1.1.21</b> August 2024<br/>
 - NEW: IP Speaker node: play preloaded audio files from an IP Speaker.<br/>
 </p>
