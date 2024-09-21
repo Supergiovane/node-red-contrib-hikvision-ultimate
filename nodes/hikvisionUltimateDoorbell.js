@@ -39,6 +39,14 @@ module.exports = function (RED) {
 		// 10-doorbell, 11-VOIP Client Software, 12-network camera, 13-access control device*/
 		node.sendPayload = (_msg) => {
 			if (_msg === null || _msg === undefined) return;
+
+			if (_msg.type !== undefined && _msg.type === 'img') {
+				_msg.extension = extension;
+				node.send([null, null, _msg]);
+				return;
+			}
+
+
 			_msg.topic = node.topic;
 			_msg.payload = true;
 			if (_msg.hasOwnProperty("errorDescription")) { node.send([null, _msg]); return; }; // It's a connection error/restore comunication.

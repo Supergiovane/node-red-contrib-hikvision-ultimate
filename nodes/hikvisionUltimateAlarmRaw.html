@@ -8,7 +8,7 @@
 			server: { type: "Hikvision-config", required: true }
 		},
 		inputs: 0,
-		outputs: 2,
+		outputs: 3,
 		outputLabels: function (i) {
 			var ret = "";
 			switch (i) {
@@ -18,9 +18,8 @@
 				case 1:
 					return "Error";
 					break;
-				case 2
-					:
-					return "";
+				case 2:
+					return "Image";
 					break;
 				default:
 					break;

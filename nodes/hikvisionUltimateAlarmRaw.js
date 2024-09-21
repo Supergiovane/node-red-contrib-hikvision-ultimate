@@ -13,24 +13,35 @@ module.exports = function (RED) {
 		}
 
 		// Called from config node, to send output to the flow
-		node.sendPayload = (_msg) => {
+		node.sendPayload = (_msg, extension = '') => {
 			if (_msg === null || _msg === undefined) return;
 			_msg.topic = node.topic;
-			if (_msg.hasOwnProperty("errorDescription")) { node.send([null, _msg]); return; }; // It's a connection error/restore comunication.
+			if (_msg.hasOwnProperty("errorDescription")) { node.send([null, _msg, null]); return; }; // It's a connection error/restore comunication.
 			if (!_msg.hasOwnProperty("payload") || (_msg.hasOwnProperty("payload") && _msg.payload === undefined)) return;
 
+			if (_msg.type !== undefined && _msg.type === 'img') {
+				_msg.extension = extension;
+				node.send([null, null, _msg]);
+				return;
+			}
+
+
+			// Heartbeat discard
+			// 	<activePostCount>0</activePostCount>
+			//  <eventType>videoloss</eventType>
+			//  <eventState>inactive</eventState>
 			if (_msg.hasOwnProperty("payload")
 				&& _msg.payload.hasOwnProperty("eventType")
 				&& _msg.payload.eventType.toString().toLowerCase() === "videoloss"
 				&& _msg.payload.eventState.toString().toLowerCase() === "inactive"
-				&& _msg.payload.hasOwnProperty("activePostCount") && Number(_msg.payload.activePostCount) === 0) {
+				&& _msg.payload.hasOwnProperty("activePostCount") && (Number(_msg.payload.activePostCount) === 0 || Number(_msg.payload.activePostCount) === 1)) {
 				// It's a HertBeat, exit.
 				node.setNodeStatus({ fill: "green", shape: "ring", text: "Waiting for alert..." });
 				return;
 			};
 
 			node.setNodeStatus({ fill: "green", shape: "dot", text: "Alert received" });
-			node.send([_msg, null]);
+			node.send([_msg, null, null]);
 		}
 
 		// On each deploy, unsubscribe+resubscribe

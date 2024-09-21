@@ -40,7 +40,7 @@ module.exports = function (RED) {
 								node.isNodeInAlarm = true;
 								node.total_alarmfilterduration = 0;
 								node.setNodeStatus({ fill: "red", shape: "dot", text: "Zone " + node.currentAlarmMSG.zone + " alarm" });
-								node.send([node.currentAlarmMSG, null]);
+								node.send([node.currentAlarmMSG, null, null]);
 							} else { node.total_alarmfilterduration = 0; }
 						}
 					}
@@ -64,12 +64,17 @@ module.exports = function (RED) {
 
 
 		// Called from config node, to send output to the flow
-		node.sendPayload = (_msg) => {
+		node.sendPayload = (_msg, extension = '') => {
 			if (_msg === null || _msg === undefined) return;
 			_msg.topic = node.topic;
-			if (_msg.hasOwnProperty("errorDescription")) { node.send([null, _msg]); return; }; // It's a connection error/restore comunication.
+			if (_msg.hasOwnProperty("errorDescription")) { node.send([null, _msg, null]); return; }; // It's a connection error/restore comunication.
 			if (!_msg.hasOwnProperty("payload") || (_msg.hasOwnProperty("payload") && _msg.payload === undefined)) return;
 
+			if (_msg.type === 'img') {
+				_msg.extension = extension;
+				node.send([null, null, _msg]);
+				return;
+			}
 			var oRetMsg = {}; // Return message
 
 			// Check what alarm type must i search for.
@@ -297,12 +302,12 @@ module.exports = function (RED) {
 			// 29/01/2020 check wether the filter is enabled or not
 			if (oRetMsg.hasOwnProperty("payload")) {
 				if (node.alarmfilterduration == 0) {
-					node.send([oRetMsg, null]);
+					node.send([oRetMsg, null, null]);
 				} else {
 					// Sends the false only in case the isNodeInAlarm is true.
 					node.currentAlarmMSG = oRetMsg;
 					if (oRetMsg.payload === false && node.isNodeInAlarm) {
-						node.send([oRetMsg, null]);
+						node.send([oRetMsg, null, null]);
 						node.currentAlarmMSG = {};
 						node.isNodeInAlarm = false;
 					} else if (oRetMsg.payload === true && !node.isNodeInAlarm) {

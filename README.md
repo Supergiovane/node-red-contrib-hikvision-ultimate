@@ -47,6 +47,7 @@ You can optionally filter the alarms by CHANNEL, EVENT and ZONE. <br/>
 For NVR/DVR, the ***Channel*** property is the CAMERA number, while for Cameras, is the image sensor number (normally 1).<br/>
 The ***Zone*** property is the alarm zone (RADARS), or the alert region number (CAMERAS AND NVR/DVR).<br/>
 For RADAR device types, you can filter improper/false alams as well.<br/>
+On the third pin, the node will output the event's picture (if any). You can save it directly to disk or user where you want.<br/>
 
 <img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/GenericAlarm.png' >
 
@@ -126,6 +127,15 @@ msg = {
     "errorDescription": "", // This will contain the error rescription, in case of errors.
     "payload": false, // Or TRUE if error
     "_msgid": "dd5b3622.884a78"
+}
+```
+
+**Output PIN 3 (Image)**
+```javascript
+msg = {
+    "topic": "",
+    "payload": image,
+    "extension": "jpg" // Can be "jpg" or "png"
 }
 ```
 <br/>
@@ -515,6 +525,7 @@ If an ***error*** occurs, the XML node will output a msg with the error
 
 ## RAW CAMERA Event NODE
 The RAW CAMERA Event node reacts to every message sent by the device. You can use this node when the other nodes doesn't fit your needs. It connects to ***NVR, Camera, Radars etc...*** and outputs the event received. <br/>
+On the third pin, the node will output the event's picture (if any). You can save it directly to disk or user where you want.<br/>
 
 <img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/RawAlarm.png' >
 
@@ -529,6 +540,7 @@ This below is an example of msg output (in this case, a movement detected from a
 ```javascript
 msg = {
     "topic": "",
+    "type": "event",
     "payload": {
         "ipAddress": "192.168.1.25",
         "ipv6Address": "",
@@ -556,8 +568,7 @@ msg = {
                 "trackedByIPC": false
             }
         ]
-    },
-    "_msgid": "dba1850a.2dc5e8"
+    }
 }
 ```
 
@@ -566,8 +577,17 @@ msg = {
 msg = {
     "topic": "",
     "errorDescription": "", // This will contain the error rescription, in case of errors.
-    "payload": false, // Or TRUE if error
-    "_msgid": "dd5b3622.884a78"
+    "payload": false // Or TRUE if error
+}
+```
+
+**Output PIN 3 (Image)**
+```javascript
+msg = {
+    "topic": "",
+    "type": "img",
+    "payload": image,
+    "extension": "jpg" // Can be "jpg" or "png"
 }
 ```
 <br/>

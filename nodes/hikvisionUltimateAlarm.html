@@ -14,7 +14,7 @@
 			channelID: { value: "0" }
 		},
 		inputs: 0,
-		outputs: 2,
+		outputs: 3,
 		outputLabels: function (i) {
 			var ret = "";
 			switch (i) {
@@ -23,6 +23,9 @@
 					break;
 				case 1:
 					return "Error";
+					break;
+				case 2:
+					return "Image";
 					break;
 				default:
 					break;

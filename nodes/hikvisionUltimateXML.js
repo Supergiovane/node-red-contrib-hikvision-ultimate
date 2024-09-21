@@ -17,6 +17,10 @@ module.exports = function (RED) {
 
 		// Called from config node, to send output to the flow
 		node.sendPayload = (_msg) => {
+			if (_msg.type !== undefined && _msg.type === 'img') {
+				// The payload is an image, exit.
+				return;
+			}
 			node.setNodeStatus({ fill: "green", shape: "ring", text: "Received response" });
 			if (_msg === null || _msg === undefined) return;
 			node.send(_msg);
@@ -40,7 +44,7 @@ module.exports = function (RED) {
 
 		});
 
-		
+
 		node.on("close", function (done) {
 			done();
 		});

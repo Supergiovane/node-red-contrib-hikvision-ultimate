@@ -216,6 +216,11 @@ module.exports = function (RED) {
 		// Called from config node, to send output to the flow
 		node.sendPayload = (_msg) => {
 			if (_msg === null || _msg === undefined) return;
+
+			if (_msg.type !== undefined && _msg.type === 'img') {
+				// Coming from an event containing an image
+				return;
+			}
 			// 01/09/2022 Add the previous input message
 			_msg.previousInputMessage = node.previousInputMessage;
 			_msg.topic = node.topic;
