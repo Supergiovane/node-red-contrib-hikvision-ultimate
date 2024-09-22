@@ -134,7 +134,7 @@ msg = {
 ```javascript
 msg = {
     "topic": "",
-    "payload": image,
+    "payload": image (Bytes),
     "extension": "jpg" // Can be "jpg" or "png"
 }
 ```

@@ -405,12 +405,107 @@
 </script>
 
 <script type="text/markdown" data-help-name="hikvisionUltimateAlarm">
-	<p>
-        <a href="https://www.paypal.me/techtoday" target="_blank"><img src='https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square' width='30%'></a>
-        
-	</p>
-	<p>
-		The node outputs true/false on PIN 1 and a connection ERROR on PIN 2 (true if the node is DISCONNECTED to the server, otherwise false IF IT'S RECONNECTED).
-	</p>
-	
+<p>Events and alarms from the camera/nvr.</p>
+
+## CAMERA EVENT NODE
+
+<img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/hikcamera.jpg' >
+
+The Camera Event node connects to ***NVR, Camera, Radars, etc..*** and outputs true/false in case of an alarm. <br/>
+The node can be configured as **Camera/NVR** (with standard and smart events) or as **Old Security System** and **Radar** (with specific CID events, designed for these type of security devices)<br/>
+You can optionally filter the alarms by CHANNEL, EVENT and ZONE. <br/>
+For NVR/DVR, the ***Channel*** property is the CAMERA number, while for Cameras, is the image sensor number (normally 1).<br/>
+The ***Zone*** property is the alarm zone (RADARS), or the alert region number (CAMERAS AND NVR/DVR).<br/>
+For RADAR device types, you can filter improper/false alams as well.<br/>
+On the third pin, the node will output the event's picture (if any). You can save it directly to disk or user where you want.<br/>
+
+<img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/GenericAlarm.png' >
+
+You can choose from many different alarms, including: <br/>
+- Video Motion Alarm (When motion is detected)
+- Local alarm input (it's the device's IO pigtail connector)
+- Line crossing (when someone crosses a line)
+- CID alarms
+- Many more.....
+
+
+
+**Flow Messages**
+
+The node outputs a payload on **PIN 1** (***TRUE*** on alarm start, ***FALSE*** on alarm end). Some alarm types only support the alarm start event.</br>
+The node outputs a payload on **PIN 2**, representing a connection error. ***TRUE*** if error, otherwise ***FALSE***</br>
+This below is an example of msg output:</br>
+
+
+**Output PIN 1**
+```javascript
+// Example of an event from NVR/Camera
+msg = {
+	"payload": true,
+	"topic": "",
+	"channelid": "13", // This is the camera number for NVR, or the channel ID for cameras
+	"zone": 0, // Zone or Region, see above, the explained difference
+	"description": "Motion alarm",
+	"_msgid": "386a613.89f259e"
+}
+```
+
+```javascript
+// Example of an event from Radar
+msg = {
+{
+	"zone": 1, // This is the zone number that fired the alarm
+	"payload": true, // true if alarm, otherwise false if alarm ended.
+	"alarm": {
+		"ipAddress": "192.168.1.25",
+		"ipv6Address": "",
+		"portNo": 80,
+		"protocol": "HTTP",
+		"macAddress": "BananaRama",
+		"channelID": 1,
+		"dateTime": "2012-01-13T03:58:19+01:00",
+		"activePostCount": 1,
+		"eventType": "cidEvent",
+		"eventState": "active",
+		"eventDescription": "CID event",
+		"CIDEvent": {
+			"code": 3103,
+			"standardCIDcode": 3130,
+			"type": "zoneAlarm",
+			"trigger": "2012-01-13T03:58:19+01:00",
+			"upload": "2012-01-13T03:58:19+01:00",
+			"CameraList": [],
+			"NVRList": [
+				{
+					"id": 1,
+					"ip": "192.168.1.32",
+					"port": 8000,
+					"channel": 1
+				}
+			],
+			"zone": 1
+		}
+	}
+	"_msgid": "b07e50f6.86a72"
+}
+```
+
+**Output PIN 2 (connection error)**
+```javascript
+msg = {
+	"topic": "",
+	"errorDescription": "", // This will contain the error rescription, in case of errors.
+	"payload": false, // Or TRUE if error
+	"_msgid": "dd5b3622.884a78"
+}
+```
+
+**Output PIN 3 (Image)**
+```javascript
+msg = {
+	"topic": "",
+	"payload": image (Bytes),
+	"extension": "jpg" // Can be "jpg" or "png"
+}
+```
 </script>

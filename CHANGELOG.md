@@ -4,9 +4,9 @@
 [![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square)](https://www.paypal.me/techtoday) 
 
 <p>
-<b>Version 1.2.0-beta.1</b> September 2024<br/>
-- RAW Event Node (BETA): on the third pin, outputs the IMAGE related to the event (if any). The node will now filter the heartbeat signals.<br/>
-- Event Node (BETA): on the third pin, outputs the IMAGE related to the event (if any).<br/>
+<b>Version 1.2.0</b> September 2024<br/>
+- RAW Event Node: on the third pin, outputs the IMAGE related to the event (if any). The node will now filter the heartbeat signals.<br/>
+- Event Node: on the third pin, outputs the IMAGE related to the event (if any).<br/>
 </p>
 <p>
 <b>Version 1.1.22</b> August 2024<br/>
