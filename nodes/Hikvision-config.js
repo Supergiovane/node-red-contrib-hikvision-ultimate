@@ -231,7 +231,6 @@ module.exports = (RED) => {
                             if (node.debug) RED.log.error("Hikvision-config: No Content-Type in response");
 
                         }
-
                         if (contentType.includes('multipart')) {
                             const boundary = extractBoundary(contentType);
                             if (!boundary) {
@@ -248,48 +247,62 @@ module.exports = (RED) => {
                                 let extension = 'bin';  // Default estensione per parti non riconosciute
 
                                 part.on('header', (header) => {
-                                    //console.log('Part headers:', header);
-                                    node.resetHeartBeatTimer();
-                                    // Verifica il tipo di parte
-                                    if (header['content-type'] && (header['content-type'][0].includes('image/jpeg') || header['content-type'][0].includes('image/jpg'))) {
-                                        extension = 'jpg';  // Estensione corretta per immagini JPEG
-                                    } else if (header['content-type'] && header['content-type'][0].includes('image/png')) {
-                                        extension = 'png';  // Estensione corretta per immagini PNG
-                                    } else if (header['content-type'] && header['content-type'][0].includes('application/xml')) {
-                                        extension = 'xml';  // Estensione corretta per immagini PNG
-                                    } else if (header['content-type'] && header['content-type'][0].includes('application/json')) {
-                                        extension = 'json';  // Estensione corretta per immagini PNG
+                                    try {
+                                        //console.log('Part headers:', header);
+                                        node.resetHeartBeatTimer();
+                                        // Verifica il tipo di parte
+                                        if (header['content-type'] && (header['content-type'][0].includes('image/jpeg') || header['content-type'][0].includes('image/jpg'))) {
+                                            extension = 'jpg';  // Estensione corretta per immagini JPEG
+                                        } else if (header['content-type'] && header['content-type'][0].includes('image/png')) {
+                                            extension = 'png';  // Estensione corretta per immagini PNG
+                                        } else if (header['content-type'] && header['content-type'][0].includes('application/xml')) {
+                                            extension = 'xml';  // Estensione corretta per immagini PNG
+                                        } else if (header['content-type'] && header['content-type'][0].includes('application/json')) {
+                                            extension = 'json';  // Estensione corretta per immagini PNG
+                                        }
+                                    } catch (error) {
                                     }
                                 });
 
                                 part.on('data', (data) => {
-                                    node.resetHeartBeatTimer();
-                                    partData.push(data);  // Aggiungi i chunk di dati alla parte
+                                    try {
+                                        node.resetHeartBeatTimer();
+                                        partData.push(data);  // Aggiungi i chunk di dati alla parte
+                                    } catch (error) {
+                                    }
                                 });
 
                                 part.on('end', () => {
-                                    node.resetHeartBeatTimer();
-                                    const fullData = Buffer.concat(partData);  // Unisci i chunk di dati
-                                    switch (extension) {
-                                        case 'xml':
-                                            handleXML(fullData);
-                                            break;
-                                        case 'json':
-                                            handleJSON(fullData);
-                                            break;
-                                        case 'jpg' || 'png':
-                                            //const filename = generateFilename(extension);
-                                            //saveFile(fullData, filename);  // Salva l'immagine su disco
-                                            handleIMG(fullData, extension);
-                                            break;
-                                        default:
-                                            break;
+                                    try {
+                                        node.resetHeartBeatTimer();
+                                        const fullData = Buffer.concat(partData);  // Unisci i chunk di dati
+                                        switch (extension) {
+                                            case 'xml':
+                                                handleXML(fullData);
+                                                break;
+                                            case 'json':
+                                                handleJSON(fullData);
+                                                break;
+                                            case 'jpg' || 'png':
+                                                //const filename = generateFilename(extension);
+                                                //saveFile(fullData, filename);  // Salva l'immagine su disco
+                                                handleIMG(fullData, extension);
+                                                break;
+                                            default:
+                                                break;
+                                        }
+                                    } catch (error) {
                                     }
                                 });
+
+                                part.on('error', (err) => {
+                                    //console.error('Error in part:', err);
+                                });
+
                             });
 
                             dicer.on('finish', () => {
-                                console.log('Finished parsing multipart stream.');
+                                //console.log('Finished parsing multipart stream.');
                             });
 
                             dicer.on('error', (err) => {

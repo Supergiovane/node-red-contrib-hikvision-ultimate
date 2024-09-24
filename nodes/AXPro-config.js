@@ -1,13 +1,14 @@
 const { default: fetch } = require('node-fetch')
 const sha256 = require('./utils/Sha256').sha256
 const { XMLParser, XMLBuilder } = require("fast-xml-parser");
+const Dicer = require('dicer');
 
 module.exports = (RED) => {
 
     const DigestFetch = require('digest-fetch'); // 04/6/2022 DO NOT UPGRADE TO NODE-FETCH V3, BECAUSE DIGEST-FETCH DOESN'T SUPPORT IT
     const AbortController = require('abort-controller');
-    const readableStr = require('stream').Readable;
     const https = require('https');
+
 
     function Hikvisionconfig(config) {
         RED.nodes.createNode(this, config)
@@ -30,7 +31,6 @@ module.exports = (RED) => {
         node.clientAlarmStream = undefined
 
         var controller = null; // AbortController
-        var oReadable = new readableStr();
         node.setAllClientsStatus = ({ fill, shape, text }) => {
             function nextStatus(oClient) {
                 oClient.setNodeStatus({ fill: fill, shape: shape, text: text })
@@ -62,7 +62,7 @@ module.exports = (RED) => {
                     // 28/12/2020 Connection attempt limit reached
                     node.heartBeatTimerDisconnectionCounter = 0;
                     if (node.isConnected) {
-                        if (node.errorDescription === "") node.errorDescription = "Timeout waiting heartbeat"; // In case of timeout of a stream, there is no error throwed.
+                        if (node.errorDescription === "") node.errorDescription = "Timeout waiting for heartbeat"; // In case of timeout of a stream, there is no error throwed.
                         node.nodeClients.forEach(oClient => {
                             oClient.sendPayload({ topic: oClient.topic || "", errorDescription: node.errorDescription, payload: true });
                         });
@@ -103,6 +103,11 @@ module.exports = (RED) => {
 
 
         //#region ALARMSTREAM
+        // Funzione per estrarre il boundary dal Content-Type
+        function extractBoundary(contentType) {
+            const match = contentType.match(/boundary=(.*)$/);
+            return match ? match[1] : null;
+        }
         async function startAlarmStream() {
 
             node.resetHeartBeatTimer(); // First thing, start the heartbeat timer.
@@ -141,7 +146,7 @@ module.exports = (RED) => {
 
                 // The following properties are node-fetch extensions
                 follow: 20,         // maximum redirect count. 0 to not follow redirect
-                timeout: 0,         // req/res timeout in ms, it resets on redirect. 0 to disable (OS limit applies). Signal is recommended instead.
+                timeout: 20000,         // req/res timeout in ms, it resets on redirect. 0 to disable (OS limit applies). Signal is recommended instead.
                 compress: false,     // support gzip/deflate content encoding. false to disable
                 size: 0,            // maximum response body size in bytes. 0 to disable
                 agent: node.protocol === "https" ? customHttpsAgent : null
@@ -149,7 +154,6 @@ module.exports = (RED) => {
 
 
             try {
-
 
                 const responseAuth = await node.clientAlarmStream.fetch(node.protocol + "://" + node.host + "/ISAPI/Security/sessionLogin/capabilities?username=" + node.credentials.user, node.optionsAlarmStream)
                 if (responseAuth.status >= 200 && responseAuth.status <= 300) {
@@ -227,99 +231,22 @@ module.exports = (RED) => {
 
 
             try {
-                //#region "HANDLE STREAM MESSAGE"
-                // Handle the complete stream message, enclosed into the --boundary stream string
-                // If there is more boundary, process each one separately
-                // ###################################
-                async function handleChunk(result) {
-                    try {
-                        // 05/12/2020 process the data
-                        var aResults = result.split("--boundary");
-                        if (node.debug) RED.log.info("SPLITTATO RESULT COUNT: ####### " + aResults.length + " ###################### FINE SPLITTATO RESULT");
-                        aResults.forEach(async sRet => {
-                            if (sRet.trim() !== "") {
-                                if (node.debug) RED.log.error("BANANA PROCESSING" + sRet);
-                                try {
-                                    //sRet = sRet.replace(/--boundary/g, '');
-                                    var i = sRet.indexOf("<"); // Get only the XML, starting with "<"
-                                    if (i > -1) {
-                                        sRet = sRet.substring(i);
-
-                                        try {
-                                            const parser = new XMLParser();
-                                            let result = parser.parse(sRet);
-                                            if (node.debug) RED.log.error("BANANA SBANANATO XML -> JSON " + JSON.stringify(result));
-                                            if (result !== null && result !== undefined && result.hasOwnProperty("EventNotificationAlert")) {
-                                                node.nodeClients.forEach(oClient => {
-                                                    if (result !== undefined) oClient.sendPayload({ topic: oClient.topic || "", payload: result.EventNotificationAlert });
-                                                });
-                                            }
-                                        } catch (error) {
-                                            sRet = "";
-                                            if (node.debug) RED.log.error("BANANA ERRORE fast-xml-parser(sRet, function (err, result) " + error.message || "");
-                                        }
-
-                                    } else {
-                                        i = sRet.indexOf("{") // It's a Json
-                                        if (i > -1) {
-                                            if (node.debug) RED.log.error("BANANA SBANANATO JSON " + sRet);
-                                            sRet = sRet.substring(i);
-                                            try {
-                                                sRet = JSON.parse(sRet);
-                                                //  if (node.debug)  RED.log.error("BANANA JSONATO: " + sRet);
-                                                if (sRet !== null && sRet !== undefined) {
-                                                    node.nodeClients.forEach(oClient => {
-                                                        oClient.sendPayload({ topic: oClient.topic || "", payload: sRet });
-                                                    })
-                                                }
-                                            } catch (error) {
-                                                sRet = "";
-                                            }
-                                        } else {
-                                            // Invalid body
-                                            if (node.debug) RED.log.info("AXPro-config: DecodingBody Info only: Invalid Json " + sRet);
-                                        }
-                                    }
-                                    // All is fine. Reset and restart the hearbeat timer
-                                    // Hikvision sends an heartbeat alarm (videoloss), depending on firmware, every 300ms or more.
-                                    // If this HeartBeat isn't received, abort the stream request and restart.
-                                    node.resetHeartBeatTimer();
-                                } catch (error) {
-                                    //  if (node.debug) RED.log.error("BANANA startAlarmStream decodifica body: " + error);
-                                    if (node.debug) RED.log.error("AXPro-config: DecodingBody error: " + (error.message || " unknown error"));
-                                    throw (error);
-                                }
-                            } else {
-                                if (node.debug) RED.log.info("SPLITTATO RESULT EMPTY: ####### " + sRet + " ###################### FINE SPLITTATO RESULT");
-                            }
-                        });
-
-
-                    } catch (error) {
-                        if (node.debug) RED.log.info("AXPro-config: readStream error: " + (error.message || " unknown error"));
-                        node.errorDescription = "readStream error " + (error.message || " unknown error");
-                        throw (error);
-                    }
-                }
-                // ###################################
-                //#endregion
-
 
                 node.optionsAlarmStream.method = 'GET'
                 delete (node.optionsAlarmStream.Authorization)
                 delete (node.optionsAlarmStream.body)
                 node.optionsAlarmStream.headers = { Cookie: node.authCookie }
 
-                const responseFromAxProAlarmStream = await node.clientAlarmStream.fetch(node.protocol + "://" + node.host + "/ISAPI/Event/notification/alertStream", node.optionsAlarmStream);
-                if (responseFromAxProAlarmStream.status >= 200 && responseFromAxProAlarmStream.status <= 300) {
+                const res = await node.clientAlarmStream.fetch(node.protocol + "://" + node.host + "/ISAPI/Event/notification/alertStream", node.optionsAlarmStream);
+                if (res.status >= 200 && res.status <= 300) {
                     node.setAllClientsStatus({ fill: "green", shape: "ring", text: "Waiting for event." });
                 } else {
-                    node.setAllClientsStatus({ fill: "red", shape: "ring", text: responseFromAxProAlarmStream.statusText || " unknown response code" });
+                    node.setAllClientsStatus({ fill: "red", shape: "ring", text: res.statusText || " unknown response code" });
                     //  if (node.debug)  RED.log.error("BANANA Error response " + response.statusText);
-                    node.errorDescription = "StatusResponse problem " + (responseFromAxProAlarmStream.statusText || " unknown status response code");
-                    throw new Error("StatusResponse " + (responseFromAxProAlarmStream.statusText || " unknown response code"));
+                    node.errorDescription = "StatusResponse problem " + (res.statusText || " unknown status response code");
+                    throw new Error("StatusResponse " + (res.statusText || " unknown response code"));
                 }
-                if (responseFromAxProAlarmStream.ok) {
+                if (res.ok) {
                     if (!node.isConnected) {
                         node.setAllClientsStatus({ fill: "green", shape: "ring", text: "Connected." });
                         node.nodeClients.forEach(oClient => {
@@ -328,49 +255,103 @@ module.exports = (RED) => {
                         node.errorDescription = ""; // Reset the error
                     }
                     node.isConnected = true;
+                    node.resetHeartBeatTimer();
                     try {
-                        if (node.debug) RED.log.info("AXPro-config: before Pipelining...");
-                        if (oReadable !== null) oReadable.removeAllListeners() // 09/01/2023
-                        oReadable = readableStr.from(responseFromAxProAlarmStream.body, { encoding: 'utf8' });
-                        var result = "";
-                        oReadable.on('data', async (chunk) => {
-                            result += chunk;
-                            if (result.indexOf("--boundary") > -1) {
+                        const contentType = res.headers.get('content-type');
+                        if (!contentType) {
+                            if (node.debug) RED.log.error("Hikvision-config: No Content-Type in response");
 
-                                // 11/01/2022 let's do some other checks on the event stream text
-                                let bMessageCanBeHandled = false;
-                                if (result.includes("</EventNotificationAlert>")) {
-                                    // Is the XML
-                                    bMessageCanBeHandled = true;
-                                } else if (result.includes("}")) {
-                                    // Should be the JSON
-                                    bMessageCanBeHandled = true;
-                                }
+                        }
 
-                                if (bMessageCanBeHandled) {
-                                    try {
-                                        await handleChunk(result);
-                                    } catch (error) {
-                                        if (node.debug) RED.log.info("AXPro-config: Error handleChunk " + error.message || "");
-                                    }
-                                    result = "";
-                                }
+                        if (contentType.includes('multipart')) {
+                            const boundary = extractBoundary(contentType);
+                            if (!boundary) {
+                                if (node.debug) RED.log.error("Hikvision-config: Failed to extract boundary from multipart stream");
                             }
-                        });
-                        oReadable.on('end', function () {
-                            // For some reason, some NVRs do end the stream. I must restart it.
-                            if (node.debug) RED.log.info("AXPro-config: streamPipeline: STREAMING HAS ENDED.");
-                            startAlarmStream();
-                        });
 
-                        oReadable.on('error', function (error) {
-                            if (node.debug) RED.log.error("AXPro-config: streamPipeline: " + (error.message || " unknown error"));
-                        });
+                            //console.log(`Receiving multipart stream with boundary: ${boundary}`);
 
-                        //await streamPipeline(response.body, readStream);
+                            // Inizializza Dicer per il parsing del multipart
+                            const dicer = new Dicer({ boundary });
+
+                            dicer.on('part', (part) => {
+                                let partData = [];
+                                let extension = 'bin';  // Default estensione per parti non riconosciute
+
+                                part.on('header', (header) => {
+                                    try {
+                                        node.resetHeartBeatTimer();
+                                        // Verifica il tipo di parte
+                                        if (header['content-type'] && (header['content-type'][0].includes('image/jpeg') || header['content-type'][0].includes('image/jpg'))) {
+                                            extension = 'jpg';  // Estensione corretta per immagini JPEG
+                                        } else if (header['content-type'] && header['content-type'][0].includes('image/png')) {
+                                            extension = 'png';  // Estensione corretta per immagini PNG
+                                        } else if (header['content-type'] && header['content-type'][0].includes('application/xml')) {
+                                            extension = 'xml';  // Estensione corretta per immagini PNG
+                                        } else if (header['content-type'] && header['content-type'][0].includes('application/json')) {
+                                            extension = 'json';  // Estensione corretta per immagini PNG
+                                        }
+                                    } catch (error) {
+                                    }
+                                });
+
+                                part.on('data', (data) => {
+                                    try {
+                                        node.resetHeartBeatTimer();
+                                        partData.push(data);  // Aggiungi i chunk di dati alla parte   
+                                    } catch (error) {
+                                    }
+                                });
+
+                                part.on('end', () => {
+                                    try {
+                                        node.resetHeartBeatTimer();
+                                        const fullData = Buffer.concat(partData);  // Unisci i chunk di dati
+                                        switch (extension) {
+                                            case 'xml':
+                                                handleXML(fullData);
+                                                break;
+                                            case 'json':
+                                                handleJSON(fullData);
+                                                break;
+                                            case 'jpg' || 'png':
+                                                //const filename = generateFilename(extension);
+                                                //saveFile(fullData, filename);  // Salva l'immagine su disco
+                                                handleIMG(fullData, extension);
+                                                break;
+                                            default:
+                                                break;
+                                        }
+                                    } catch (error) {
+                                    }
+                                });
+
+                                part.on('error', (err) => {
+                                    //console.error('Error in part:', err);
+                                });
+
+                            });
+
+                            dicer.on('finish', () => {
+                                //console.log('Finished parsing multipart stream.');
+                                node.resetHeartBeatTimer();
+                            });
+
+                            dicer.on('error', (err) => {
+                                console.error('Error in Dicer:', err);
+                            });
+
+                            // Pipa lo stream multipart in Dicer
+                            res.body.pipe(dicer);
+
+                        } else {
+                            //throw new Error('Unsupported Content-Type');
+                        }
+
                     } catch (error) {
-                        if (node.debug) RED.log.error("AXPro-config: streamPipeline: Please be sure to have the latest Node.JS version installed: " + (error.message || " unknown error"));
+                        if (node.debug) RED.log.error("Hikvision-config: streamPipeline: Please be sure to have the latest Node.JS version installed: " + (error.message || " unknown error"));
                     }
+
 
                 }
 
@@ -389,6 +370,46 @@ module.exports = (RED) => {
         setTimeout(startAlarmStream, 5000)
 
         //#endregion
+        //#region "HANDLE STREAM MESSAGE"
+        // Handle the complete stream message
+        // ###################################
+        async function handleIMG(result, extension) {
+            try {
+                if (node.debug) RED.log.error("BANANA SBANANATO IMG -> JSON " + JSON.stringify(oXML));
+                node.nodeClients.forEach(oClient => {
+                    oClient.sendPayload({ topic: oClient.topic || "", payload: result, type: 'img', extension: extension });
+                });
+            } catch (error) {
+                if (node.debug) RED.log.error("BANANA ERRORE fast-xml-parser(sRet, function (err, result) " + error.message || "");
+            }
+        }
+        async function handleXML(result) {
+            try {
+                const parser = new XMLParser();
+                const oXML = parser.parse(result);
+                if (node.debug) RED.log.error("BANANA SBANANATO XML -> JSON " + JSON.stringify(oXML));
+                node.nodeClients.forEach(oClient => {
+                    if (oXML !== undefined) oClient.sendPayload({ topic: oClient.topic || "", payload: oXML.EventNotificationAlert, type: 'event' });
+                });
+            } catch (error) {
+                if (node.debug) RED.log.error("BANANA ERRORE fast-xml-parser(sRet, function (err, result) " + error.message || "");
+            }
+        }
+        async function handleJSON(result) {
+            try {
+                const oJSON = JSON.parse(result);
+                if (oJSON !== null && oJSON !== undefined) {
+                    node.nodeClients.forEach(oClient => {
+                        oClient.sendPayload({ topic: oClient.topic || "", payload: oJSON, type: 'event' });
+                    })
+                }
+            } catch (error) {
+                if (node.debug) RED.log.error("BANANA ERRORE fast-xml-parser(sRet, function (err, result) " + error.message || "");
+            }
+        }
+        // ###################################
+        //#endregion
+
 
         // Read zones status and outputs only changed ones
         // Wrapping the async function, for peace of mind
