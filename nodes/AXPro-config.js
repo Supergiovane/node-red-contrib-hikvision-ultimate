@@ -6,7 +6,7 @@ const Dicer = require('dicer');
 module.exports = (RED) => {
 
     const DigestFetch = require('digest-fetch'); // 04/6/2022 DO NOT UPGRADE TO NODE-FETCH V3, BECAUSE DIGEST-FETCH DOESN'T SUPPORT IT
-    const AbortController = require('abort-controller');
+    // const AbortController = require('abort-controller');
     const https = require('https');
 
 
@@ -135,7 +135,7 @@ module.exports = (RED) => {
             // </SessionLoginCap>
 
 
-            controller = new AbortController(); // For aborting the stream request
+            controller = new globalThis.AbortController(); // For aborting the stream request
             node.optionsAlarmStream = {
                 // These properties are part of the Fetch Standard
                 method: 'GET',

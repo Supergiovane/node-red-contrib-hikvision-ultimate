@@ -2,7 +2,7 @@
 module.exports = (RED) => {
 
     const DigestFetch = require('digest-fetch')
-    const AbortController = require('abort-controller');
+    // const AbortController = require('abort-controller');
     const { XMLParser } = require("fast-xml-parser");
     const readableStr = require('stream').Readable;
     const https = require('https');
@@ -302,7 +302,7 @@ module.exports = (RED) => {
             if (node.authentication === "digest") clientCallStatus = new DigestFetch(node.credentials.user, node.credentials.password); // Instantiate the fetch client.
             if (node.authentication === "basic") clientCallStatus = new DigestFetch(node.credentials.user, node.credentials.password, { basic: true }); // Instantiate the fetch client.
 
-            controller = new AbortController(); // For aborting the stream request
+            controller = new globalThis.AbortController(); // For aborting the stream request
             var optionsAlarmStream = {
                 // These properties are part of the Fetch Standard
                 method: 'GET',

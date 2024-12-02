@@ -3,7 +3,7 @@
 module.exports = (RED) => {
 
     const DigestFetch = require('digest-fetch')
-    const AbortController = require('abort-controller');
+    // const AbortController = require('abort-controller');
     const https = require('https');
     const fs = require('fs');
     const hikvisionDate = require('./utils/dateManagement');
@@ -135,7 +135,7 @@ module.exports = (RED) => {
                 }
             };
 
-            controller = new AbortController(); // For aborting the stream request
+            controller = new globalThis.AbortController(); // For aborting the stream request
             var options = {
                 // These properties are part of the Fetch Standard
                 method: 'POST',

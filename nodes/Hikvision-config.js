@@ -2,11 +2,11 @@
 module.exports = (RED) => {
     const discoHikvisionDevices = require('./utils/hikDiscovery');
     const DigestFetch = require('digest-fetch'); // 04/6/2022 DO NOT UPGRADE TO NODE-FETCH V3, BECAUSE DIGEST-FETCH DOESN'T SUPPORT IT
-    const AbortController = require('abort-controller');
     const { XMLParser } = require("fast-xml-parser");
 
     const readableStr = require('stream').Readable;
     const https = require('https');
+    const http = require('http');
     const Dicer = require('dicer');
 
 
@@ -38,7 +38,14 @@ module.exports = (RED) => {
         }
         // 14/07/2021 custom agent as global variable, to avoid issue with self signed certificates
         const customHttpsAgent = new https.Agent({
-            rejectUnauthorized: false
+            rejectUnauthorized: false,
+            keepAlive: true, // Mantiene vive le connessioni
+            maxSockets: 10,  // Numero massimo di connessioni simultanee
+        });
+        const customHttpAgent = new http.Agent({
+            rejectUnauthorized: false,
+            keepAlive: true, // Mantiene vive le connessioni
+            maxSockets: 10,  // Numero massimo di connessioni simultanee
         });
 
         // 14/12/2020 Get the infos from the camera
@@ -72,7 +79,7 @@ module.exports = (RED) => {
                 timeout: 15000,         // req/res timeout in ms, it resets on redirect. 0 to disable (OS limit applies). Signal is recommended instead.
                 compress: false,     // support gzip/deflate content encoding. false to disable
                 size: 0,            // maximum response body size in bytes. 0 to disable
-                agent: jParams.protocol === "https" ? customHttpsAgent : null        // http(s).Agent instance or function that returns an instance (see below)
+                agent: jParams.protocol === "https" ? customHttpsAgent : customHttpAgent        // http(s).Agent instance or function that returns an instance (see below)
             };
             try {
                 (async () => {
@@ -101,40 +108,7 @@ module.exports = (RED) => {
             }
         });
 
-        // 14/12/2020 Get the infos from the camera
-        // RED.httpAdmin.get("/hikvisionUltimateDiscoverOnlineDevices", RED.auth.needsPermission('Hikvisionconfig.read'), function (req, res) {
-        //     if (node.onLineHikvisionDevicesDiscoverList === null) {
-        //         try {
-        //             (async () => {
-        //                 try {
-        //                     let discoveredDevices = await discoHikvisionDevices.Discover();
-        //                     try {
-        //                         res.json(discoveredDevices);
-        //                         return;
-        //                     } catch (error) {
-        //                         res.json(error);
-        //                         return;
-        //                     }
-
-        //                 } catch (error) {
-        //                     RED.log.error("Errore hikvisionUltimateDiscoverOnlineDevices " + error.message);
-        //                     res.json(error);
-        //                 }
-
-        //             })();
-
-        //         } catch (err) {
-        //             res.json(err);
-        //         }
-        //     } else {
-        //         res.json(node.onLineHikvisionDevicesDiscoverList)
-        //     }
-
-        // });
-
-
         // This function starts the heartbeat timer, to detect the disconnection from the server
-
         node.resetHeartBeatTimer = () => {
             // Reset node.timerCheckHeartBeat
             if (node.timerCheckHeartBeat !== null) clearTimeout(node.timerCheckHeartBeat);
@@ -185,7 +159,7 @@ module.exports = (RED) => {
             if (node.authentication === "digest") clientAlarmStream = new DigestFetch(node.credentials.user, node.credentials.password); // Instantiate the fetch client.
             if (node.authentication === "basic") clientAlarmStream = new DigestFetch(node.credentials.user, node.credentials.password, { basic: true }); // Instantiate the fetch client.
 
-            controller = new AbortController(); // For aborting the stream request
+            controller = new globalThis.AbortController(); // For aborting the stream request
             var optionsAlarmStream = {
                 // These properties are part of the Fetch Standard
                 method: 'GET',
@@ -199,7 +173,7 @@ module.exports = (RED) => {
                 timeout: 15000,         // req/res timeout in ms, it resets on redirect. 0 to disable (OS limit applies). Signal is recommended instead.
                 compress: false,     // support gzip/deflate content encoding. false to disable
                 size: 0,            // maximum response body size in bytes. 0 to disable
-                agent: node.protocol === "https" ? customHttpsAgent : null
+                agent: node.protocol === "https" ? customHttpsAgent : customHttpAgent
 
             };
 
@@ -236,8 +210,6 @@ module.exports = (RED) => {
                             if (!boundary) {
                                 if (node.debug) RED.log.error("Hikvision-config: Failed to extract boundary from multipart stream");
                             }
-
-                            //console.log(`Receiving multipart stream with boundary: ${boundary}`);
 
                             // Inizializza Dicer per il parsing del multipart
                             const dicer = new Dicer({ boundary });
@@ -294,7 +266,6 @@ module.exports = (RED) => {
                                     } catch (error) {
                                     }
                                 });
-
                                 part.on('error', (err) => {
                                     //console.error('Error in part:', err);
                                 });
@@ -382,7 +353,7 @@ module.exports = (RED) => {
             if (node.authentication === "digest") clientGenericRequest = new DigestFetch(node.credentials.user, node.credentials.password); // Instantiate the fetch client.
             if (node.authentication === "basic") clientGenericRequest = new DigestFetch(node.credentials.user, node.credentials.password, { basic: true }); // Instantiate the fetch client.
 
-            var reqController = new AbortController(); // For aborting the stream request
+            var reqController = new globalThis.AbortController(); // For aborting the stream request
             var options = {
                 // These properties are part of the Fetch Standard
                 method: _method.toString().toUpperCase(),
@@ -396,7 +367,7 @@ module.exports = (RED) => {
                 timeout: 15000,         // req/res timeout in ms, it resets on redirect. 0 to disable (OS limit applies). Signal is recommended instead.
                 compress: false,     // support gzip/deflate content encoding. false to disable
                 size: 0,            // maximum response body size in bytes. 0 to disable
-                agent: node.protocol === "https" ? customHttpsAgent : null         // http(s).Agent instance or function that returns an instance (see below)
+                agent: node.protocol === "https" ? customHttpsAgent : customHttpAgent         // http(s).Agent instance or function that returns an instance (see below)
             };
 
             try {
@@ -482,7 +453,10 @@ module.exports = (RED) => {
                 } catch (error) { }
             }
             if (node.timerCheckHeartBeat !== null) clearTimeout(node.timerCheckHeartBeat);
-            done();
+            setTimeout(() => {
+                done();
+            }, 2000);
+
         });
 
 

@@ -2,7 +2,7 @@
 module.exports = (RED) => {
 
     const DigestFetch = require('digest-fetch')
-    const AbortController = require('abort-controller');
+    // const AbortController = require('abort-controller');
     const { XMLParser } = require("fast-xml-parser");
     const readableStr = require('stream').Readable;
     const https = require('https');
@@ -119,7 +119,7 @@ module.exports = (RED) => {
             if (node.authentication === "digest") clientCallStatus = new DigestFetch(node.credentials.user, node.credentials.password); // Instantiate the fetch client.
             if (node.authentication === "basic") clientCallStatus = new DigestFetch(node.credentials.user, node.credentials.password, { basic: true }); // Instantiate the fetch client.
 
-            controller = new AbortController(); // For aborting the stream request
+            controller = new globalThis.AbortController(); // For aborting the stream request
             var optionsAlarmStream = {
                 // These properties are part of the Fetch Standard
                 method: 'GET',
@@ -240,47 +240,47 @@ module.exports = (RED) => {
         //#region GENERIC GET OT PUT CALL
         // Function to get or post generic data on device
         node.request = async function (_callerNode, _method, _URL, _body) {
-                var clientGenericRequest;
-                if (node.authentication === "digest") clientGenericRequest = new DigestFetch(node.credentials.user, node.credentials.password); // Instantiate the fetch client.
-                if (node.authentication === "basic") clientGenericRequest = new DigestFetch(node.credentials.user, node.credentials.password, { basic: true }); // Instantiate the fetch client.
+            var clientGenericRequest;
+            if (node.authentication === "digest") clientGenericRequest = new DigestFetch(node.credentials.user, node.credentials.password); // Instantiate the fetch client.
+            if (node.authentication === "basic") clientGenericRequest = new DigestFetch(node.credentials.user, node.credentials.password, { basic: true }); // Instantiate the fetch client.
 
-                var reqController = new AbortController(); // For aborting the stream request
-                var options = {
-                    // These properties are part of the Fetch Standard
-                    method: _method.toString().toUpperCase(),
-                    headers: {},        // request headers. format is the identical to that accepted by the Headers constructor (see below)
-                    body: _body,         // request body. can be null, a string, a Buffer, a Blob, or a Node.js Readable stream
-                    redirect: 'follow', // set to `manual` to extract redirect headers, `error` to reject redirect
-                    signal: reqController.signal,       // pass an instance of AbortSignal to optionally abort requests
+            var reqcontroller = new globalThis.AbortController(); // For aborting the stream request
+            var options = {
+                // These properties are part of the Fetch Standard
+                method: _method.toString().toUpperCase(),
+                headers: {},        // request headers. format is the identical to that accepted by the Headers constructor (see below)
+                body: _body,         // request body. can be null, a string, a Buffer, a Blob, or a Node.js Readable stream
+                redirect: 'follow', // set to `manual` to extract redirect headers, `error` to reject redirect
+                signal: reqController.signal,       // pass an instance of AbortSignal to optionally abort requests
 
-                    // The following properties are node-fetch extensions
-                    follow: 20,         // maximum redirect count. 0 to not follow redirect
-                    timeout: 8000,         // req/res timeout in ms, it resets on redirect. 0 to disable (OS limit applies). Signal is recommended instead.
-                    compress: false,     // support gzip/deflate content encoding. false to disable
-                    size: 0,            // maximum response body size in bytes. 0 to disable
-                    agent: node.protocol === "https" ? customHttpsAgent : null         // http(s).Agent instance or function that returns an instance (see below)
-                };
-                try {
-                    if (!_URL.startsWith("/")) _URL = "/" + _URL;
-                    const response = await clientGenericRequest.fetch(node.protocol + "://" + node.host + _URL, options);
-                    if (response.ok) {
-                        try {
-                            const oReadable = readableStr.from(response.body, { encoding: 'utf8' });
-                            oReadable.on('data', (chunk) => {
-                                if (node.debug) RED.log.error(chunk);
-                            });
-                        } catch (error) {
-                            throw new Error("Error readableStream: " + error.message || "");
-                        }
-                    } else {
-                        throw new Error("Error response: " + response.statusText || " unknown response code");
+                // The following properties are node-fetch extensions
+                follow: 20,         // maximum redirect count. 0 to not follow redirect
+                timeout: 8000,         // req/res timeout in ms, it resets on redirect. 0 to disable (OS limit applies). Signal is recommended instead.
+                compress: false,     // support gzip/deflate content encoding. false to disable
+                size: 0,            // maximum response body size in bytes. 0 to disable
+                agent: node.protocol === "https" ? customHttpsAgent : null         // http(s).Agent instance or function that returns an instance (see below)
+            };
+            try {
+                if (!_URL.startsWith("/")) _URL = "/" + _URL;
+                const response = await clientGenericRequest.fetch(node.protocol + "://" + node.host + _URL, options);
+                if (response.ok) {
+                    try {
+                        const oReadable = readableStr.from(response.body, { encoding: 'utf8' });
+                        oReadable.on('data', (chunk) => {
+                            if (node.debug) RED.log.error(chunk);
+                        });
+                    } catch (error) {
+                        throw new Error("Error readableStream: " + error.message || "");
                     }
-
-                } catch (error) {
-                    // Main Error
-                    if (node.debug) RED.log.error("Doorbell-config: clientGenericRequest.fetch error " + error.message);
-                    throw (new Error("clientGenericRequest.fetch error:" + error.message));
+                } else {
+                    throw new Error("Error response: " + response.statusText || " unknown response code");
                 }
+
+            } catch (error) {
+                // Main Error
+                if (node.debug) RED.log.error("Doorbell-config: clientGenericRequest.fetch error " + error.message);
+                throw (new Error("clientGenericRequest.fetch error:" + error.message));
+            }
         };
         //#endregion
 

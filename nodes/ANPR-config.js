@@ -3,7 +3,7 @@
 module.exports = (RED) => {
 
     const DigestFetch = require('digest-fetch')
-    const AbortController = require('abort-controller');
+    // const AbortController = require('abort-controller');
     const { XMLParser } = require("fast-xml-parser");
     const https = require('https');
 
@@ -117,7 +117,7 @@ module.exports = (RED) => {
             if (node.authentication === "digest") client = new DigestFetch(node.credentials.user, node.credentials.password); // Instantiate the fetch client.
             if (node.authentication === "basic") client = new DigestFetch(node.credentials.user, node.credentials.password, { basic: true }); // Instantiate the fetch client.
 
-            controller = new AbortController(); // For aborting the stream request
+            controller = new globalThis.AbortController(); // For aborting the stream request
             var options = {
                 // These properties are part of the Fetch Standard
                 method: 'POST',
