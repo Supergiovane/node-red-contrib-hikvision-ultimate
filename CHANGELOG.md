@@ -4,6 +4,10 @@
 [![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square)](https://www.paypal.me/techtoday) 
 
 <p>
+<b>Version 1.2.4</b> December 2024<br/>
+- Doorbell: fixed an issue introduced with 1.2.3, preventing the door to be open.<br/>
+</p>
+<p>
 <b>Version 1.2.1</b> September 2024<br/>
 - AX Pro: fixed an issue where occasionally, when malformed multipart data is sent from the AX Pro, there would be no NAK.<br/>
 </p>
