@@ -435,7 +435,7 @@ module.exports = (RED) => {
                 if (reqController !== null) {
                     try {
                         //if (reqController !== null) reqController.abort().then(ok => { }).catch(err => { });
-                        reqController.abort();
+                        if (reqController !== null) reqController.abort();
                     } catch (error) { }
                 }
             }
