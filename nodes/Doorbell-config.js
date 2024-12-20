@@ -11,7 +11,7 @@ module.exports = (RED) => {
         RED.nodes.createNode(this, config)
         var node = this
         node.port = config.port || 80;
-        node.debug = config.host.toString().toLowerCase().indexOf("banana") > -1;
+        node.debug = false //config.host.toString().toLowerCase().indexOf("banana") > -1;
         node.host = config.host.toString().toLowerCase().replace("banana", "") + ":" + node.port;
         node.protocol = config.protocol || "http";
         node.nodeClients = []; // Stores the registered clients
