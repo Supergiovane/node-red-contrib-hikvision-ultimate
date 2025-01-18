@@ -82,7 +82,7 @@ module.exports = function (RED) {
 				}
 				// Clear All Alarm Areas
 				if (msg.hasOwnProperty("clearAllAlarmAreas")) {
-					node.server.clearAlarmArea(msg.clearAllAlarmAreas)
+					node.server.clearAllAlarmAreas()
 				}
 
 			} catch (error) { }

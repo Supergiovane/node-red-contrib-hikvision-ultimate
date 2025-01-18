@@ -558,7 +558,13 @@ module.exports = (RED) => {
             try {
                 let sURL = '/ISAPI/SecurityCP/control/clearAlarm?format=json'
                 node.optionsAlarmStream.method = 'PUT'
-                delete (node.optionsAlarmStream.body)
+                const SubSysList = [];
+                for (let index = 1; index <= 32; index++) {
+                    const SubSys = { id: index };
+                    SubSysList.push({ SubSys: SubSys });
+                }
+                let body = JSON.stringify({ SubSysList: SubSysList });//{ "SubSysList": [{ "SubSys": { "id": area_id } }] }
+                node.optionsAlarmStream.body = body;
                 await node.clientAlarmStream.fetch(node.protocol + "://" + node.host + sURL, node.optionsAlarmStream);
             } catch (error) {
                 node.errorDescription = "control/clearAllAlarmArea" + (error.message || " unknown error");

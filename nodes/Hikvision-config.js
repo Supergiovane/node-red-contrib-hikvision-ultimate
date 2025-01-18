@@ -209,6 +209,7 @@ module.exports = (RED) => {
                             const boundary = extractBoundary(contentType);
                             if (!boundary) {
                                 if (node.debug) RED.log.error("Hikvision-config: Failed to extract boundary from multipart stream");
+                                boundary = "boundary"
                             }
 
                             // Inizializza Dicer per il parsing del multipart

@@ -4,6 +4,10 @@
 [![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square)](https://www.paypal.me/techtoday) 
 
 <p>
+<b>Version 1.2.6</b> January 2025<br/>
+- AX Pro: fixed msg.clearAllAlarmAreas input property, that was clearing only the area number 1.<br/>
+</p>
+<p>
 <b>Version 1.2.5</b> December 2024<br/>
 - Doorbell: Disabled some XML parser error logs.<br/>
 </p>
