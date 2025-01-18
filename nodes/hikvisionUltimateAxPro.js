@@ -78,7 +78,7 @@ module.exports = function (RED) {
 
 				// Disarm All Area in a batch
 				if (msg.hasOwnProperty("disarmAllAreas")) {
-					node.server.disarmArea(msg.disarmAllAreas)
+					node.server.disarmAllAreas()
 				}
 				// Clear All Alarm Areas
 				if (msg.hasOwnProperty("clearAllAlarmAreas")) {

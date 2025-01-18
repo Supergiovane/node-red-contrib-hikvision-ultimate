@@ -6,6 +6,7 @@
 <p>
 <b>Version 1.2.6</b> January 2025<br/>
 - AX Pro: fixed msg.clearAllAlarmAreas input property, that was clearing only the area number 1.<br/>
+- AX Pro: fixed msg.disarmAllAreas input property, that was disarming only the area number 1.<br/>
 </p>
 <p>
 <b>Version 1.2.5</b> December 2024<br/>
