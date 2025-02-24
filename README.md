@@ -47,7 +47,6 @@ You can optionally filter the alarms by CHANNEL, EVENT and ZONE. <br/>
 For NVR/DVR, the ***Channel*** property is the CAMERA number, while for Cameras, is the image sensor number (normally 1).<br/>
 The ***Zone*** property is the alarm zone (RADARS), or the alert region number (CAMERAS AND NVR/DVR).<br/>
 For RADAR device types, you can filter improper/false alams as well.<br/>
-On the third pin, the node will output the event's picture (if any). You can save it directly to disk or user where you want.<br/>
 
 <img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/GenericAlarm.png' >
 
@@ -59,11 +58,12 @@ You can choose from many different alarms, including: <br/>
 - Many more.....
 
 
-
 **Flow Messages**
 
 The node outputs a payload on **PIN 1** (***TRUE*** on alarm start, ***FALSE*** on alarm end). Some alarm types only support the alarm start event.</br>
 The node outputs a payload on **PIN 2**, representing a connection error. ***TRUE*** if error, otherwise ***FALSE***</br>
+The node outputs a payload on **PIN 3**, with the captured image (as byte array), that you can directly save to disk or attach on an email or so. This pin emits a message only if the camera sends the captured image. This usually happens with "smart" events (but many firmwares out there, allow you to do it even with the basic events). You can check that by attaching a debug node on the third pin, then set a rule in the smart event and set the camera to send pictures in case of events (usually, you'll find this option in the "Archive management" menu of your camera).</br>
+
 This below is an example of msg output:</br>
 
 

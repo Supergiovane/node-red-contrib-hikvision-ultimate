@@ -434,6 +434,7 @@ You can choose from many different alarms, including: <br/>
 
 The node outputs a payload on **PIN 1** (***TRUE*** on alarm start, ***FALSE*** on alarm end). Some alarm types only support the alarm start event.</br>
 The node outputs a payload on **PIN 2**, representing a connection error. ***TRUE*** if error, otherwise ***FALSE***</br>
+The node outputs a payload on **PIN 3**, with the captured image (as byte array), that you can directly save to disk or attach on an email or so. This pin emits a message only if the camera sends the captured image. This usually happens with "smart" events (but many firmwares out there, allow you to do it even with the basic events). You can check that by attaching a debug node on the third pin, then set a rule in the smart event and set the camera to send pictures in case of events (usually, you'll find this option in the "Archive management" menu of your camera).
 This below is an example of msg output:</br>
 
 
