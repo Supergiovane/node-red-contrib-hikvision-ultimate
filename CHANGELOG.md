@@ -4,6 +4,11 @@
 [![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square)](https://www.paypal.me/techtoday) 
 
 <p>
+<b>Version 1.2.8</b> May 2025<br/>
+- Housekeeping.<br/>
+- Optimized hikvision stream for some devices.<br/>
+</p>
+<p>
 <b>Version 1.2.6</b> January 2025<br/>
 - AX Pro: fixed msg.clearAllAlarmAreas input property, that was clearing only the area number 1.<br/>
 - AX Pro: fixed msg.disarmAllAreas input property, that was disarming only the area number 1.<br/>
