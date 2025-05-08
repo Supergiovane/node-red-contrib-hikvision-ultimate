@@ -6,6 +6,7 @@ module.exports = (RED) => {
     const { XMLParser } = require("fast-xml-parser");
     const readableStr = require('stream').Readable;
     const https = require('https');
+    const http = require('http');
 
     function Speakerconfig(config) {
         RED.nodes.createNode(this, config)
@@ -30,7 +31,14 @@ module.exports = (RED) => {
         }
         // 14/07/2021 custom agent as global variable, to avoid issue with self signed certificates
         const customHttpsAgent = new https.Agent({
-            rejectUnauthorized: false
+            rejectUnauthorized: false,
+            keepAlive: true, // Mantiene vive le connessioni
+            maxSockets: 10,  // Numero massimo di connessioni simultanee
+        });
+        const customHttpAgent = new http.Agent({
+            rejectUnauthorized: false,
+            keepAlive: true, // Mantiene vive le connessioni
+            maxSockets: 10,  // Numero massimo di connessioni simultanee
         });
 
         // 14/12/2020 Get the infos from the Speaker
@@ -64,7 +72,7 @@ module.exports = (RED) => {
                 timeout: 5000,         // req/res timeout in ms, it resets on redirect. 0 to disable (OS limit applies). Signal is recommended instead.
                 compress: false,     // support gzip/deflate content encoding. false to disable
                 size: 0,            // maximum response body size in bytes. 0 to disable
-                agent: jParams.protocol === "https" ? customHttpsAgent : null        // http(s).Agent instance or function that returns an instance (see below)
+                agent: jParams.protocol === "https" ? customHttpsAgent : customHttpAgent        // http(s).Agent instance or function that returns an instance (see below)
             };
             try {
                 (async () => {
@@ -118,7 +126,7 @@ module.exports = (RED) => {
                 timeout: 5000,         // req/res timeout in ms, it resets on redirect. 0 to disable (OS limit applies). Signal is recommended instead.
                 compress: false,     // support gzip/deflate content encoding. false to disable
                 size: 0,            // maximum response body size in bytes. 0 to disable
-                agent: jParams.protocol === "https" ? customHttpsAgent : null        // http(s).Agent instance or function that returns an instance (see below)
+                agent: jParams.protocol === "https" ? customHttpsAgent : customHttpAgent       // http(s).Agent instance or function that returns an instance (see below)
             };
             try {
                 (async () => {
@@ -170,7 +178,7 @@ module.exports = (RED) => {
                 timeout: 5000,         // req/res timeout in ms, it resets on redirect. 0 to disable (OS limit applies). Signal is recommended instead.
                 compress: false,     // support gzip/deflate content encoding. false to disable
                 size: 0,            // maximum response body size in bytes. 0 to disable
-                agent: jParams.protocol === "https" ? customHttpsAgent : null        // http(s).Agent instance or function that returns an instance (see below)
+                agent: jParams.protocol === "https" ? customHttpsAgent : customHttpAgent        // http(s).Agent instance or function that returns an instance (see below)
             };
             try {
                 (async () => {
@@ -214,7 +222,7 @@ module.exports = (RED) => {
                 timeout: 5000,         // req/res timeout in ms, it resets on redirect. 0 to disable (OS limit applies). Signal is recommended instead.
                 compress: false,     // support gzip/deflate content encoding. false to disable
                 size: 0,            // maximum response body size in bytes. 0 to disable
-                agent: jParams.protocol === "https" ? customHttpsAgent : null        // http(s).Agent instance or function that returns an instance (see below)
+                agent: jParams.protocol === "https" ? customHttpsAgent : customHttpAgent         // http(s).Agent instance or function that returns an instance (see below)
             };
 
             try {
@@ -255,7 +263,7 @@ module.exports = (RED) => {
                 timeout: 5000,         // req/res timeout in ms, it resets on redirect. 0 to disable (OS limit applies). Signal is recommended instead.
                 compress: false,     // support gzip/deflate content encoding. false to disable
                 size: 0,            // maximum response body size in bytes. 0 to disable
-                agent: jParams.protocol === "https" ? customHttpsAgent : null        // http(s).Agent instance or function that returns an instance (see below)
+                agent: jParams.protocol === "https" ? customHttpsAgent : customHttpAgent        // http(s).Agent instance or function that returns an instance (see below)
             };
             // STOP PLAYING PREVIOUS FILE
             try {
@@ -316,7 +324,7 @@ module.exports = (RED) => {
                 timeout: 4000,         // req/res timeout in ms, it resets on redirect. 0 to disable (OS limit applies). Signal is recommended instead.
                 compress: false,     // support gzip/deflate content encoding. false to disable
                 size: 0,            // maximum response body size in bytes. 0 to disable
-                agent: node.protocol === "https" ? customHttpsAgent : null
+                agent: node.protocol === "https" ? customHttpsAgent : customHttpAgent
 
             };
             try {

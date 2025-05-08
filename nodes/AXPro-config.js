@@ -338,7 +338,7 @@ module.exports = (RED) => {
                             });
 
                             dicer.on('error', (err) => {
-                                console.error('Error in Dicer:', err);
+                                if (node.debug) RED.log.error('Error in Dicer:' + err.stack);
                             });
 
                             // Pipa lo stream multipart in Dicer
