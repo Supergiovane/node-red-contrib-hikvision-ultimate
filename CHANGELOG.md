@@ -4,6 +4,10 @@
 [![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square)](https://www.paypal.me/techtoday) 
 
 <p>
+<b>Version 1.2.9</b> May 2025<br/>
+- Fixed this: https://github.com/Supergiovane/node-red-contrib-hikvision-ultimate/issues/84#event-17587603634<br/>
+</p>
+<p>
 <b>Version 1.2.8</b> May 2025<br/>
 - Housekeeping.<br/>
 - Optimized hikvision stream for some devices.<br/>

@@ -537,7 +537,8 @@ module.exports = (RED) => {
                 timeout: 15000,         // req/res timeout in ms, it resets on redirect. 0 to disable (OS limit applies). Signal is recommended instead.
                 compress: false,     // support gzip/deflate content encoding. false to disable
                 size: 0,            // maximum response body size in bytes. 0 to disable
-                agent: jParams.protocol === "https" ? customHttpsAgent : customHttpAgent // http(s).Agent instance or function that returns an instance (see below),        
+                agent: node.protocol === "https" ? customHttpsAgent : customHttpAgent // http(s).Agent instance or function that returns an instance (see below),        
+
             };
 
             try {

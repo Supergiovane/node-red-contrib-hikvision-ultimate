@@ -202,12 +202,11 @@ module.exports = (RED) => {
 
         // PLAY THE FILE ALOUD VIA THE SPEAKER
         node.playAloud = async function (_customAudioID, _volume) {
-            var jParams = node;
             var clientInfo;
 
             // Set Auth
-            if (jParams.authentication === "digest") clientInfo = new DigestFetch(jParams.credentials.user, jParams.credentials.password); // Instantiate the fetch client.
-            if (jParams.authentication === "basic") clientInfo = new DigestFetch(jParams.credentials.user, jParams.credentials.password, { basic: true }); // Instantiate the fetch client.
+            if (node.authentication === "digest") clientInfo = new DigestFetch(node.credentials.user, node.credentials.password); // Instantiate the fetch client.
+            if (node.authentication === "basic") clientInfo = new DigestFetch(node.credentials.user, node.credentials.password, { basic: true }); // Instantiate the fetch client.
 
             var opt = {
                 // These properties are part of the Fetch Standard
@@ -222,14 +221,14 @@ module.exports = (RED) => {
                 timeout: 5000,         // req/res timeout in ms, it resets on redirect. 0 to disable (OS limit applies). Signal is recommended instead.
                 compress: false,     // support gzip/deflate content encoding. false to disable
                 size: 0,            // maximum response body size in bytes. 0 to disable
-                agent: jParams.protocol === "https" ? customHttpsAgent : customHttpAgent         // http(s).Agent instance or function that returns an instance (see below)
+                agent: node.protocol === "https" ? customHttpsAgent : customHttpAgent         // http(s).Agent instance or function that returns an instance (see below)
             };
 
             try {
                 // STOP PLAYING PREVIOUS FILE, IF ANY
-                const resInfoStop = await clientInfo.fetch(jParams.protocol + "://" + jParams.host + "/ISAPI/AccessControl/EventCardLinkageCfg/CustomAudio/" + _customAudioID + "/stop?format=json", opt);
+                const resInfoStop = await clientInfo.fetch(node.protocol + "://" + node.host + "/ISAPI/AccessControl/EventCardLinkageCfg/CustomAudio/" + _customAudioID + "/stop?format=json", opt);
                 // PLAY THE FILE
-                const resInfo = await clientInfo.fetch(jParams.protocol + "://" + jParams.host + "/ISAPI/Event/triggers/notifications/AudioAlarm/AudioOut/1/PlayCustomAudioFile?format=json&customAudioID=" + _customAudioID + "&audioVolume=" + _volume + "&loopPlaybackTimes=1", opt);
+                const resInfo = await clientInfo.fetch(node.protocol + "://" + node.host + "/ISAPI/Event/triggers/notifications/AudioAlarm/AudioOut/1/PlayCustomAudioFile?format=json&customAudioID=" + _customAudioID + "&audioVolume=" + _volume + "&loopPlaybackTimes=1", opt);
                 const body = await resInfo.json();
                 if (body.statusCode === 1) {
                     return true;
