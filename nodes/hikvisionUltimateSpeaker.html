@@ -44,56 +44,108 @@
 
 			let node = this;
 
+			const $serverField = $("#node-input-server");
+			const $audioSelect = $("#node-input-customAudioID");
+			const $playButton = $("#testFile");
+			const $volume = $("#node-input-volume");
+			let isPlaying = false;
+
+			function updateButtonState() {
+				if (!$serverField.val() || !$audioSelect.val()) {
+					$playButton.prop("disabled", true).val("Play");
+					isPlaying = false;
+					return;
+				}
+				$playButton.prop("disabled", false).val(isPlaying ? "Stop" : "Play");
+			}
+
+			function resetPlayingState() {
+				isPlaying = false;
+				updateButtonState();
+			}
+
+			function refreshAudioList() {
+				$audioSelect.empty();
+				resetPlayingState();
+				try {
+					const configId = $serverField.val();
+					if (!configId) {
+						return;
+					}
+					const configNode = RED.nodes.node(configId);
+					if (!configNode) {
+						return;
+					}
+					$.getJSON("hikvisionUltimateGetSpeakerFiles?nodeID=" + configNode.id, {}).done(function (data) {
+						if (!Array.isArray(data) || data.length === 0) {
+							return;
+						}
+						$.each(data, function (i, item) {
+							$audioSelect.append($("<option>").val(item.customAudioID.toString()).text(item.customAudioName + " #" + item.customAudioID))
+						});
+						const desiredId = node.customAudioID ? node.customAudioID.toString() : data[0].customAudioID.toString();
+						$audioSelect.val(desiredId);
+						if (!node.customAudioID) {
+							node.customAudioID = desiredId;
+						}
+						updateButtonState();
+					}).fail(function () {
+						resetPlayingState();
+					});
+				} catch (error) {
+					resetPlayingState();
+				}
+			}
+
 			// File to be played
 			$("#node-input-server").change(function () {
-				$("#node-input-customAudioID").empty();
-				try {
-					let oNodeServer = RED.nodes.node($(this).val());
-					$.getJSON("hikvisionUltimateGetSpeakerFiles?nodeID=" + oNodeServer.id, {}).done(function (data) {
-						$.each(data, function (i, item) {
-							$("#node-input-customAudioID").append($("<option>").val(item.customAudioID.toString()).text(item.customAudioName + " #" + item.customAudioID))
-						});
-						$("#node-input-customAudioID").val(node.customAudioID)
-					});
-				} catch (error) { }
+				refreshAudioList();
+			});
+			$audioSelect.on("change", function () {
+				resetPlayingState();
 			});
 
 			// Volume
-			$("#node-input-volume").empty();
+			$volume.empty();
 			for (let index = 1; index < 100; index++) {
-				$("#node-input-volume").append($("<option>").val(index.toString()).text(index + "%"))
+				$volume.append($("<option>").val(index.toString()).text(index + "%"))
 			}
-			$("#node-input-volume").val(this.volume)
+			$volume.val(this.volume);
 
-			$("#testFile").click(function () {
-				this.value = "Wait...";
-				this.disabled = true;
-				// If the node is newly created, the backend cannot get the infos, so i must pass each parameter back
-				var sQueryString = "";
-				var jManipulate = {};
-				// Read all data needed to backend to call the camera URL
-				jManipulate.host = $("#node-input-host").val();
-				jManipulate.port = $("#node-input-port").val();
-				jManipulate.protocol = $("#node-input-protocol").val();
-				jManipulate.user = $("#node-input-user").val();
-				jManipulate.password = $("#node-input-password").val();
-				jManipulate.authentication = $("#node-input-authentication").val();
-				sQueryString = "?nodeID=" + node.id + "&customAudioID=" + $("#node-input-customAudioID").find(":selected").val() + "&params=" + encodeURIComponent(JSON.stringify(jManipulate));
-
-				$.getJSON("hikvisionUltimateSpeakerTest" + sQueryString, (data) => {
-					this.value = "Connect";
-					this.disabled = false;
-
-				}).error(function (jqXHR, textStatus, errorThrown) {
-					RED.notify("THIS IS YOUR FIRST CAMERA NODE EVER. PLEASE SAVE AND DEPLOY. THEN REOPEN THIS WINDOW AGAIN.",
-						{
-							modal: false,
-							fixed: false,
-							type: 'warning'
+			$playButton.click(function () {
+				const serverId = $serverField.val();
+				const audioId = $audioSelect.val();
+				if (!serverId || !audioId) {
+					RED.notify("Select a speaker and an audio before playing.", { type: "warning" });
+					return;
+				}
+                const action = isPlaying ? "stop" : "play";
+                const paramsObj = {
+                    nodeID: serverId,
+                    customAudioID: audioId,
+                    action
+                };
+                if (action === "play") {
+                    paramsObj.volume = $volume.val() || "2";
+                }
+                $playButton.prop("disabled", true).val(action === "play" ? "Wait..." : "Stopping...");
+                $.getJSON("hikvisionUltimateSpeakerTest?" + $.param(paramsObj), (data) => {
+                    isPlaying = action === "play";
+                    updateButtonState();
+                }).fail(function (jqXHR) {
+                    resetPlayingState();
+                    const message = (jqXHR && jqXHR.responseJSON && jqXHR.responseJSON.error) || "Impossibile riprodurre il file. Verifica la configurazione dello Speaker.";
+                    RED.notify(message,
+                        {
+                            modal: false,
+                            fixed: false,
+                            type: 'warning'
 						})
 				});
 			});
 
+			updateButtonState();
+			refreshAudioList();
 
 
 		},
@@ -124,14 +176,16 @@
         <label for="node-input-topic"><i class="fa fa-tasks"></i> Node topic</label>
         <input type="text" id="node-input-topic" placeholder="Node's own topic">
 	</div>
-    <div class="form-row">
+	<div class="form-row">
         <label for="node-input-customAudioID"><i class="fa fa-tasks"></i> File</label>
-		<select id="node-input-customAudioID">
-		<input type="button" id="testFile" class="ui-button ui-corner-all ui-widget" style="background-color:#AEE1FF;width:100px" value="Play">
-	</div>	
+		<div style="display:flex; gap:8px; align-items:center;">
+			<select id="node-input-customAudioID" style="flex:1;"></select>
+			<input type="button" id="testFile" class="ui-button ui-corner-all ui-widget" style="background-color:#AEE1FF;width:100px" value="Play">
+		</div>
+	</div>
 	<div class="form-row">
         <label for="node-input-volume"><i class="fa fa-tasks"></i> Volume</label>
-		<select id="node-input-volume">
+		<select id="node-input-volume"></select>
 	</div>	
 
 </script>

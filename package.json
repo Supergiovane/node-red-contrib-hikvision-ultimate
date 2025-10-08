@@ -1,10 +1,12 @@
 {
     "name": "node-red-contrib-hikvision-ultimate",
-    "version": "1.2.11-beta.0",
+    "version": "1.2.11",
     "description": "A native set of nodes for Hikvision (and compatible) Cameras, Alarms, Radars, NVR, Doorbells, etc.",
     "author": "Supergiovane (https://github.com/Supergiovane)",
     "scripts": {
-        "release:beta": "npm version prerelease --preid=beta && npm publish --tag beta"
+        "release:beta": "npm version prerelease --preid=beta && npm publish --tag beta",
+        "node-red:noauth": "npx node-red -s tools/node-red/settings-noauth.js",
+        "node-red:auth": "npx node-red -s tools/node-red/settings-auth.js"
     },
     "dependencies": {
         "jimp": "0.22.10",

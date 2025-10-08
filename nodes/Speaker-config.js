@@ -108,21 +108,21 @@ module.exports = (RED) => {
 
         // 17/94/2024 Get the files
         RED.httpAdmin.get("/hikvisionUltimateGetSpeakerFiles", RED.auth.needsPermission('Speakerconfig.read'), function (req, res) {
-            var jParams = RED.nodes.getNode(req.query.nodeID);// Retrieve node.id of the config node.
-            var _nodeServer = null;
-            var clientInfo;
-
-            let passwordToUse = jParams.credentials.password;
-            if (passwordToUse === "__PWRD__") {
-                _nodeServer = RED.nodes.getNode(req.query.nodeID);
-                if (!_nodeServer || !_nodeServer.credentials || !_nodeServer.credentials.password) {
-                    res.json({ error: "Missing stored credentials" });
-                    return;
-                }
-                passwordToUse = _nodeServer.credentials.password;
+            const configNode = RED.nodes.getNode(req.query.nodeID);
+            if (!configNode) {
+                res.status(400).json({ error: "Speaker configuration non trovata. Salva e ridistribuisci il flow, poi riprova." });
+                return;
             }
 
-            clientInfo = buildClient(jParams.authentication, jParams.credentials.user, passwordToUse);
+            const credentials = configNode.credentials || {};
+            const username = credentials.user;
+            let passwordToUse = credentials.password;
+            if (!passwordToUse || passwordToUse === "__PWRD__") {
+                res.json({ error: "Password non disponibile. Salva e ridistribuisci il config node Speaker, poi riapri l’editor." });
+                return;
+            }
+
+            const clientInfo = buildClient(configNode.authentication, username, passwordToUse);
 
 
             var opt = {
@@ -138,13 +138,13 @@ module.exports = (RED) => {
                 timeout: 5000,         // req/res timeout in ms, it resets on redirect. 0 to disable (OS limit applies). Signal is recommended instead.
                 compress: false,     // support gzip/deflate content encoding. false to disable
                 size: 0,            // maximum response body size in bytes. 0 to disable
-                agent: jParams.protocol === "https" ? customHttpsAgent : customHttpAgent       // http(s).Agent instance or function that returns an instance (see below)
+                agent: configNode.protocol === "https" ? customHttpsAgent : customHttpAgent       // http(s).Agent instance or function that returns an instance (see below)
             };
             try {
                 (async () => {
                     try {
                         // const resInfo = await clientInfo.fetch(jParams.protocol + "://" + jParams.host + ":" + jParams.port + "/ISAPI/AccessControl/EventCardLinkageCfg/CustomAudio?format=json", opt);
-                        const resInfo = await clientInfo.fetch(jParams.protocol + "://" + jParams.host + "/ISAPI/AccessControl/EventCardLinkageCfg/CustomAudio?format=json", opt);
+                        const resInfo = await clientInfo.fetch(configNode.protocol + "://" + configNode.host + "/ISAPI/AccessControl/EventCardLinkageCfg/CustomAudio?format=json", opt);
                         const body = await resInfo.json();
                         res.json(body.CustomAudioInfoList);
                         return;
@@ -161,28 +161,36 @@ module.exports = (RED) => {
 
         // 17/94/2024 Get the files
         RED.httpAdmin.get("/hikvisionUltimateSpeakerTest", RED.auth.needsPermission('Speakerconfig.read'), function (req, res) {
-            var jParams = RED.nodes.getNode(req.query.nodeID).server;// Retrieve node.id of the config node.
-            let customAudioID = req.query.customAudioID;
-            var _nodeServer = null;
-            var clientInfo;
-            let passwordToUse = jParams.credentials.password;
-            if (passwordToUse === "__PWRD__") {
-                _nodeServer = RED.nodes.getNode(req.query.nodeID);
-                if (!_nodeServer || !_nodeServer.credentials || !_nodeServer.credentials.password) {
-                    res.json({ error: "Missing stored credentials" });
-                    return;
-                }
-                passwordToUse = _nodeServer.credentials.password;
+            const configNode = RED.nodes.getNode(req.query.nodeID);
+            if (!configNode) {
+                res.json({ error: "Speaker configuration non trovata. Salva e ridistribuisci il flow, poi riprova." });
+                return;
+            }
+            const credentials = configNode.credentials || {};
+            const username = credentials.user;
+            let passwordToUse = credentials.password;
+            if (!passwordToUse || passwordToUse === "__PWRD__") {
+                res.status(400).json({ error: "Password non disponibile. Salva e ridistribuisci il config node Speaker, poi riapri l’editor." });
+                return;
             }
 
-            clientInfo = buildClient(jParams.authentication, jParams.credentials.user, passwordToUse);
+            const customAudioID = req.query.customAudioID;
+            if (!customAudioID) {
+                res.status(400).json({ error: "customAudioID mancante" });
+                return;
+            }
+
+            const action = (req.query.action || "play").toLowerCase();
+            const volume = Math.min(100, Math.max(1, parseInt(req.query.volume, 10) || parseInt(configNode.volume, 10) || 2));
+
+            const clientInfo = buildClient(configNode.authentication, username, passwordToUse);
 
 
             var opt = {
                 // These properties are part of the Fetch Standard
                 method: "PUT",
-                headers: {},        // request headers. format is the identical to that accepted by the Headers constructor (see below)
-                body: null,         // request body. can be null, a string, a Buffer, a Blob, or a Node.js Readable stream
+                headers: { 'Content-Type': 'application/json' },        // request headers. format is the identical to that accepted by the Headers constructor (see below)
+                body: JSON.stringify({ "audioOutID": [1] }),         // request body. can be null, a string, a Buffer, a Blob, or a Node.js Readable stream
                 redirect: 'follow', // set to `manual` to extract redirect headers, `error` to reject redirect
                 signal: null,       // pass an instance of AbortSignal to optionally abort requests
 
@@ -191,25 +199,43 @@ module.exports = (RED) => {
                 timeout: 5000,         // req/res timeout in ms, it resets on redirect. 0 to disable (OS limit applies). Signal is recommended instead.
                 compress: false,     // support gzip/deflate content encoding. false to disable
                 size: 0,            // maximum response body size in bytes. 0 to disable
-                agent: jParams.protocol === "https" ? customHttpsAgent : customHttpAgent        // http(s).Agent instance or function that returns an instance (see below)
+                agent: configNode.protocol === "https" ? customHttpsAgent : customHttpAgent        // http(s).Agent instance or function that returns an instance (see below)
             };
             try {
                 (async () => {
                     try {
-                        // const resInfo = await clientInfo.fetch(jParams.protocol + "://" + jParams.host + ":" + jParams.port + "/ISAPI/AccessControl/EventCardLinkageCfg/CustomAudio?format=json", opt);
-                        const resInfo = await clientInfo.fetch(jParams.protocol + "://" + jParams.host + "/ISAPI/Event/triggers/notifications/AudioAlarm/AudioOut/1/PlayCustomAudioFile?format=json&customAudioID=" + customAudioID + "&audioVolume=2&loopPlaybackTimes=1", opt);
-                        const body = await resInfo.json();
-                        res.json({});
-                        return;
+                        const baseUrl = configNode.protocol + "://" + configNode.host;
+                        if (action === "stop") {
+                            const stopResponse = await clientInfo.fetch(baseUrl + "/ISAPI/AccessControl/EventCardLinkageCfg/CustomAudio/" + customAudioID + "/stop?format=json", opt);
+                            if (!stopResponse.ok) {
+                                throw new Error(stopResponse.statusText || "Stop request failed");
+                            }
+                            await stopResponse.json();
+                            res.json({ stopped: true });
+                            return;
+                        } else {
+                            try {
+                                await clientInfo.fetch(baseUrl + "/ISAPI/AccessControl/EventCardLinkageCfg/CustomAudio/" + customAudioID + "/stop?format=json", opt);
+                            } catch (ignore) {
+                                // Ignora eventuali errori nello stop preventivo
+                            }
+                            const playResponse = await clientInfo.fetch(baseUrl + "/ISAPI/Event/triggers/notifications/AudioAlarm/AudioOut/1/PlayCustomAudioFile?format=json&customAudioID=" + customAudioID + "&audioVolume=" + volume + "&loopPlaybackTimes=1", opt);
+                            if (!playResponse.ok) {
+                                throw new Error(playResponse.statusText || "Play request failed");
+                            }
+                            await playResponse.json();
+                            res.json({ playing: true });
+                            return;
+                        }
                     } catch (error) {
                         RED.log.error("Errore hikvisionUltimateGetInfoSpeaker " + error.message);
-                        res.json(error);
+                        res.status(502).json({ error: error.message || "Errore durante la richiesta al dispositivo" });
                     }
 
                 })();
 
             } catch (err) {
-                res.json(err);
+                res.status(500).json({ error: err.message || "Errore interno" });
             }
         });
 
