@@ -1,7 +1,7 @@
 
 module.exports = (RED) => {
 
-    const DigestFetch = require('digest-fetch')
+    const { createHttpClient } = require('./utils/httpClient');
     // const AbortController = require('abort-controller');
     const { XMLParser } = require("fast-xml-parser");
     const readableStr = require('stream').Readable;
@@ -29,6 +29,16 @@ module.exports = (RED) => {
             }
             node.nodeClients.map(nextStatus);
         }
+
+        const buildClient = (authentication, username, password) => {
+            const mode = (authentication || "digest").toLowerCase();
+            return createHttpClient({
+                username,
+                password,
+                authentication: mode === "basic" ? "basic" : "digest",
+                logger: node.debug ? RED.log : undefined
+            });
+        };
         // 14/07/2021 custom agent as global variable, to avoid issue with self signed certificates
         const customHttpsAgent = new https.Agent({
             rejectUnauthorized: false
@@ -40,16 +50,17 @@ module.exports = (RED) => {
             var _nodeServer = null;
             var clientInfo;
 
+            let passwordToUse = jParams.password;
             if (jParams.password === "__PWRD__") {
-                // The password isn't changed or (the server node was already present, it's only updated)
-                _nodeServer = RED.nodes.getNode(req.query.nodeID);// Retrieve node.id of the config node.
-                if (jParams.authentication === "digest") clientInfo = new DigestFetch(jParams.user, _nodeServer.credentials.password); // Instantiate the fetch client.
-                if (jParams.authentication === "basic") clientInfo = new DigestFetch(jParams.user, _nodeServer.credentials.password, { basic: true }); // Instantiate the fetch client.
-            } else {
-                // The node is NEW
-                if (jParams.authentication === "digest") clientInfo = new DigestFetch(jParams.user, jParams.password); // Instantiate the fetch client.
-                if (jParams.authentication === "basic") clientInfo = new DigestFetch(jParams.user, jParams.password, { basic: true }); // Instantiate the fetch client.
+                _nodeServer = RED.nodes.getNode(req.query.nodeID);
+                if (!_nodeServer || !_nodeServer.credentials || !_nodeServer.credentials.password) {
+                    res.json({ error: "Missing stored credentials" });
+                    return;
+                }
+                passwordToUse = _nodeServer.credentials.password;
             }
+
+            clientInfo = buildClient(jParams.authentication, jParams.user, passwordToUse);
 
 
             var opt = {
@@ -116,8 +127,7 @@ module.exports = (RED) => {
         async function queryCallStatus() {
 
             var clientCallStatus;
-            if (node.authentication === "digest") clientCallStatus = new DigestFetch(node.credentials.user, node.credentials.password); // Instantiate the fetch client.
-            if (node.authentication === "basic") clientCallStatus = new DigestFetch(node.credentials.user, node.credentials.password, { basic: true }); // Instantiate the fetch client.
+            clientCallStatus = buildClient(node.authentication, node.credentials.user, node.credentials.password);
 
             controller = new globalThis.AbortController(); // For aborting the stream request
             var optionsAlarmStream = {
@@ -241,8 +251,7 @@ module.exports = (RED) => {
         // Function to get or post generic data on device
         node.request = async function (_callerNode, _method, _URL, _body) {
             var clientGenericRequest;
-            if (node.authentication === "digest") clientGenericRequest = new DigestFetch(node.credentials.user, node.credentials.password); // Instantiate the fetch client.
-            if (node.authentication === "basic") clientGenericRequest = new DigestFetch(node.credentials.user, node.credentials.password, { basic: true }); // Instantiate the fetch client.
+            clientGenericRequest = buildClient(node.authentication, node.credentials.user, node.credentials.password);
 
             let reqController = new globalThis.AbortController(); // For aborting the stream request
             var options = {

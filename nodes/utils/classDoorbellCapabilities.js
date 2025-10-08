@@ -1,3 +1,5 @@
+const { createHttpClient } = require('./httpClient');
+
 // Declaration
 module.exports = class classDoorbellCapabilities {
   /**
@@ -32,8 +34,12 @@ module.exports = class classDoorbellCapabilities {
         }
     }
 
-    if (jParams.authentication === "digest") clientInfo = new DigestFetch(jParams.user, jParams.password); // Instantiate the fetch client.
-    if (jParams.authentication === "basic") clientInfo = new DigestFetch(jParams.user, jParams.password, { basic: true }); // Instantiate the fetch client.
+    const authMode = (jParams.authentication || "digest").toLowerCase();
+    clientInfo = createHttpClient({
+        username: jParams.user,
+        password: jParams.password,
+        authentication: authMode === "basic" ? "basic" : "digest"
+    });
     var opt = {
         // These properties are part of the Fetch Standard
         method: "GET",

@@ -1,11 +1,10 @@
-const { default: fetch } = require('node-fetch')
 const sha256 = require('./utils/Sha256').sha256
 const { XMLParser, XMLBuilder } = require("fast-xml-parser");
 const Dicer = require('dicer');
 
 module.exports = (RED) => {
 
-    const DigestFetch = require('digest-fetch'); // 04/6/2022 DO NOT UPGRADE TO NODE-FETCH V3, BECAUSE DIGEST-FETCH DOESN'T SUPPORT IT
+    const { createHttpClient } = require('./utils/httpClient');
     // const AbortController = require('abort-controller');
     const https = require('https');
 
@@ -112,7 +111,17 @@ module.exports = (RED) => {
 
             node.resetHeartBeatTimer(); // First thing, start the heartbeat timer.
             node.setAllClientsStatus({ fill: "grey", shape: "ring", text: "Connecting..." });
-            if (node.authentication === "sha256-salted") node.clientAlarmStream = new DigestFetch("", "", { basic: true }); // Instantiate the fetch client.
+            if (node.authentication === "sha256-salted") {
+                node.clientAlarmStream = createHttpClient({ authentication: "none" });
+            } else {
+                const authMode = (node.authentication || "digest").toLowerCase();
+                node.clientAlarmStream = createHttpClient({
+                    username: node.credentials.user,
+                    password: node.credentials.password,
+                    authentication: authMode === "basic" ? "basic" : "digest",
+                    logger: node.debug ? RED.log : undefined
+                });
+            }
 
             // 22/12/2022 Start auth process
             // ##################################
@@ -343,6 +352,17 @@ module.exports = (RED) => {
 
                             // Pipa lo stream multipart in Dicer
                             res.body.pipe(dicer);
+                            res.body.on('error', (err) => {
+                                if (node.debug) RED.log.error("AXPro-config: alertStream body error: " + (err.message || " unknown error"));
+                                node.errorDescription = "alertStream error " + (err.message || " unknown error");
+                                node.setAllClientsStatus({ fill: "red", shape: "ring", text: node.errorDescription });
+                                node.isConnected = false;
+                                try {
+                                    if (controller) controller.abort();
+                                } catch (abortError) { }
+                                if (node.timerCheckHeartBeat !== null) clearTimeout(node.timerCheckHeartBeat);
+                                node.timerCheckHeartBeat = setTimeout(startAlarmStream, 2000);
+                            });
 
                         } else {
                             //throw new Error('Unsupported Content-Type');
@@ -595,7 +615,4 @@ module.exports = (RED) => {
 
 
 }
-
-
-
 

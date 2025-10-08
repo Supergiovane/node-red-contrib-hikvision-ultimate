@@ -3,9 +3,10 @@
     "version": "1.2.10",
     "description": "A native set of nodes for Hikvision (and compatible) Cameras, Alarms, Radars, NVR, Doorbells, etc.",
     "author": "Supergiovane (https://github.com/Supergiovane)",
+    "scripts": {
+        "release:beta": "npm version prerelease --preid=beta && npm publish --tag beta"
+    },
     "dependencies": {
-        "node-fetch": "2.6.7",
-        "digest-fetch": "2.0.1",
         "jimp": "0.22.10",
         "lodash": "4.17.21",
         "fast-xml-parser": "4.0.13",

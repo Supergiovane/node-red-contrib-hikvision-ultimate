@@ -1,8 +1,7 @@
 
 
 module.exports = (RED) => {
-    // Legacy
-    const DigestFetch = require('digest-fetch'); // 04/6/2022 DO NOT UPGRADE TO NODE-FETCH V3, BECAUSE DIGEST-FETCH DOESN'T SUPPORT IT
+    const { createHttpClient } = require('./utils/httpClient');
 
 
     const STREAM_TIMEOUT = 30000; // 30 seconds
@@ -72,16 +71,25 @@ module.exports = (RED) => {
             var _nodeServer = null;
             var clientInfo;
 
+            const requestedAuth = (jParams.authentication || "digest").toLowerCase();
+            const authentication = requestedAuth === "basic" ? "basic" : "digest";
+            let passwordToUse = jParams.password;
+
             if (jParams.password === "__PWRD__") {
-                // The password isn't changed or (the server node was already present, it's only updated)
-                _nodeServer = RED.nodes.getNode(req.query.nodeID);// Retrieve node.id of the config node.
-                if (jParams.authentication === "digest") clientInfo = new DigestFetch(jParams.user, _nodeServer.credentials.password); // Instantiate the fetch client.
-                if (jParams.authentication === "basic") clientInfo = new DigestFetch(jParams.user, _nodeServer.credentials.password, { basic: true }); // Instantiate the fetch client.
-            } else {
-                // The node is NEW
-                if (jParams.authentication === "digest") clientInfo = new DigestFetch(jParams.user, jParams.password); // Instantiate the fetch client.
-                if (jParams.authentication === "basic") clientInfo = new DigestFetch(jParams.user, jParams.password, { basic: true }); // Instantiate the fetch client.
+                _nodeServer = RED.nodes.getNode(req.query.nodeID);
+                if (!_nodeServer || !_nodeServer.credentials || !_nodeServer.credentials.password) {
+                    res.json({ error: "Missing stored credentials" });
+                    return;
+                }
+                passwordToUse = _nodeServer.credentials.password;
             }
+
+            clientInfo = createHttpClient({
+                username: jParams.user,
+                password: passwordToUse,
+                authentication,
+                logger: node.debug ? RED.log : undefined
+            });
 
 
             var opt = {
@@ -520,8 +528,13 @@ module.exports = (RED) => {
         node.request = async function (_callerNode, _method, _URL, _body, _fromXMLNode) {
             if (_fromXMLNode === undefined) _fromXMLNode = false; // 07/10/2021 Does the request come from an XML node?
             var clientGenericRequest;
-            if (node.authentication === "digest") clientGenericRequest = new DigestFetch(node.credentials.user, node.credentials.password); // Instantiate the fetch client.
-            if (node.authentication === "basic") clientGenericRequest = new DigestFetch(node.credentials.user, node.credentials.password, { basic: true }); // Instantiate the fetch client.
+            const authMode = (node.authentication || "digest").toLowerCase();
+            clientGenericRequest = createHttpClient({
+                username: node.credentials.user,
+                password: node.credentials.password,
+                authentication: authMode === "basic" ? "basic" : "digest",
+                logger: node.debug ? RED.log : undefined
+            });
 
             var reqController = new globalThis.AbortController(); // For aborting the stream request
             var options = {
