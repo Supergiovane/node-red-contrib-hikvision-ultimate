@@ -4,6 +4,12 @@
 [![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square)](https://www.paypal.me/techtoday) 
 
 <p>
+<b>Version 1.2.12</b> November 2025<br/>
+- Hikvision config: configurable connection timeout and improved stream heartbeat handling to prevent socket hangups.<br/>
+- AXPro config: aligned multipart parsing and heartbeat logic with the Hikvision fixes.<br/>
+- Hikvision config editor: documented timeout behaviour and discourages using "No Timeout".<br/>
+</p>
+<p>
 <b>Version 1.2.11</b> October 2025<br/>
 - Fixed this: https://github.com/Supergiovane/node-red-contrib-hikvision-ultimate/issues/89#issuecomment-3379715396<br/>
 </p>

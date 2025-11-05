@@ -11,8 +11,8 @@
             protocol: { value: "http" },
             heartbeattimerdisconnectionlimit: { value: 2 },
             deviceinfo: { value: {} },
-            debuglevel: { value: "no"}
-
+            debuglevel: { value: "no" },
+            streamtimeout: { value: 3 }
         },
         credentials: {
             user: { type: "text" },
@@ -20,6 +20,16 @@
         },
         oneditprepare: function () {
             var node = this;
+
+            const timeoutSelect = $("#node-config-input-streamtimeout");
+            timeoutSelect.empty();
+            timeoutSelect.append('<option value="0">No Timeout (not recommended)</option>');
+            for (let i = 1; i <= 20; i++) {
+                const label = i === 1 ? '1 minute' : `${i} minutes`;
+                timeoutSelect.append(`<option value="${i}">${label}</option>`);
+            }
+            const storedTimeout = node.streamtimeout !== undefined ? node.streamtimeout : 3;
+            timeoutSelect.val(storedTimeout.toString());
 
 
             // // Get the online devices
@@ -165,6 +175,10 @@
         </select>
     </div>
     <div class="form-row">
+        <label for="node-config-input-streamtimeout"><i class="fa fa-clock-o"></i> Connection timeout</label>
+        <select type="text" id="node-config-input-streamtimeout"></select>
+    </div>
+    <div class="form-row">
         <label for="node-config-input-debuglevel"><i class="fa fa-exclamation-triangle"></i> Debug level</label>
         <select type="text" id="node-config-input-debuglevel">
             <option value="no">No. No debug text please.</option>
@@ -197,6 +211,7 @@ This node connects your camera/nvr to node-red.
 | Password | The passowrd you use to connect. |
 | Auth. | The authentication to be used. Must be the same as your camera/nvr |
 | Emit error | Number of failed connection from the node to the camera/nvr, after than an error on PIN 2 is emitted. After connection error, the node try to reconnect for the number of times selected, then emits a connection error on PIN 2. Increase this number for slow LANs, like VPN |
+| Connection timeout | Minutes before the stream is considered lost. *No Timeout* is not recommended because the connection can drop silently. Default is 3 minutes. |
 | Debug level | Outputs all errors in Node-Red. Useful for debugging. Default is *false*. Node-Red must be restarted.|
 | Get Info | Click "Connect" button to retrieve some info. This is not mandatory, but helps you understand, wether the camera/nvr is reachable. |
 

@@ -104,8 +104,10 @@ module.exports = (RED) => {
         //#region ALARMSTREAM
         // Funzione per estrarre il boundary dal Content-Type
         function extractBoundary(contentType) {
-            const match = contentType.match(/boundary=(.*)$/);
-            return match ? match[1] : null;
+            if (!contentType) return null;
+            const match = /boundary="?([^";]+)"?/i.exec(contentType);
+            if (!match) return null;
+            return match[1].trim().replace(/^--/, '');
         }
         async function startAlarmStream() {
 
@@ -316,21 +318,22 @@ module.exports = (RED) => {
                                     try {
                                         node.resetHeartBeatTimer();
                                         const fullData = Buffer.concat(partData);  // Unisci i chunk di dati
-                                        switch (extension) {
-                                            case 'xml':
-                                                handleXML(fullData);
-                                                break;
-                                            case 'json':
-                                                handleJSON(fullData);
-                                                break;
-                                            case 'jpg' || 'png':
-                                                //const filename = generateFilename(extension);
-                                                //saveFile(fullData, filename);  // Salva l'immagine su disco
-                                                handleIMG(fullData, extension);
-                                                break;
-                                            default:
-                                                break;
-                                        }
+                                switch (extension) {
+                                    case 'xml':
+                                        handleXML(fullData);
+                                        break;
+                                    case 'json':
+                                        handleJSON(fullData);
+                                        break;
+                                    case 'jpg':
+                                    case 'png':
+                                        //const filename = generateFilename(extension);
+                                        //saveFile(fullData, filename);  // Salva l'immagine su disco
+                                        handleIMG(fullData, extension);
+                                        break;
+                                    default:
+                                        break;
+                                }
                                     } catch (error) {
                                     }
                                 });
@@ -349,6 +352,20 @@ module.exports = (RED) => {
                             dicer.on('error', (err) => {
                                 if (node.debug) RED.log.error('Error in Dicer:' + err.stack);
                             });
+
+                            const onRawData = () => {
+                                try {
+                                    node.resetHeartBeatTimer();
+                                } catch (error) {
+                                }
+                            };
+                            const cleanupRawListener = () => {
+                                res.body.removeListener('data', onRawData);
+                            };
+                            res.body.on('data', onRawData);
+                            res.body.once('end', cleanupRawListener);
+                            res.body.once('close', cleanupRawListener);
+                            res.body.once('error', cleanupRawListener);
 
                             // Pipa lo stream multipart in Dicer
                             res.body.pipe(dicer);
@@ -615,4 +632,3 @@ module.exports = (RED) => {
 
 
 }
-

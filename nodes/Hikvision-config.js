@@ -1,10 +1,7 @@
-
-
 module.exports = (RED) => {
     const { createHttpClient } = require('./utils/httpClient');
 
 
-    const STREAM_TIMEOUT = 30000; // 30 seconds
     const NONCE_COUNT = '00000001';
 
     const { XMLParser } = require("fast-xml-parser");
@@ -41,6 +38,11 @@ module.exports = (RED) => {
         node.errorDescription = ""; // Contains the error description in case of connection error.
         node.authentication = config.authentication || "digest";
         node.deviceinfo = config.deviceinfo || {};
+        const configuredStreamTimeout = config.streamtimeout;
+        const streamTimeoutMinutes = configuredStreamTimeout === undefined || configuredStreamTimeout === null || configuredStreamTimeout === "" ? 0 : Number(configuredStreamTimeout);
+        const safeStreamTimeoutMinutes = Number.isFinite(streamTimeoutMinutes) && streamTimeoutMinutes > 0 ? streamTimeoutMinutes : 0;
+        node.streamtimeout = safeStreamTimeoutMinutes;
+        node.streamTimeoutMs = safeStreamTimeoutMinutes > 0 ? safeStreamTimeoutMinutes * 60000 : 0;
         node.heartBeatTimerDisconnectionCounter = 0;
         node.heartbeattimerdisconnectionlimit = config.heartbeattimerdisconnectionlimit || 2;
         var controller = null; // AbortController
@@ -182,8 +184,10 @@ module.exports = (RED) => {
         //#region ALARMSTREAM
         // Funzione per estrarre il boundary dal Content-Type
         function extractBoundary(contentType) {
-            const match = contentType.match(/boundary=(.*)$/);
-            return match ? match[1] : null;
+            if (!contentType) return null;
+            const match = /boundary="?([^";]+)"?/i.exec(contentType);
+            if (!match) return null;
+            return match[1].trim().replace(/^--/, '');
         }
 
         // Function to continue with authenticated request
@@ -194,14 +198,19 @@ module.exports = (RED) => {
 
                 stream = transferProtocol.request(options, continueWithStream);
 
-                stream.setTimeout(STREAM_TIMEOUT, () => {
-                    if (node.debug) RED.log.error('Hikvision-config: Connection timeout after 30 seconds');
-                    try {
-                        stopStream();
-                    } catch (error) {
-                    }
+                if (node.streamTimeoutMs > 0) {
+                    stream.setTimeout(node.streamTimeoutMs, () => {
+                        if (node.debug) {
+                            const minutes = node.streamtimeout;
+                            RED.log.error(`Hikvision-config: Connection timeout after ${minutes} minute${minutes === 1 ? '' : 's'}`);
+                        }
+                        try {
+                            stopStream();
+                        } catch (error) {
+                        }
 
-                });
+                    });
+                }
 
                 stream.on('error', (err) => {
                     if (node.debug) RED.log.error('Hikvision-config: Stream error: ' + err.message);
@@ -306,7 +315,8 @@ module.exports = (RED) => {
                                         case 'json':
                                             handleJSON(fullData);
                                             break;
-                                        case 'jpg' || 'png':
+                                        case 'png':
+                                        case 'jpg':
                                             //const filename = generateFilename(extension);
                                             //saveFile(fullData, filename);  // Salva l'immagine su disco
                                             handleIMG(fullData, extension);
@@ -330,6 +340,20 @@ module.exports = (RED) => {
                         dicer.on('error', (err) => {
                             if (node.debug) RED.log.error("Hikvision-config: Error in Dicer:" + err.stack);
                         });
+
+                        const onRawData = () => {
+                            try {
+                                node.resetHeartBeatTimer();
+                            } catch (error) {
+                            }
+                        };
+                        const cleanupRawDataListener = () => {
+                            res.removeListener('data', onRawData);
+                        };
+                        res.on('data', onRawData);
+                        res.once('end', cleanupRawDataListener);
+                        res.once('close', cleanupRawDataListener);
+                        res.once('error', cleanupRawDataListener);
 
                         // Pipa lo stream multipart in Dicer
                         res.pipe(dicer);
