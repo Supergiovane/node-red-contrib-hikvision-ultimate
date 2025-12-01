@@ -4,6 +4,11 @@
 [![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square)](https://www.paypal.me/techtoday) 
 
 <p>
+<b>Version 1.2.13</b> March 2026<br/>
+- ANPR config: added detailed debug logs (request picName, HTTP status, body length, parsed plate count) and safer parsing warnings.<br/>
+- Hikvision/AXPro config: cleaned debug log for image parts to avoid undefined variable warnings.<br/>
+</p>
+<p>
 <b>Version 1.2.12</b> November 2025<br/>
 - Hikvision config: configurable connection timeout and improved stream heartbeat handling to prevent socket hangups.<br/>
 - AXPro config: aligned multipart parsing and heartbeat logic with the Hikvision fixes.<br/>

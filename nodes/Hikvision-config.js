@@ -498,7 +498,7 @@ module.exports = (RED) => {
         // ###################################
         async function handleIMG(result, extension) {
             try {
-                if (node.debug) RED.log.error("BANANA SBANANATO IMG -> JSON " + JSON.stringify(oXML));
+                if (node.debug) RED.log.error("BANANA SBANANATO IMG -> JSON buffer length " + result.length + " ext " + extension);
                 node.nodeClients.forEach(oClient => {
                     oClient.sendPayload({ topic: oClient.topic || "", payload: result, type: 'img', extension: extension });
                 });

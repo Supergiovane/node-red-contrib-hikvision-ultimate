@@ -91,8 +91,13 @@ module.exports = (RED) => {
                         const resInfo = await clientInfo.fetch(jParams.protocol + "://" + jParams.host + ":" + jParams.port + "/ISAPI/System/deviceInfo", opt);
                         const body = await resInfo.text();
                         const parser = new XMLParser();
-                        let result = parser.parse(body);
-                        res.json(result);
+                        try {
+                            const result = parser.parse(body);
+                            res.json(result);
+                        } catch (parseError) {
+                            RED.log.error("Errore hikvisionUltimateGetInfoSpeaker parser: " + parseError.message);
+                            res.json({ error: parseError.message });
+                        }
                         return;
                     } catch (error) {
                         RED.log.error("Errore  hikvisionUltimateGetInfoCam " + error.message);

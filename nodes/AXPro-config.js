@@ -177,20 +177,30 @@ module.exports = (RED) => {
                 // Get the XML Body of the salt and challenge
                 const XMLBody = await responseAuth.text()
                 // Transform it into Json
-                const parser = new XMLParser();
-                let result = parser.parse(XMLBody);
-                const jSon = JSON.parse(JSON.stringify(result))
-                if (node.debug) RED.log.error("BANANA SBANANATO XMLBoduAuth -> JSON " + JSON.stringify(result));
+                let jSon = null;
+                try {
+                    const parser = new XMLParser();
+                    const result = parser.parse(XMLBody);
+                    jSon = JSON.parse(JSON.stringify(result));
+                    if (node.debug) RED.log.error("BANANA SBANANATO XMLBoduAuth -> JSON " + JSON.stringify(result));
+                } catch (parseError) {
+                    throw new Error("AXPro auth capabilities parse error: " + (parseError.message || "unknown parse error"));
+                }
+
+                const sessionCapabilities = jSon?.SessionLoginCap;
+                if (!sessionCapabilities) {
+                    throw new Error("AXPro auth capabilities missing SessionLoginCap");
+                }
 
                 // jSon now contains the body in JSON Format. The simple thing is done.
                 // Now i need to authenticate
                 let bodyAuth = {
-                    sessionId: jSon.SessionLoginCap.sessionID,
-                    challenge: jSon.SessionLoginCap.challenge,
-                    iterations: jSon.SessionLoginCap.iterations,
-                    isIrreversible: jSon.SessionLoginCap.isIrreversible,
-                    salt: jSon.SessionLoginCap.salt || '',
-                    salt2: jSon.SessionLoginCap.salt2 || ''
+                    sessionId: sessionCapabilities.sessionID,
+                    challenge: sessionCapabilities.challenge,
+                    iterations: sessionCapabilities.iterations,
+                    isIrreversible: sessionCapabilities.isIrreversible,
+                    salt: sessionCapabilities.salt || '',
+                    salt2: sessionCapabilities.salt2 || ''
                 }
                 // Finally, i've got the encoded salted password
                 // Do not put Spaghetti in the cold water. Please be sure that water is warm and it's boiling.
@@ -412,7 +422,7 @@ module.exports = (RED) => {
         // ###################################
         async function handleIMG(result, extension) {
             try {
-                if (node.debug) RED.log.error("BANANA SBANANATO IMG -> JSON " + JSON.stringify(oXML));
+                if (node.debug) RED.log.error("BANANA SBANANATO IMG -> JSON buffer length " + result.length + " ext " + extension);
                 node.nodeClients.forEach(oClient => {
                     oClient.sendPayload({ topic: oClient.topic || "", payload: result, type: 'img', extension: extension });
                 });

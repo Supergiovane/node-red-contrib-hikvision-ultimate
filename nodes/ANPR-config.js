@@ -123,6 +123,7 @@ module.exports = (RED) => {
         async function getPlates(_lastPicName) {
 
             if (_lastPicName == undefined || _lastPicName == null || _lastPicName == "") return null;
+            if (node.debug) RED.log.info("ANPR-config: getPlates request for picName " + _lastPicName);
 
             var client;
             client = buildClient(node.authentication, node.credentials.user, node.credentials.password);
@@ -145,6 +146,7 @@ module.exports = (RED) => {
             };
             try {
                 const response = await client.fetch(node.protocol + "://" + node.host + "/ISAPI/Traffic/channels/1/vehicleDetect/plates", options);
+                if (node.debug) RED.log.info("ANPR-config: getPlates response status " + response.status);
                 if (response.status >= 200 && response.status <= 300) {
                     //node.setAllClientsStatus({ fill: "green", shape: "ring", text: "Connected." });
                 } else {
@@ -157,6 +159,7 @@ module.exports = (RED) => {
                     var body = "";
                     body = await response.text();
                     var sRet = body.toString();
+                    if (node.debug) RED.log.info("ANPR-config: getPlates body length " + sRet.length);
                     // console.log("BANANA ANPR: " + sRet);
                     var oPlates = null;
                     try {
@@ -214,6 +217,10 @@ module.exports = (RED) => {
 
                             //console.log("BANANA JSON PLATES: " + JSON.stringify(oPlates));
                             if (oPlates.Plates.hasOwnProperty("Plate")) {
+                                if (node.debug) {
+                                    const plateCount = Array.isArray(oPlates.Plates.Plate) ? oPlates.Plates.Plate.length : 1;
+                                    RED.log.info("ANPR-config: getPlates parsed " + plateCount + " plate(s)");
+                                }
                                 // If the plate is an array, returns a sorted list, otherwise a single plate.
                                 if (Array.isArray(oPlates.Plates.Plate)) {
                                     oPlates.Plates.Plate = oPlates.Plates.Plate.sort(sortPlates);
@@ -232,6 +239,7 @@ module.exports = (RED) => {
                         }
 
                     } catch (error) {
+                        if (node.debug) RED.log.warn("ANPR-config: getPlates parsing error " + (error.message || ""));
                         if (node.debug) RED.log.warn("ANPR-config: ERRORE CATCHATO getPlates:" + (error.message || ""));
                         // console.log("BANANA ANPR-config: ERRORE CATCHATO initPlateReader: " + error);
                         throw new Error("Error getPlates: " + (error.message || ""));
