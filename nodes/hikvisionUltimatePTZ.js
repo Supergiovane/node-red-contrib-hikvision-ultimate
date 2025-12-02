@@ -4,6 +4,10 @@ module.exports = function (RED) {
 		var node = this;
 		node.topic = config.topic || node.name;
 		node.server = RED.nodes.getNode(config.server)
+		const isDebug = node.server && node.server.debug;
+		const logDebug = (text) => {
+			if (isDebug) RED.log.info(`hikvisionUltimatePTZ: ${text}`);
+		};
 		node.PTZPreset = (config.PTZPreset === null || config.PTZPreset === undefined) ? "1" : config.PTZPreset;
 		node.channelID = (config.channelID === null || config.channelID === undefined) ? "1" : config.channelID;
 
@@ -32,6 +36,7 @@ module.exports = function (RED) {
 						var sAlarmType = _msg.payload.eventType.toString().toLowerCase();
 						if (sAlarmType === "videoloss" && _msg.payload.hasOwnProperty("activePostCount") && _msg.payload.activePostCount == "0") {
 							node.setNodeStatus({ fill: "green", shape: "ring", text: "Received HeartBeat (the device is online)" });
+							logDebug("Heartbeat received from device, skipping PTZ recall");
 							return; // It's a Heartbeat
 						}
 					} catch (error) { }
@@ -39,6 +44,7 @@ module.exports = function (RED) {
 			}
 			node.send([_msg, null]);
 			node.setNodeStatus({ fill: "green", shape: "dot", text: "PTZ Pteset recalled." });
+			logDebug(`Forwarded PTZ event for channel ${node.channelID} preset ${node.PTZPreset}`);
 		}
 
 		// On each deploy, unsubscribe+resubscribe
@@ -51,12 +57,14 @@ module.exports = function (RED) {
 			if (msg === null || msg === undefined) return;
 			if (msg.hasOwnProperty("payload") && msg.hasOwnProperty("payload") !== null && msg.hasOwnProperty("payload") !== undefined) {
 				if (typeof msg.payload === "boolean" && msg.payload === true) {
+					logDebug(`Recall PTZ preset ${node.PTZPreset} on channel ${node.channelID} (boolean trigger)`);
 					recallPTZ();
 				} else if (typeof msg.payload === "object") {
 					// Set the preset via input msg
 					if (msg.payload.hasOwnProperty("channelID")) node.channelID = msg.payload.channelID;
 					if (msg.payload.hasOwnProperty("PTZPreset")) node.PTZPreset = msg.payload.PTZPreset;
 					node.setNodeStatus({ fill: "green", shape: "dot", text: "Preset passed by msg input." });
+					logDebug(`Recall PTZ with payload overrides: channel ${node.channelID} preset ${node.PTZPreset}`);
 					recallPTZ();
 				}
 			}
@@ -68,8 +76,10 @@ module.exports = function (RED) {
 			// Recall PTZ Preset
 			// Params: _callerNode, _method, _URL, _body
 			try {
+				logDebug(`Sending PTZ goto preset request channel ${node.channelID}, preset ${node.PTZPreset}`);
 				node.server.request(node, "PUT", "/ISAPI/PTZCtrl/channels/" + node.channelID + "/presets/" + node.PTZPreset + "/goto", "");
 			} catch (error) {
+				logDebug(`Error sending PTZ command: ${error.message || error}`);
 
 			}
 		}

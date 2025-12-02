@@ -6,6 +6,10 @@ module.exports = function (RED) {
 		var node = this;
 		node.topic = config.topic || config.name;
 		node.server = RED.nodes.getNode(config.server)
+		const isDebug = node.server && node.server.debug;
+		const logDebug = (text) => {
+			if (isDebug) RED.log.info(`hikvisionUltimateAlarm: ${text}`);
+		};
 		node.reactto = (config.reactto === null || config.reactto === undefined) ? "vmd" : config.reactto.toLowerCase();// Rect to alarm coming from...
 		node.filterzone = config.filterzone || "0";// Rect to alarm coming from zone...
 		node.channelID = config.channelID || "0";// Rect to alarm coming from channelID...
@@ -67,11 +71,19 @@ module.exports = function (RED) {
 		node.sendPayload = (_msg, extension = '') => {
 			if (_msg === null || _msg === undefined) return;
 			_msg.topic = node.topic;
-			if (_msg.hasOwnProperty("errorDescription")) { node.send([null, _msg, null]); return; }; // It's a connection error/restore comunication.
-			if (!_msg.hasOwnProperty("payload") || (_msg.hasOwnProperty("payload") && _msg.payload === undefined)) return;
+			if (_msg.hasOwnProperty("errorDescription")) {
+				logDebug(`Connection status message: ${_msg.errorDescription || ""}`);
+				node.send([null, _msg, null]);
+				return;
+			}; // It's a connection error/restore comunication.
+			if (!_msg.hasOwnProperty("payload") || (_msg.hasOwnProperty("payload") && _msg.payload === undefined)) {
+				logDebug("Discarded incoming message without payload");
+				return;
+			}
 
 			if (_msg.type === 'img') {
 				_msg.extension = extension;
+				logDebug("Forwarding image payload");
 				node.send([null, null, _msg]);
 				return;
 			}
@@ -101,15 +113,18 @@ module.exports = function (RED) {
 							// Starts alarm
 							oRetMsg.payload = true;
 							node.setNodeStatus({ fill: "red", shape: "ring", text: "Zone " + oRetMsg.zone + "  pre alert" });
+							logDebug(`CID alarm start for zone ${oRetMsg.zone} (code ${_msg.payload.CIDEvent.code})`);
 							break;
 						case sAlarmCodeEnd:
 							// End alarm.
 							oRetMsg.payload = false;
 							node.setNodeStatus({ fill: "green", shape: "dot", text: "Zone " + oRetMsg.zone + " normal" });
+							logDebug(`CID alarm end for zone ${oRetMsg.zone} (code ${_msg.payload.CIDEvent.code})`);
 							break;
 						default:
 							// Unknown CID code.
 							node.setNodeStatus({ fill: "grey", shape: "ring", text: "Zone " + oRetMsg.zone + " unknowk CID code " + _msg.payload.CIDEvent.code });
+							logDebug(`Unknown CID code ${_msg.payload.CIDEvent.code} for zone ${oRetMsg.zone}`);
 							return; // Unknown state
 					}
 				}
@@ -240,6 +255,7 @@ module.exports = function (RED) {
 					sEventType = _msg.payload.eventType.toString().toLowerCase();
 					if (sEventType === "videoloss" && _msg.payload.hasOwnProperty("activePostCount") && _msg.payload.activePostCount == "0") {
 						node.setNodeStatus({ fill: "green", shape: "ring", text: "Received HeartBeat (the device is online)" });
+						logDebug("Heartbeat received, ignoring");
 						return; // It's a Heartbeat
 					}
 					if (sEventType === "duration" && !node.isNodeInAlarm) {
@@ -282,6 +298,7 @@ module.exports = function (RED) {
 								oRetMsg.zone = iRegionID; // Zone
 								oRetMsg.description = sEventDesc;
 								node.isNodeInAlarm = bAlarmStatus;
+								logDebug(`Event ${sEventType} state ${bAlarmStatus ? "active" : "inactive"} channel ${sChannelID} zone ${iRegionID}`);
 								break; // Find first occurrence, exit.
 							}
 						}
@@ -295,6 +312,7 @@ module.exports = function (RED) {
 			if (oRetMsg.hasOwnProperty("payload")) {
 				if (node.alarmfilterduration == 0) {
 					node.send([oRetMsg, null, null]);
+					logDebug(`Forwarded alarm immediately (${oRetMsg.description || "no description"})`);
 				} else {
 					// Sends the false only in case the isNodeInAlarm is true.
 					node.currentAlarmMSG = oRetMsg;
@@ -302,9 +320,11 @@ module.exports = function (RED) {
 						node.send([oRetMsg, null, null]);
 						node.currentAlarmMSG = {};
 						node.isNodeInAlarm = false;
+						logDebug("Alarm reset forwarded after filter duration");
 					} else if (oRetMsg.payload === true && !node.isNodeInAlarm) {
 						if (!node.isRunningTimerFilterPeriod) {
 							startTimerAlarmFilterPeriod();
+							logDebug("Alarm filter timer started");
 						}
 					}
 				}

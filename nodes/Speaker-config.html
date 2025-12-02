@@ -9,6 +9,7 @@
             authentication: { value: "digest" },
             protocol: { value: "http" },
             heartbeattimerdisconnectionlimit: { value: 1 },
+            debuglevel: { value: "no" },
             deviceinfo: { value: {} }
         },
         credentials: {
@@ -146,6 +147,13 @@
         </select>
     </div>
     <div class="form-row">
+        <label for="node-config-input-debuglevel"><i class="fa fa-exclamation-triangle"></i> Debug level</label>
+        <select type="text" id="node-config-input-debuglevel">
+            <option value="no">No. No debug text please.</option>
+            <option value="yes">Turn on the debug mode.</option>           
+        </select>
+    </div>
+    <div class="form-row">
         <label><i class="fa fa-sign-in"></i> Get info</label>
         <input type="button" id="getinfocam" class="ui-button ui-corner-all ui-widget" style="background-color:#AEE1FF;width:150px" value="Connect">
     </div>
@@ -172,6 +180,7 @@ Select the parameters and click Connect<br/>
 | Username | The user name to access the speaker. |
 | Password | The password. |
 | Authentication | Select Digest or Basic. All the current hikvision devices allow Digest, so select this method whenever possible. |
+| Debug level | Enable to print verbose logs to the Node-RED console. |
 | Get Info | By clicking CONNECT, the node will connect to the speaker and retrieve the infos. |
 
 

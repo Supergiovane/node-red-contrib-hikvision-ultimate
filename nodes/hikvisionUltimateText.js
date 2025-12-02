@@ -5,6 +5,10 @@ module.exports = function (RED) {
 		RED.nodes.createNode(this, config);
 		var node = this;
 		node.server = RED.nodes.getNode(config.server)
+		const isDebug = node.server && node.server.debug;
+		const logDebug = (text) => {
+			if (isDebug) RED.log.info(`hikvisionUltimateText: ${text}`);
+		};
 		node.row1 = config.row1 === undefined ? "" : config.row1;
 		node.row1XY = config.row1XY === undefined ? "" : config.row1XY;
 		node.row2 = config.row2 === undefined ? "" : config.row2;
@@ -77,10 +81,12 @@ module.exports = function (RED) {
 			node.setNodeStatus({ fill: "green", shape: "ring", text: "OK" });
 			try {
 				// Params: _callerNode, _method, _URL, _body
+				logDebug(`Sending text overlay on channel ${node.channelID}`);
 				node.server.request(node, "PUT", "/ISAPI/System/Video/inputs/channels/" + node.channelID + "/overlays/text", sRows);
 			} catch (error) {
 				// Try this, maybe the device is an old Turbo DVR
 				try {
+					logDebug(`Fallback overlay endpoint for channel ${node.channelID}`);
 					node.server.request(node, "PUT", "/ISAPI/System/Video/inputs/channels/" + node.channelID + "/overlays", sRows);
 				} catch (error) { }
 			}

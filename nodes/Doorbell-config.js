@@ -11,8 +11,10 @@ module.exports = (RED) => {
         RED.nodes.createNode(this, config)
         var node = this
         node.port = config.port || 80;
-        node.debug = false //config.host.toString().toLowerCase().indexOf("banana") > -1;
-        node.host = config.host.toString().toLowerCase().replace("banana", "") + ":" + node.port;
+        const rawHost = (config.host || "").toString().toLowerCase();
+        const hostHasBanana = rawHost.indexOf("banana") > -1;
+        node.debug = (config.debuglevel === "yes") || hostHasBanana;
+        node.host = rawHost.replace("banana", "") + ":" + node.port;
         node.protocol = config.protocol || "http";
         node.nodeClients = []; // Stores the registered clients
         node.isConnected = true; // Assumes, that is already connected.

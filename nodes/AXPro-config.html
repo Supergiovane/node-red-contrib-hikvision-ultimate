@@ -9,6 +9,7 @@
             authentication: { value: "sha256-salted" },
             protocol: { value: "http" },
             heartbeattimerdisconnectionlimit: { value: 2 },
+            debuglevel: { value: "no" },
             deviceinfo: { value: {} }
         },
         credentials: {
@@ -79,6 +80,13 @@
         <option value=2>after 2 failed reconnection attempts (Default)</option>
         <option value=3>after 3 failed reconnection attempts</option>
         <option value=4>after 4 failed reconnection attempts</option>
+        </select>
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-debuglevel"><i class="fa fa-exclamation-triangle"></i> Debug level</label>
+        <select type="text" id="node-config-input-debuglevel">
+            <option value="no">No. No debug text please.</option>
+            <option value="yes">Turn on the debug mode.</option>           
         </select>
     </div>
     <div class="form-tips" style="margin-top:11px">

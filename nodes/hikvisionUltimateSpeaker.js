@@ -6,6 +6,10 @@ module.exports = function (RED) {
 		var node = this;
 		node.topic = config.topic || config.name;
 		node.server = RED.nodes.getNode(config.server)
+		const isDebug = node.server && node.server.debug;
+		const logDebug = (text) => {
+			if (isDebug) RED.log.info(`hikvisionUltimateSpeaker: ${text}`);
+		};
 
 
 		node.setNodeStatus = ({ fill, shape, text }) => {
@@ -17,8 +21,15 @@ module.exports = function (RED) {
 		node.sendPayload = (_msg) => {
 			if (_msg === null || _msg === undefined) return;
 			_msg.topic = node.topic;
-			if (_msg.hasOwnProperty("errorDescription")) { node.send([null, _msg]); return; }; // It's a connection error/restore comunication.
-			if (!_msg.hasOwnProperty("payload") || (_msg.hasOwnProperty("payload") && (_msg.payload === undefined || _msg.payload === null))) return;
+			if (_msg.hasOwnProperty("errorDescription")) {
+				logDebug(`Connection status message: ${_msg.errorDescription || ""}`);
+				node.send([null, _msg]);
+				return;
+			}; // It's a connection error/restore comunication.
+			if (!_msg.hasOwnProperty("payload") || (_msg.hasOwnProperty("payload") && (_msg.payload === undefined || _msg.payload === null))) {
+				logDebug("Discarded incoming message without payload");
+				return;
+			}
 
 
 			node.send([_msg, null]);
@@ -36,6 +47,7 @@ module.exports = function (RED) {
 		this.on('input', function (msg) {
 			if (msg.payload === true) {
 				(async () => {
+					logDebug(`Play request for customAudioID ${config.customAudioID} at volume ${config.volume}`);
 					msg.payload = await node.server.playAloud(config.customAudioID, config.volume);
 					node.send([msg, null]);
 					node.setNodeStatus({ fill: "green", shape: "dot", text: "Play" });
@@ -43,6 +55,7 @@ module.exports = function (RED) {
 			}
 			if (msg.payload === false) {
 				(async () => {
+					logDebug(`Stop request for customAudioID ${config.customAudioID}`);
 					msg.payload = await node.server.stopFile(config.customAudioID);
 					node.send([msg, null]);
 					node.setNodeStatus({ fill: "grey", shape: "dot", text: "Stop" });

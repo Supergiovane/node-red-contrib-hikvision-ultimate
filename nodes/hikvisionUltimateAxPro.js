@@ -6,6 +6,10 @@ module.exports = function (RED) {
 		var node = this;
 		node.topic = config.topic || config.name;
 		node.server = RED.nodes.getNode(config.server)
+		const isDebug = node.server && node.server.debug;
+		const logDebug = (text) => {
+			if (isDebug) RED.log.info(`hikvisionUltimateAxPro: ${text}`);
+		};
 		node.zonesStatus = [] // Contains the status of all zones
 		node.outputtype = Number(config.outputtype || 0)
 
@@ -18,11 +22,19 @@ module.exports = function (RED) {
 		node.sendPayload = (_msg) => {
 			if (_msg === null || _msg === undefined) return;
 			_msg.topic = node.topic;
-			if (_msg.hasOwnProperty("errorDescription")) { node.send([null, _msg]); return; }; // It's a connection error/restore comunication.
+			if (_msg.hasOwnProperty("errorDescription")) {
+				logDebug(`Connection status message: ${_msg.errorDescription || ""}`);
+				node.send([null, _msg]);
+				return;
+			}; // It's a connection error/restore comunication.
 			// If heartbeat, return
-			if (_msg.payload.hasOwnProperty("eventType") && _msg.payload.hasOwnProperty("eventState") && _msg.payload.eventType === "cidEvent" && _msg.payload.eventState === "inactive") return
+			if (_msg.payload.hasOwnProperty("eventType") && _msg.payload.hasOwnProperty("eventState") && _msg.payload.eventType === "cidEvent" && _msg.payload.eventState === "inactive") {
+				logDebug("Heartbeat received from AX Pro, ignored");
+				return
+			}
 			if ((node.outputtype === 0 || node.outputtype === 1) && _msg.payload.hasOwnProperty('CIDEvent')) {
 				// ALARM EVENT
+				logDebug(`Forwarding CIDEvent code ${_msg.payload.CIDEvent.code || "n/a"} zone ${_msg.payload.CIDEvent.zone !== undefined ? _msg.payload.CIDEvent.zone + 1 : "n/a"}`);
 				node.send([{ payload: { CIDEvent: RED.util.cloneMessage(_msg.payload.CIDEvent) } }, null]); // Clone message to avoid adding _msgid
 			}
 			if ((node.outputtype === 0 || node.outputtype === 2) && _msg.payload.hasOwnProperty('ZoneList')) {
@@ -40,6 +52,7 @@ module.exports = function (RED) {
 								//node.zonesStatus.push(receivedZone) // Add updated
 							}
 							node.setNodeStatus({ fill: "green", shape: "dot", text: "Zone changed " + receivedZone.name });
+							logDebug(`Zone ${receivedZone.id} (${receivedZone.name}) changed state to ${receivedZone.status || "unknown"}`);
 							node.send([{ payload: { zoneUpdate: RED.util.cloneMessage(receivedZone) } }, null]); // Clone message to avoid adding _msgid
 						}
 					} catch (error) { }
@@ -47,6 +60,7 @@ module.exports = function (RED) {
 			} else {
 				//node.send([_msg, null])
 				node.setNodeStatus({ fill: "green", shape: "ring", text: "Waiting for zone change" });
+				logDebug("Zone update received without changes after filters");
 			}
 
 		}
@@ -61,27 +75,33 @@ module.exports = function (RED) {
 			try {
 				// Disarm Area
 				if (msg.hasOwnProperty("disarmArea")) {
+					logDebug(`Disarm area ${msg.disarmArea}`);
 					node.server.disarmArea(msg.disarmArea)
 				}
 				// Arm Away Area
 				if (msg.hasOwnProperty("armAwayArea")) {
+					logDebug(`Arm away area ${msg.armAwayArea}`);
 					node.server.armAwayArea(msg.armAwayArea)
 				}
 				// Arm Stay Area
 				if (msg.hasOwnProperty("armStayArea")) {
+					logDebug(`Arm stay area ${msg.armStayArea}`);
 					node.server.armStayArea(msg.armStayArea)
 				}
 				// Clear Alarm Area
 				if (msg.hasOwnProperty("clearAlarmArea")) {
+					logDebug(`Clear alarm area ${msg.clearAlarmArea}`);
 					node.server.clearAlarmArea(msg.clearAlarmArea)
 				}
 
 				// Disarm All Area in a batch
 				if (msg.hasOwnProperty("disarmAllAreas")) {
+					logDebug("Disarm all areas");
 					node.server.disarmAllAreas()
 				}
 				// Clear All Alarm Areas
 				if (msg.hasOwnProperty("clearAllAlarmAreas")) {
+					logDebug("Clear all alarm areas");
 					node.server.clearAllAlarmAreas()
 				}
 

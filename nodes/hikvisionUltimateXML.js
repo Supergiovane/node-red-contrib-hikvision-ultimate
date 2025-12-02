@@ -5,6 +5,10 @@ module.exports = function (RED) {
 		RED.nodes.createNode(this, config);
 		var node = this;
 		node.server = RED.nodes.getNode(config.server)
+		const isDebug = node.server && node.server.debug;
+		const logDebug = (text) => {
+			if (isDebug) RED.log.info(`hikvisionUltimateXML: ${text}`);
+		};
 		node.xmlText = config.xmlText === undefined ? "" : config.xmlText;
 		node.path = config.path === undefined ? "" : config.path;
 		node.method = config.method === undefined ? "PUT" : config.method;
@@ -22,6 +26,7 @@ module.exports = function (RED) {
 				return;
 			}
 			node.setNodeStatus({ fill: "green", shape: "ring", text: "Received response" });
+			logDebug("Response received from device");
 			if (_msg === null || _msg === undefined) return;
 			node.send(_msg);
 
@@ -37,8 +42,10 @@ module.exports = function (RED) {
 			node.setNodeStatus({ fill: "green", shape: "ring", text: "Send request..." });
 			try {
 				// Params: _callerNode, _method, _URL, _body, _fromXMLNode
+				logDebug(`Sending ${node.method} to ${node.path} (payload length ${node.xmlText.length})`);
 				node.server.request(node, node.method, node.path, node.xmlText, true);
 			} catch (error) {
+				logDebug(`Error sending request: ${error.message || error}`);
 
 			}
 

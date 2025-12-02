@@ -6,6 +6,10 @@ module.exports = function (RED) {
 		var node = this;
 		node.topic = config.topic || config.name;
 		node.server = RED.nodes.getNode(config.server)
+		const isDebug = node.server && node.server.debug;
+		const logDebug = (text) => {
+			if (isDebug) RED.log.info(`hikvisionUltimateDoorbell: ${text}`);
+		};
 		node.ringStatus = (config.ringStatus === null || config.ringStatus === undefined) ? "all" : config.ringStatus.toLowerCase();
 		node.floorNo = (config.floorNo === null || config.floorNo === undefined) ? "all" : config.floorNo;
 		node.unitNo = (config.unitNo === null || config.unitNo === undefined) ? "all" : config.unitNo;
@@ -49,7 +53,11 @@ module.exports = function (RED) {
 
 			_msg.topic = node.topic;
 			_msg.payload = true;
-			if (_msg.hasOwnProperty("errorDescription")) { node.send([null, _msg]); return; }; // It's a connection error/restore comunication.
+			if (_msg.hasOwnProperty("errorDescription")) {
+				logDebug(`Connection status message: ${_msg.errorDescription || ""}`);
+				node.send([null, _msg]);
+				return;
+			}; // It's a connection error/restore comunication.
 			//node.send([_msg, null]);
 			if (_msg.hasOwnProperty("CallerInfo") && _msg.CallerInfo.hasOwnProperty("status")) {
 
@@ -63,10 +71,18 @@ module.exports = function (RED) {
 					delete _msg._msgid; // To allow objects compare
 					delete node.currentEmittedMSG._msgid; // To allow objects compare
 
-					if (RED.util.compareObjects(node.currentEmittedMSG, _msg)) return; // Omit sending the same notification more than once
+					if (RED.util.compareObjects(node.currentEmittedMSG, _msg)) {
+						logDebug("Skipping duplicate CallerInfo notification");
+						return; // Omit sending the same notification more than once
+					}
 					node.currentEmittedMSG = _msg;
 					// Oputputs only msg that are no "idle"
-					if (_msg.CallerInfo.status.toString() !== "idle") node.send([_msg, null]);
+					if (_msg.CallerInfo.status.toString() !== "idle") {
+						logDebug(`Forwarding CallerInfo status ${_msg.CallerInfo.status}`);
+						node.send([_msg, null]);
+					} else {
+						logDebug("CallerInfo status is idle, not forwarding");
+					}
 				}
 
 			}
@@ -85,6 +101,7 @@ module.exports = function (RED) {
 			if (msg.hasOwnProperty("openDoor")) {
 				// Open the door latch
 				let iDoor = msg.openDoor || 1;
+				logDebug(`Open door request for gateway ${iDoor}`);
 				// <RemoteOpenDoor version="2.0" xmlns="http://www.isapi.org/ver20/XMLSchema"> 
 				// <gateWayIndex>
 				// 	<!--required, xs:integer, access control point No., currently, the value can only be equal to 1--> 
@@ -108,16 +125,19 @@ module.exports = function (RED) {
 					node.setNodeStatus({ fill: "green", shape: "ring", text: "Door unlocked" });
 					msg.payload = true;
 					node.send([msg, null]);
+					logDebug("Door unlocked via API 2.0");
 				}).catch(error => {
 					// Try with API 1.0
 					node.server.request(node, "PUT", "/ISAPI/AccessControl/RemoteControl/door/" + iDoor, "<RemoteControlDoor><cmd>open</cmd></RemoteControlDoor>").then(success => {
 						node.setNodeStatus({ fill: "green", shape: "ring", text: "Door unlocked" });
 						msg.payload = true;
 						node.send([msg, null]);
+						logDebug("Door unlocked via API 1.0 fallback");
 					}).catch(error => {
 						node.setNodeStatus({ fill: "red", shape: "ring", text: "Error unlocking door " + error.message });
 						msg.payload = false;
 						node.send([msg, null]);
+						logDebug(`Error unlocking door: ${error.message || error}`);
 					});
 
 				});
@@ -125,6 +145,7 @@ module.exports = function (RED) {
 			}
 
 			if (msg.hasOwnProperty("hangUp")) {
+				logDebug("Hang-up requested from flow input");
 				try {
 					// Both calls are needed to stop current ring and call
 
@@ -132,6 +153,7 @@ module.exports = function (RED) {
 					// Try with API 2.0, but with some firmware it doesn't work
 					node.server.request(node, "DELETE", "/ISAPI/VideoIntercom/ring", "").then(success => {
 						node.setNodeStatus({ fill: "green", shape: "ring", text: "Stop ringing" });
+						logDebug("Stop ringing sent");
 					}).catch(error => {
 						node.setNodeStatus({ fill: "red", shape: "ring", text: "Error stop ringing " + error.message });
 						RED.log.error("hikvisionUltimateDoorbell: Error stopping ring " + error.message);
@@ -145,8 +167,10 @@ module.exports = function (RED) {
 							const jHangUp = JSON.parse(JSON.stringify(JSON.parse(`{"CallSignal": {"cmdType": "hangUp"}}`)))
 							node.server.request(node, "PUT", "/ISAPI/VideoIntercom/callSignal?format=json", jHangUp).then(success => {
 								node.setNodeStatus({ fill: "green", shape: "ring", text: "Hang Up" });
+								logDebug("Hang up command sent");
 							}).catch(error => {
 								RED.log.error("hikvisionUltimateDoorbell: Error hangUp " + error.message);
+								logDebug(`Hang up command failed: ${error.message || error}`);
 							});
 						} catch (error) {
 						}
@@ -156,8 +180,10 @@ module.exports = function (RED) {
 								const jReject = JSON.parse(JSON.stringify(JSON.parse(`{"CallSignal": {"cmdType": "reject"}}`)))
 								node.server.request(node, "PUT", "/ISAPI/VideoIntercom/callSignal?format=json", jReject).then(success => {
 									node.setNodeStatus({ fill: "green", shape: "ring", text: "reject" });
+									logDebug("Reject command sent");
 								}).catch(error => {
 									RED.log.error("hikvisionUltimateDoorbell: Error reject " + error.message);
+									logDebug(`Reject command failed: ${error.message || error}`);
 								});
 							} catch (error) {
 							}

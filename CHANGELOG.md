@@ -4,7 +4,9 @@
 [![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square)](https://www.paypal.me/techtoday) 
 
 <p>
-<b>Version 1.2.13</b> March 2026<br/>
+<b>Version 1.2.14</b> March 2026<br/>
+- Runtime nodes: added optional debug logs (alarms, ANPR, PTZ, picture, AX Pro, doorbell, speaker, text, XML) when debug level is enabled.<br/>
+- All config nodes: added Debug level option aligned with Hikvision-config.<br/>
 - ANPR config: added detailed debug logs (request picName, HTTP status, body length, parsed plate count) and safer parsing warnings.<br/>
 - Hikvision/AXPro config: cleaned debug log for image parts to avoid undefined variable warnings.<br/>
 </p>

@@ -9,6 +9,9 @@ module.exports = function (RED) {
 		var node = this;
 		node.topic = config.topic || config.name;
 		node.server = RED.nodes.getNode(config.server)
+		const logDebug = (text) => {
+			if (node.server && node.server.debug) RED.log.info(`hikvisionUltimatePicture: ${text}`);
+		};
 		node.picture; // Stores the cam image
 		node.pictureLarghezza = 0;
 		node.pictureAltezza = 0;
@@ -95,10 +98,12 @@ module.exports = function (RED) {
 
 				//console.log("MAN " + JSON.stringify(oConfig))
 				if (_nodeServer === null) {
+					logDebug("No server configured for picture request");
 					res.json({ picture: "", width: 0, height: 0 });
 				} else {
 					node.picture = null;
 					node.server = _nodeServer;
+					logDebug(`Requesting snapshot from URL index ${node.urlImageCurrentIndex}: ${node.urlImage[node.urlImageCurrentIndex]}`);
 					// Call the request, that then sends the result via node.sendPayload function
 					node.server.request(node, "GET", node.urlImage[node.urlImageCurrentIndex], null).then(success => {
 						// Wait until the server has called node.sendPayload and node.sendPayload has populated the node.picture variable
@@ -111,14 +116,17 @@ module.exports = function (RED) {
 								if (node.urlImageCurrentIndex > node.urlImage.length - 1) {
 									// No more URLs to try
 									node.urlImageCurrentIndex = 0;
+									logDebug("Snapshot timed out, no more URLs to try");
 									res.json({ picture: "", width: " !Error getting picture Timeout! ", height: 0 });
 								} else {
 									// Cycled through all URLS
+									logDebug(`Snapshot timed out, retrying with URL index ${node.urlImageCurrentIndex}`);
 									res.json({ picture: "", width: " !Retry new URL... ", height: 0 });
 								}
 								return;
 							} else {
 								if (node.picture !== null) {
+									logDebug(`Snapshot received (w:${node.pictureLarghezza} h:${node.pictureAltezza}) from URL index ${node.urlImageCurrentIndex}`);
 									res.json({ picture: node.picture, width: node.pictureLarghezza, height: node.pictureAltezza, urlImageCurrentIndex: node.urlImageCurrentIndex });
 									return;
 								}
@@ -130,6 +138,7 @@ module.exports = function (RED) {
 					}).catch(error => {
 						// No more URLs to try
 						node.urlImageCurrentIndex = 0;
+						logDebug(`Snapshot request error: ${error.message || error}`);
 						res.json({ picture: "", width: " !Error getting picture! ", height: " !" + error.message + "! " });
 					});
 				}

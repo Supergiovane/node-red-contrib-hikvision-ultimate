@@ -6,6 +6,10 @@ module.exports = function (RED) {
 		var node = this;
 		node.topic = config.topic || config.name;
 		node.server = RED.nodes.getNode(config.server)
+		const isDebug = node.server && node.server.debug;
+		const logDebug = (text) => {
+			if (isDebug) RED.log.info(`hikvisionUltimateAlarmRaw: ${text}`);
+		};
 
 		node.setNodeStatus = ({ fill, shape, text }) => {
 			var dDate = new Date();
@@ -16,10 +20,18 @@ module.exports = function (RED) {
 		node.sendPayload = (_msg, extension = '') => {
 			if (_msg === null || _msg === undefined) return;
 			_msg.topic = node.topic;
-			if (_msg.hasOwnProperty("errorDescription")) { node.send([null, _msg, null]); return; }; // It's a connection error/restore comunication.
-			if (!_msg.hasOwnProperty("payload") || (_msg.hasOwnProperty("payload") && _msg.payload === undefined)) return;
+			if (_msg.hasOwnProperty("errorDescription")) {
+				logDebug(`Connection status message: ${_msg.errorDescription || ""}`);
+				node.send([null, _msg, null]);
+				return;
+			}; // It's a connection error/restore comunication.
+			if (!_msg.hasOwnProperty("payload") || (_msg.hasOwnProperty("payload") && _msg.payload === undefined)) {
+				logDebug("Discarded incoming message without payload");
+				return;
+			}
 
 			if (_msg.type !== undefined && _msg.type === 'img') {
+				logDebug("Forwarding image payload");
 				_msg.extension = extension;
 				node.send([null, null, _msg]);
 				return;
@@ -36,11 +48,13 @@ module.exports = function (RED) {
 				&& _msg.payload.eventState.toString().toLowerCase() === "inactive"
 				&& _msg.payload.hasOwnProperty("activePostCount") && (Number(_msg.payload.activePostCount) === 0 || Number(_msg.payload.activePostCount) === 1)) {
 				// It's a HertBeat, exit.
+				logDebug("Heartbeat received, ignored");
 				node.setNodeStatus({ fill: "green", shape: "ring", text: "Waiting for alert..." });
 				return;
 			};
 
 			node.setNodeStatus({ fill: "green", shape: "dot", text: "Alert received" });
+			logDebug("Forwarding raw alarm payload");
 			node.send([_msg, null, null]);
 		}
 

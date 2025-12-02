@@ -7,7 +7,8 @@
             name: { value: "License Plate Camera" },
             protocol: { value: "http" },
             deviceinfo: { value: {} },
-            authentication: { value: "digest" }
+            authentication: { value: "digest" },
+            debuglevel: { value: "no" }
         },
         credentials: {
             user: { type: "text" },
@@ -138,6 +139,13 @@
         <select type="text" id="node-config-input-authentication">
         <option value="digest">Digest</option>
         <option value="basic">Basic</option>
+        </select>
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-debuglevel"><i class="fa fa-exclamation-triangle"></i> Debug level</label>
+        <select type="text" id="node-config-input-debuglevel">
+            <option value="no">No. No debug text please.</option>
+            <option value="yes">Turn on the debug mode.</option>           
         </select>
     </div>
     <div class="form-row">
