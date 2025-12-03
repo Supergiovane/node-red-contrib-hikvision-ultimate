@@ -4,6 +4,11 @@
 [![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square)](https://www.paypal.me/techtoday) 
 
 <p>
+<b>Version 1.2.15</b> December 2026<br/>
+- Access Control Terminal: avoid crashes on devices that omit the eventDescription property by synthesizing a fallback description.<br/>
+</p>
+
+<p>
 <b>Version 1.2.14</b> December 2026<br/>
 - Runtime nodes: added optional debug logs (alarms, ANPR, PTZ, picture, AX Pro, doorbell, speaker, text, XML) when debug level is enabled.<br/>
 - All config nodes: added Debug level option aligned with Hikvision-config.<br/>
