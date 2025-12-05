@@ -20,6 +20,9 @@ module.exports = (RED) => {
         node.protocol = config.protocol || "http";
         node.nodeClients = []; // Stores the registered clients
         node.isConnected = true; // Assume it's connected, to signal the disconnection on start
+        node.isClosing = false;
+        node.timerInitACTEventReader = null;
+        node.timerQueryForACTEvents = null;
         node.lastACTEventSerialNo = 0; // This contains the evend number. It's an unique counter, that the device gives to the event, to didentify it and check for missing events.
         node.errorDescription = ""; // Contains the error description in case of connection error.
         node.authentication = config.authentication || "digest";
@@ -240,6 +243,7 @@ module.exports = (RED) => {
             try {
                 let iRet = Number(_ACTEvents.AcsEvent.InfoList[0].serialNo || 0);
                 setTimeout(() => {
+                    if (node.isClosing) return;
                     node.setAllClientsStatus({ fill: "grey", shape: "ring", text: "Last event number: " + iRet });
                 }, 1000);
                 return iRet;
@@ -253,6 +257,7 @@ module.exports = (RED) => {
 
         // At start, reads the last recognized event and starts listening from the time last event was fired.
         node.initACTEventReader = () => {
+            if (node.isClosing) return;
             (async () => {
 
                 var oEvents = null;
@@ -263,21 +268,30 @@ module.exports = (RED) => {
                 }
 
                 if (oEvents === null) {
-                    setTimeout(node.initACTEventReader, 10000); // Restart initPlateReader
+                    if (node.isClosing) return;
+                    if (node.timerInitACTEventReader !== null) clearTimeout(node.timerInitACTEventReader);
+                    node.timerInitACTEventReader = setTimeout(node.initACTEventReader, 10000); // Restart initPlateReader
                 } else {
                     try {
                         node.lastACTEventSerialNo = await returnMostRecentEventSerialNoFromList(oEvents);
                     } catch (error) {
-                        setTimeout(node.initACTEventReader, 10000); // Restart initPlateReader
+                        if (node.isClosing) return;
+                        if (node.timerInitACTEventReader !== null) clearTimeout(node.timerInitACTEventReader);
+                        node.timerInitACTEventReader = setTimeout(node.initACTEventReader, 10000); // Restart initPlateReader
                         return;
                     }
-                    setTimeout(() => node.setAllClientsStatus({ fill: "green", shape: "ring", text: "Waiting for Access events..." }), 2000);
-                    setTimeout(node.queryForACTEvents, 2000); // Start main polling thread
+                    setTimeout(() => {
+                        if (node.isClosing) return;
+                        node.setAllClientsStatus({ fill: "green", shape: "ring", text: "Waiting for Access events..." });
+                    }, 2000);
+                    if (node.timerQueryForACTEvents !== null) clearTimeout(node.timerQueryForACTEvents);
+                    node.timerQueryForACTEvents = setTimeout(node.queryForACTEvents, 2000); // Start main polling thread
                 }
             })();
         };
 
         node.queryForACTEvents = () => {
+            if (node.isClosing) return;
             (async () => {
                 var oEvents = null;
                 try {
@@ -288,7 +302,9 @@ module.exports = (RED) => {
 
                 if (oEvents === null) {
                     // An error was occurred.
-                    setTimeout(node.initACTEventReader, 10000); // Restart initPlateReader from scratch
+                    if (node.isClosing) return;
+                    if (node.timerInitACTEventReader !== null) clearTimeout(node.timerInitACTEventReader);
+                    node.timerInitACTEventReader = setTimeout(node.initACTEventReader, 10000); // Restart initPlateReader from scratch
                 } else {
                     if (oEvents.AcsEvent.hasOwnProperty("InfoList")) {
                         if (Array.isArray(oEvents.AcsEvent.InfoList) && oEvents.AcsEvent.InfoList.length > 0) {
@@ -326,23 +342,29 @@ module.exports = (RED) => {
                     } else {
                         // No new events found
                     }
-                    setTimeout(node.queryForACTEvents, 2000); // Call the function again.
+                    if (node.isClosing) return;
+                    if (node.timerQueryForACTEvents !== null) clearTimeout(node.timerQueryForACTEvents);
+                    node.timerQueryForACTEvents = setTimeout(node.queryForACTEvents, 2000); // Call the function again.
                 }
             })();
 
         };
 
         // Start!
-        setTimeout(node.initACTEventReader, 10000); // First connection.
+        if (node.timerInitACTEventReader !== null) clearTimeout(node.timerInitACTEventReader);
+        node.timerInitACTEventReader = setTimeout(node.initACTEventReader, 10000); // First connection.
         //#endregion
 
         //#region "FUNCTIONS"
         node.on('close', function (removed, done) {
+            node.isClosing = true;
             if (controller !== null) {
                 try {
                     controller.abort();
                 } catch (error) { }
             }
+            if (node.timerInitACTEventReader !== null) clearTimeout(node.timerInitACTEventReader);
+            if (node.timerQueryForACTEvents !== null) clearTimeout(node.timerQueryForACTEvents);
             done();
         });
 

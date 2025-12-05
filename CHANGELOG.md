@@ -3,11 +3,17 @@
 
 [![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square)](https://www.paypal.me/techtoday) 
 
+
+<p>
+<b>Version 1.2.16</b> December 2026<br/>
+- All config and runtime nodes: ensured all recurring setTimeout/setInterval timers are cleared on node close, preventing RAM growth on every Node-RED deploy.<br/>
+</p>
+<p>
+
 <p>
 <b>Version 1.2.15</b> December 2026<br/>
 - Access Control Terminal: avoid crashes on devices that omit the eventDescription property by synthesizing a fallback description.<br/>
 </p>
-
 <p>
 <b>Version 1.2.14</b> December 2026<br/>
 - Runtime nodes: added optional debug logs (alarms, ANPR, PTZ, picture, AX Pro, doorbell, speaker, text, XML) when debug level is enabled.<br/>

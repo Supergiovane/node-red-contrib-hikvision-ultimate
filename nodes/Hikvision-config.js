@@ -34,6 +34,7 @@ module.exports = (RED) => {
         node.protocol = config.protocol || "http";
         node.nodeClients = []; // Stores the registered clients
         node.isConnected = true; // Assumes, that is already connected.
+        node.isClosing = false;
         node.timerCheckHeartBeat = null;
         node.errorDescription = ""; // Contains the error description in case of connection error.
         node.authentication = config.authentication || "digest";
@@ -138,9 +139,11 @@ module.exports = (RED) => {
 
         // This function starts the heartbeat timer, to detect the disconnection from the server
         node.resetHeartBeatTimer = () => {
+            if (node.isClosing) return;
             // Reset node.timerCheckHeartBeat
             if (node.timerCheckHeartBeat !== null) clearTimeout(node.timerCheckHeartBeat);
             node.timerCheckHeartBeat = setTimeout(() => {
+                if (node.isClosing) return;
                 node.heartBeatTimerDisconnectionCounter += 1;
                 if (node.heartBeatTimerDisconnectionCounter < node.heartbeattimerdisconnectionlimit) {
                     // 28/12/2020 Retry again until connection attempt limit reached
@@ -172,6 +175,7 @@ module.exports = (RED) => {
                     }
                     node.isConnected = false;
                     setTimeout(() => {
+                        if (node.isClosing) return;
                         try {
                             startAlarmStream()
                         } catch (error) {
@@ -393,6 +397,8 @@ module.exports = (RED) => {
 
         async function startAlarmStream() {
 
+            if (node.isClosing) return;
+
             node.resetHeartBeatTimer(); // First thing, start the heartbeat timer.
             node.setAllClientsStatus({ fill: "grey", shape: "ring", text: "Connecting..." });
 
@@ -540,6 +546,7 @@ module.exports = (RED) => {
         //#endregion
 
         setTimeout(() => {
+            if (node.isClosing) return;
             try {
                 startAlarmStream();
             } catch (error) {
@@ -655,6 +662,7 @@ module.exports = (RED) => {
 
         //#region "FUNCTIONS"
         node.on('close', function (removed, done) {
+            node.isClosing = true;
             if (controller !== null) {
                 try {
                     controller.abort();

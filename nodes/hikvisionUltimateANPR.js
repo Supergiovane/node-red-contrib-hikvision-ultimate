@@ -14,6 +14,7 @@ module.exports = function (RED) {
 		node.currentPlate = ""; // Stores the current plate (for the avoidsameplatetime function)
 		node.timerAvoidSamePlate = null; // Timer for avoiding repeating plate
 		node.bAvoidSamePlate = false;
+		node.isClosing = false;
 
 		node.setNodeStatus = ({ fill, shape, text }) => {
 			var dDate = new Date();
@@ -47,6 +48,7 @@ module.exports = function (RED) {
 			if (node.timerAvoidSamePlate !== null) clearTimeout(node.timerAvoidSamePlate);
 			node.bAvoidSamePlate = true;
 			node.timerAvoidSamePlate = setTimeout(() => {
+				if (node.isClosing) return;
 				node.bAvoidSamePlate = false;
 			}, node.avoidsameplatetime * 1000);
 			// ##########################
@@ -70,9 +72,11 @@ module.exports = function (RED) {
 		});
 
 		node.on("close", function (done) {
+			node.isClosing = true;
 			if (node.server) {
 				node.server.removeClient(node);
 			}
+			if (node.timerAvoidSamePlate !== null) clearTimeout(node.timerAvoidSamePlate);
 			done();
 		});
 

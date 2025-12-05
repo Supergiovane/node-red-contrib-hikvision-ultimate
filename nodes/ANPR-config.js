@@ -18,6 +18,9 @@ module.exports = (RED) => {
         node.protocol = config.protocol || "http";
         node.nodeClients = []; // Stores the registered clients
         node.isConnected = true; // Assume it's connected, to signal the disconnection on start
+        node.isClosing = false;
+        node.timerInitPlateReader = null;
+        node.timerQueryForPlates = null;
         node.lastPicName = "";
         node.errorDescription = ""; // Contains the error description in case of connection error.
         node.authentication = config.authentication || "digest";
@@ -336,6 +339,7 @@ module.exports = (RED) => {
         // At start, reads the last recognized plate and starts listening from the time last plate was recognized.
         // This avoid output all the previoulsy plate list, stored by the camera.
         node.initPlateReader = () => {
+            if (node.isClosing) return;
 
             (async () => {
 
@@ -348,23 +352,32 @@ module.exports = (RED) => {
                 }
 
                 if (oPlates === null) {
-                    setTimeout(node.initPlateReader, 10000); // Restart initPlateReader
+                    if (node.isClosing) return;
+                    if (node.timerInitPlateReader !== null) clearTimeout(node.timerInitPlateReader);
+                    node.timerInitPlateReader = setTimeout(node.initPlateReader, 10000); // Restart initPlateReader
                 } else {
                     // console.log("BANANA STRIGONE " + JSON.stringify(oPlates))
                     try {
                         node.lastPicName = await returnMostRecentPicnameFromList(oPlates, true);
                         //console.log("lastPicName:" + node.lastPicName);
                     } catch (error) {
-                        setTimeout(node.initPlateReader, 10000); // Restart initPlateReader
+                        if (node.isClosing) return;
+                        if (node.timerInitPlateReader !== null) clearTimeout(node.timerInitPlateReader);
+                        node.timerInitPlateReader = setTimeout(node.initPlateReader, 10000); // Restart initPlateReader
                         return;
                     }
-                    setTimeout(() => node.setAllClientsStatus({ fill: "green", shape: "ring", text: "Waiting for vehicle..." }), 2000);
-                    setTimeout(node.queryForPlates, 3000); // Start main polling thread
+                    setTimeout(() => {
+                        if (node.isClosing) return;
+                        node.setAllClientsStatus({ fill: "green", shape: "ring", text: "Waiting for vehicle..." });
+                    }, 2000);
+                    if (node.timerQueryForPlates !== null) clearTimeout(node.timerQueryForPlates);
+                    node.timerQueryForPlates = setTimeout(node.queryForPlates, 3000); // Start main polling thread
                 }
             })();
         };
 
         node.queryForPlates = () => {
+            if (node.isClosing) return;
             // console.log("BANANA queryForPlates");
             if (node.lastPicName === "") {
                 // Should not be here!
@@ -375,7 +388,8 @@ module.exports = (RED) => {
                     })
                 }
                 node.isConnected = false;
-                setTimeout(node.initPlateReader, 10000); // Restart whole process.
+                if (node.timerInitPlateReader !== null) clearTimeout(node.timerInitPlateReader);
+                node.timerInitPlateReader = setTimeout(node.initPlateReader, 10000); // Restart whole process.
             } else {
                 (async () => {
                     var oPlates = null;
@@ -387,7 +401,9 @@ module.exports = (RED) => {
 
                     if (oPlates === null) {
                         // An error was occurred.
-                        setTimeout(node.initPlateReader, 2000); // Restart initPlateReader from scratch
+                        if (node.isClosing) return;
+                        if (node.timerInitPlateReader !== null) clearTimeout(node.timerInitPlateReader);
+                        node.timerInitPlateReader = setTimeout(node.initPlateReader, 2000); // Restart initPlateReader from scratch
                     } else {
                         if (oPlates.Plates.hasOwnProperty("Plate")) {
                             // Check wether is an array of plates or a single plate
@@ -420,23 +436,29 @@ module.exports = (RED) => {
                         } else {
                             // No new plates found
                         }
-                        setTimeout(node.queryForPlates, 3000); // Call the cunction again.
+                        if (node.isClosing) return;
+                        if (node.timerQueryForPlates !== null) clearTimeout(node.timerQueryForPlates);
+                        node.timerQueryForPlates = setTimeout(node.queryForPlates, 3000); // Call the function again.
                     }
                 })();
             }
         };
 
         // Start!
-        setTimeout(node.initPlateReader, 10000); // First connection.
+        if (node.timerInitPlateReader !== null) clearTimeout(node.timerInitPlateReader);
+        node.timerInitPlateReader = setTimeout(node.initPlateReader, 10000); // First connection.
         //#endregion
 
         //#region "FUNCTIONS"
         node.on('close', function (removed, done) {
+            node.isClosing = true;
             if (controller !== null) {
                 try {
                     controller.abort();
                 } catch (error) { }
             }
+            if (node.timerInitPlateReader !== null) clearTimeout(node.timerInitPlateReader);
+            if (node.timerQueryForPlates !== null) clearTimeout(node.timerQueryForPlates);
             done();
         });
 

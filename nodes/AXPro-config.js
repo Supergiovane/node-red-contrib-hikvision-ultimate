@@ -20,6 +20,7 @@ module.exports = (RED) => {
         node.protocol = config.protocol || "http";
         node.nodeClients = []; // Stores the registered clients
         node.isConnected = true; // Assumes, that is already connected.
+        node.isClosing = false;
         node.timerCheckHeartBeat = null;
         node.timerReadZonesStatus = null;
         node.errorDescription = ""; // Contains the error description in case of connection error.
@@ -46,9 +47,11 @@ module.exports = (RED) => {
 
         // This function starts the heartbeat timer, to detect the disconnection from the server
         node.resetHeartBeatTimer = () => {
+            if (node.isClosing) return;
             // Reset node.timerCheckHeartBeat
             if (node.timerCheckHeartBeat !== null) clearTimeout(node.timerCheckHeartBeat);
             node.timerCheckHeartBeat = setTimeout(() => {
+                if (node.isClosing) return;
                 node.heartBeatTimerDisconnectionCounter += 1;
                 if (node.heartBeatTimerDisconnectionCounter < node.heartbeattimerdisconnectionlimit) {
                     // 28/12/2020 Retry again until connection attempt limit reached
@@ -58,7 +61,7 @@ module.exports = (RED) => {
                             controller.abort();
                         } catch (error) { }
                     }
-                    setTimeout(startAlarmStream, 1000); // Reconnect
+                    if (!node.isClosing) setTimeout(startAlarmStream, 1000); // Reconnect
                 } else {
                     // 28/12/2020 Connection attempt limit reached
                     node.heartBeatTimerDisconnectionCounter = 0;
@@ -75,7 +78,7 @@ module.exports = (RED) => {
                         } catch (error) { }
                     }
                     node.isConnected = false;
-                    setTimeout(startAlarmStream, 1000); // Reconnect
+                    if (!node.isClosing) setTimeout(startAlarmStream, 1000); // Reconnect
                 }
             }, 40000);
         }
@@ -112,6 +115,8 @@ module.exports = (RED) => {
             return match[1].trim().replace(/^--/, '');
         }
         async function startAlarmStream() {
+
+            if (node.isClosing) return;
 
             node.resetHeartBeatTimer(); // First thing, start the heartbeat timer.
             node.setAllClientsStatus({ fill: "grey", shape: "ring", text: "Connecting..." });
@@ -464,6 +469,7 @@ module.exports = (RED) => {
         // Wrapping the async function, for peace of mind
         async function startZonesStatusReading() {
             try {
+                if (node.isClosing) return;
 
                 let optionsZonesStatusReading = {
                     // These properties are part of the Fetch Standard
@@ -507,12 +513,14 @@ module.exports = (RED) => {
 
         //#region "FUNCTIONS"
         node.on('close', function (removed, done) {
+            node.isClosing = true;
             if (controller !== null) {
                 try {
                     controller.abort();
                 } catch (error) { }
             }
             if (node.timerCheckHeartBeat !== null) clearTimeout(node.timerCheckHeartBeat);
+            if (node.timerReadZonesStatus !== null) clearTimeout(node.timerReadZonesStatus);
             done();
         });
 
