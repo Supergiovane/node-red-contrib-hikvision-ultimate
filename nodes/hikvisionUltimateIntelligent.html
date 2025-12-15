@@ -1,0 +1,160 @@
+
+<script type="text/javascript">
+	RED.nodes.registerType('hikvisionUltimateIntelligent', {
+		category: 'Hikvision Ultimate',
+		color: '#C0C0C0',
+		defaults: {
+			name: { value: "" },
+			topic: { value: "" },
+			server: { type: "Hikvision-config", required: true },
+			channelID: { value: "0" },
+			filterzone: { value: "0" },
+			intelligentevent: { value: "all" }
+		},
+		inputs: 0,
+		outputs: 3,
+		outputLabels: function (i) {
+			switch (i) {
+				case 0:
+					return "Payload";
+				case 1:
+					return "Error";
+				case 2:
+					return "Image";
+				default:
+					return "";
+			}
+		},
+		icon: "node-anpr-icon.svg",
+		label: function () {
+			return this.name || "Intelligent Event";
+		},
+		paletteLabel: function () {
+			return "Intelligent Event";
+		}
+	});
+</script>
+
+<script type="text/x-red" data-template-name="hikvisionUltimateIntelligent">
+	<div class="form-row">
+		<b>Intelligent Event node</b>&nbsp&nbsp&nbsp&nbsp<span style="color:red"><i class="fa fa-question-circle"></i>&nbsp<a target="_blank" href="https://github.com/Supergiovane/node-red-contrib-hikvision-ultimate"><u>Help online</u></a></span>
+        <br/>
+		<br/>
+		
+		<label for="node-input-server">Server</label>
+		<input type="text" id="node-input-server" />
+	</div>
+	<div class="form-row">
+        <label for="node-input-name"><i class="icon-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+	<div class="form-row">
+        <label for="node-input-topic"><i class="fa fa-tasks"></i> Node topic</label>
+        <input type="text" id="node-input-topic" placeholder="Node's own topic">
+	</div>
+	<div class="form-row">
+		<label for="node-input-intelligentevent"><i class="fa fa-tasks"></i> React to Intelligent Event</label>
+		<select id="node-input-intelligentevent">
+			<option value="all">All Events</option>
+			<option value="human">Human</option>
+			<option value="vehicle">Vehicle</option>
+		</select>
+	</div>
+	<div class="form-row">
+        <label for="node-input-channelID"><i class="fa fa-tasks"></i> React to Channel</label>
+		<select id="node-input-channelID">
+			<option value="0">All channels</option>
+			<option value="1">Channel 1</option>
+			<option value="2">Channel 2</option>
+			<option value="3">Channel 3</option>
+			<option value="4">Channel 4</option>
+			<option value="5">Channel 5</option>
+			<option value="6">Channel 6</option>
+			<option value="7">Channel 7</option>
+			<option value="8">Channel 8</option>
+			<option value="9">Channel 9</option>
+			<option value="10">Channel 10</option>
+			<option value="11">Channel 11</option>
+			<option value="12">Channel 12</option>
+			<option value="13">Channel 13</option>
+			<option value="14">Channel 14</option>
+			<option value="15">Channel 15</option>
+			<option value="16">Channel 16</option>
+			<option value="17">Channel 17</option>
+			<option value="18">Channel 18</option>
+			<option value="19">Channel 19</option>
+			<option value="20">Channel 20</option>
+			<option value="21">Channel 21</option>
+			<option value="22">Channel 22</option>
+			<option value="23">Channel 23</option>
+			<option value="24">Channel 24</option>
+			<option value="25">Channel 25</option>
+			<option value="26">Channel 26</option>
+			<option value="27">Channel 27</option>
+			<option value="28">Channel 28</option>
+			<option value="29">Channel 29</option>
+			<option value="30">Channel 30</option>
+			<option value="31">Channel 31</option>
+			<option value="32">Channel 32</option>
+		</select>
+	</div>
+	<div class="form-row">
+        <label for="node-input-filterzone"><i class="fa fa-tasks"></i> React to Zone </label>
+		<select id="node-input-filterzone">
+			<option value="0">All zones</option>
+			<option value="1">Zone 1</option>
+			<option value="2">Zone 2</option>
+			<option value="3">Zone 3</option>
+			<option value="4">Zone 4</option>
+			<option value="5">Zone 5</option>
+			<option value="6">Zone 6</option>
+			<option value="7">Zone 7</option>
+			<option value="8">Zone 8</option>
+			<option value="9">Zone 9</option>
+			<option value="10">Zone 10</option>
+			<option value="11">Zone 11</option>
+			<option value="12">Zone 12</option>
+			<option value="13">Zone 13</option>
+			<option value="14">Zone 14</option>
+			<option value="15">Zone 15</option>
+			<option value="16">Zone 16</option>
+		</select>
+		<div class="form-tips" style="margin-top:11px">
+			For NVR, the Channel represents the CAMERA number, while for Cameras, represents the sensor number (by default 1). The zone represents the region number for the smart event.
+		 </div>
+	</div>
+</script>
+
+<script type="text/markdown" data-help-name="hikvisionUltimateIntelligent">
+<p>Receives "Intelligent" or "Smart" events from a Hikvision camera/NVR.</p>
+
+<h3>Details</h3>
+<p>This node connects to a Hikvision device and outputs messages for smart events like human detection, vehicle detection, intrusion detection, and more. These events are typically configured in the camera's own web interface.</p>
+<p>The node will output the full event object as a JSON payload, which may include information like the event type, the state (active/inactive), and custom data about the detected object (e.g., "person", "vehicle").</p>
+
+<h3>Outputs</h3>
+<ol>
+    <li><b>Payload</b>: The main output. Emits a message containing the event details.</li>
+    <li><b>Error</b>: Emits messages related to connection status and errors.</li>
+    <li><b>Image</b>: Emits the image associated with the event, if available.</li>
+</ol>
+
+<h3>Example Payload</h3>
+<pre>
+{
+    "payload": {
+        "SmartEvent": {
+            "eventType": "fielddetection",
+            "eventState": "active",
+            "eventDescription": "Intrusion Detection",
+            "customData": {
+                "objectType": "person",
+                "confidence": 95
+            }
+        }
+    },
+    "topic": "MyCamera/IntelligentEvent",
+    "description": "Intrusion Detection"
+}
+</pre>
+</script>
