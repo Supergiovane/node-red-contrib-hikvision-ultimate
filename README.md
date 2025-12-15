@@ -146,7 +146,8 @@ msg = {
 
 ## INTELLIGENT EVENT NODE
 
-<img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/Intelligent.jpg' >
+<img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/intelligent.jpg'>  
+
 
 Receives "Intelligent" / "Smart" events from a Hikvision camera or NVR.<br/>
 
