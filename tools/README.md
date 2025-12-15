@@ -48,3 +48,20 @@ npm run node-red:auth
 ```
 
 These profiles are for development only. Never deploy them in production with the default credentials.
+
+## ANPR testing helpers
+
+Two helper scripts are available for testing the ANPR config node and `picName` handling:
+
+| Command | Description |
+| ------- | ----------- |
+| `npm run test:anpr-picname` | Runs a small unit test that parses sample ANPR XML and verifies `picName` stays a precise string and round-trips through `BigInt`. |
+| `npm run mock:anpr-server` | Starts a mock HTTP server that emulates a Hikvision ANPR camera at `http://localhost:18080/ISAPI/Traffic/channels/1/vehicleDetect/plates`. |
+
+When the mock server is running, configure your `ANPR-config` node with:
+
+- `protocol`: `http`
+- `host`: `127.0.0.1` (or `localhost`)
+- `port`: `18080`
+
+The mock returns lists of plates with `picName` values in random order; `ANPR-config.js` will sort them using `picName` before emitting messages to the `hikvisionUltimateANPR` node.

@@ -6,7 +6,9 @@
     "scripts": {
         "release:beta": "npm version prerelease --preid=beta && npm publish --tag beta",
         "node-red:noauth": "npx node-red -s tools/node-red/settings-noauth.js",
-        "node-red:auth": "npx node-red -s tools/node-red/settings-auth.js"
+        "node-red:auth": "npx node-red -s tools/node-red/settings-auth.js",
+        "test:anpr-picname": "node tools/test-anpr-picname.js",
+        "mock:anpr-server": "node tools/mock-anpr-server.js"
     },
     "dependencies": {
         "jimp": "0.22.10",

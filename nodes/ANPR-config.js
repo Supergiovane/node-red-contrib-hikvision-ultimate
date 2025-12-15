@@ -110,13 +110,25 @@ module.exports = (RED) => {
         // Sort the plates, in any case, even if the anpr camera returns a sorted list. It's not always true!
         function sortPlates(a, b) {
             try {
-                if (a.Plate.picName < b.Plate.picName) {
-                    return -1;
+                const aRaw = (a && (a.picName || (a.Plate && a.Plate.picName))) || "";
+                const bRaw = (b && (b.picName || (b.Plate && b.Plate.picName))) || "";
+
+                // Prefer numeric comparison (BigInt) to avoid any surprises,
+                // but fall back to string comparison if parsing fails.
+                const aStr = String(aRaw);
+                const bStr = String(bRaw);
+
+                try {
+                    const aNum = BigInt(aStr);
+                    const bNum = BigInt(bStr);
+                    if (aNum < bNum) return -1;
+                    if (aNum > bNum) return 1;
+                    return 0;
+                } catch (error) {
+                    if (aStr < bStr) return -1;
+                    if (aStr > bStr) return 1;
+                    return 0;
                 }
-                if (a.Plate.picName > b.Plate.picName) {
-                    return 1;
-                }
-                return 0;
             } catch (error) {
                 return 0;
             }
@@ -164,6 +176,10 @@ module.exports = (RED) => {
                     var body = "";
                     body = await response.text();
                     var sRet = body.toString();
+                    if (sRet === null || sRet === undefined || sRet.length === 0) {
+                        if (node.debug) RED.log.warn("ANPR-config: getPlates empty response body");
+                        throw new Error("Empty response body");
+                    }
                     if (node.debug) RED.log.info("ANPR-config: getPlates body length " + sRet.length);
                     // console.log("BANANA ANPR: " + sRet);
                     var oPlates = null;
@@ -171,7 +187,8 @@ module.exports = (RED) => {
                         var i = sRet.indexOf("<"); // Get only the XML, starting with "<"
                         if (i > -1) {
                             sRet = sRet.substring(i);
-                            const parser = new XMLParser();
+                            // 2024-XX-XX: ensure picName and similar fields stay as strings
+                            const parser = new XMLParser({ parseTagValue: false });
                             try {
                                 let result = parser.parse(sRet);
                                 try {
@@ -196,8 +213,9 @@ module.exports = (RED) => {
                             if (i > -1) {
                                 sRet = sRet.substring(i);
                                 try {
-                                    oPlates = JSON.parse(result);
+                                    oPlates = JSON.parse(sRet);
                                 } catch (error) {
+                                    if (node.debug) RED.log.warn("ANPR-config: getPlates JSON parse error " + (error.message || ""));
                                     oPlates = null;
                                 }
                             } else {
@@ -209,7 +227,7 @@ module.exports = (RED) => {
                         }
                         // console.log("BANANA GIASONE " + JSON.stringify(oPlates));
                         // Working the plates. Must be sure, that no error occurs, before acknolwedging the plate last picName
-                        if (oPlates.Plates !== null && oPlates.Plates !== undefined) {
+                        if (oPlates && oPlates.Plates !== null && oPlates.Plates !== undefined) {
 
                             // Send connection OK
                             if (!node.isConnected) {
@@ -410,8 +428,15 @@ module.exports = (RED) => {
                             if (Array.isArray(oPlates.Plates.Plate) && oPlates.Plates.Plate.length > 0) {
                                 // Send the message to the child nodes
                                 oPlates.Plates.Plate.forEach(oPlate => {
+                                    const picNameString = (oPlate && oPlate.picName !== undefined && oPlate.picName !== null) ? oPlate.picName.toString() : "";
                                     node.nodeClients.forEach(oClient => {
-                                        oClient.sendPayload({ topic: oClient.topic || "", plate: oPlate, payload: oPlate.plateNumber, connected: true });
+                                        oClient.sendPayload({
+                                            topic: oClient.topic || "",
+                                            plate: oPlate,
+                                            payload: oPlate.plateNumber,
+                                            picName: picNameString,
+                                            connected: true
+                                        });
                                     })
                                 })
                                 // Set the picname of the most recent plate in this filtered list
