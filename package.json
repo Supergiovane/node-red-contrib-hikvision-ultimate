@@ -55,7 +55,8 @@
             "hikvisionUltimateDoorbell": "nodes/hikvisionUltimateDoorbell.js",
             "hikvisionUltimateAxPro": "nodes/hikvisionUltimateAxPro.js",
             "hikvisionUltimateAccessControlTerminal": "nodes/hikvisionUltimateAccessControlTerminal.js",
-            "hikvisionUltimateSpeaker": "nodes/hikvisionUltimateSpeaker.js"
+            "hikvisionUltimateSpeaker": "nodes/hikvisionUltimateSpeaker.js",
+            "hikvisionUltimateIntelligent": "nodes/hikvisionUltimateIntelligent.js"
         }
     }
 }

@@ -138,6 +138,101 @@ msg = {
     "extension": "jpg" // Can be "jpg" or "png"
 }
 ```
+
+<br/>
+<br/>
+
+---
+
+## INTELLIGENT EVENT NODE
+
+<img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/Intelligent.jpg' >
+
+Receives "Intelligent" / "Smart" events from a Hikvision camera or NVR.<br/>
+
+This node is similar to the **Camera Event** node, but it focuses on **smart / intelligent analytics**, such as:
+- Intrusion / field detection
+- Human / vehicle detection
+- Line crossing, face detection, etc. (depending on your device firmware)
+
+Events must be configured in the camera/NVR web interface (Smart/Intelligent events menu) and set to **Notify alarm center / Send to center**, otherwise they will not be sent to this node.<br/>
+
+You can:
+- Filter by **channel** (camera number on NVR / sensor ID on camera).<br/>
+- Filter by **object type**: All / Human / Vehicle / Animal (if the camera provides this information).<br/>
+- Optionally filter **false alarms** using:
+  - **Alarm duration**: how many seconds the alarm must stay active (or repeatedly active)
+  - **Evaluation period**: time window in which the total active time is evaluated
+
+If *Alarm duration* is `0`, every event is forwarded immediately.<br/>
+If *Alarm duration* is `> 0`, the node only outputs an alarm when the cumulative active time inside the evaluation period reaches the selected duration.<br/>
+
+
+**Flow Messages**
+
+The node has 3 outputs:
+- **PIN 1**: Intelligent event (true/false, plus details)
+- **PIN 2**: Connection status / error
+- **PIN 3**: Image (if provided by the device)
+
+**Output PIN 1**
+```javascript
+// Example of a smart event
+msg = {
+  "payload": true,                 // true on alarm start, false on alarm end
+  "topic": "MyCamera/IntelligentEvent",
+  "channelid": "1",                // camera/NVR channel ID
+  "zone": 0,                       // region/zone ID, if provided by the event
+  "description": "Intrusion Detection",
+
+  // Full parsed event object (SmartEvent or EventNotificationAlert)
+  "event": { /* ... full event ... */ },
+
+  // Optional fields populated when the camera includes image info in the event
+  "imageName": "202011301142008600", // picture name (picName, etc.) if available
+  "imageUrl": "/ISAPI/ContentMgmt/StreamingProxy/channels/101/picture", // picture URL/path
+
+  "_msgid": "abcd1234.5678efgh"
+}
+```
+
+If the smart event payload contains fields such as `picName`, `picUrl` (or similar variants, possibly inside `customData`), the node exposes them as:
+- `msg.imageName`
+- `msg.imageUrl`
+
+You can then perform a separate HTTP GET (for example with the **HTTP Request** node) or use the **Picture** node to retrieve the related JPEG image.<br/>
+
+**Output PIN 2 (connection error)**
+```javascript
+msg = {
+  "topic": "MyCamera/IntelligentEvent",
+  "errorDescription": "",  // non-empty string in case of error
+  "payload": false         // true = error, false = connection OK
+}
+```
+
+**Output PIN 3 (Image)**
+```javascript
+msg = {
+  "topic": "MyCamera/IntelligentEvent",
+  "payload": imageBuffer,  // image bytes
+  "extension": "jpg"       // "jpg" or "png"
+}
+```
+
+This third pin emits messages only if the camera/NVR actually sends a picture on the alert stream for that event type (smart event snapshots enabled in the device configuration).<br/>
+
+**Example: Intelligent event + snapshot flow**
+
+A typical flow is:
+1. Use the **Intelligent Event** node (PIN 1) to detect human/vehicle/intrusion events.
+2. When `msg.payload === true`, trigger the **Picture** node to grab a fresh snapshot from the same camera and channel.
+3. Optionally use `msg.imageName` / `msg.imageUrl` from the Intelligent node to:
+   - build filenames,
+   - store references in a database,
+   - or fetch archived images from the NVR.
+
+
 <br/>
 <br/>
 

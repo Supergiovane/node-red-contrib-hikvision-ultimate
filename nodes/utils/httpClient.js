@@ -307,6 +307,7 @@ class HttpClient {
         firstResponse.body.resume();
 
         const wwwAuth = firstResponse.headers.get('www-authenticate');
+        if (this.logger) this.logger.info('WWW-Authenticate header: ' + wwwAuth);
         if (!wwwAuth || !/^digest/i.test(wwwAuth.trim())) {
             if (this.logger) this.logger.warn('Digest authentication requested but challenge is missing or not supported.');
             return firstResponse;

@@ -8,8 +8,9 @@
 			topic: { value: "" },
 			server: { type: "Hikvision-config", required: true },
 			channelID: { value: "0" },
-			filterzone: { value: "0" },
-			intelligentevent: { value: "all" }
+			intelligentevent: { value: "all" },
+			alarmfilterduration: { value: 0 },
+			alarmfilterperiod: { value: 0 },
 		},
 		inputs: 0,
 		outputs: 3,
@@ -31,6 +32,22 @@
 		},
 		paletteLabel: function () {
 			return "Intelligent Event";
+		},
+		oneditprepare: function () {
+			var node = this;
+
+			if (node.alarmfilterduration == 0) {
+				$("#ui_alarmfilterperiod").hide();
+			} else {
+				$("#ui_alarmfilterperiod").show();
+			}
+			$("#node-input-alarmfilterduration").change(function (e) {
+				if ($("#node-input-alarmfilterduration").val() == 0) {
+					$("#ui_alarmfilterperiod").hide();
+				} else {
+					$("#ui_alarmfilterperiod").show();
+				}
+			});
 		}
 	});
 </script>
@@ -53,15 +70,19 @@
         <input type="text" id="node-input-topic" placeholder="Node's own topic">
 	</div>
 	<div class="form-row">
-		<label for="node-input-intelligentevent"><i class="fa fa-tasks"></i> React to Intelligent Event</label>
+		<label for="node-input-intelligentevent"><i class="fa fa-cogs"></i> React to Object Type</label>
 		<select id="node-input-intelligentevent">
 			<option value="all">All Events</option>
 			<option value="human">Human</option>
 			<option value="vehicle">Vehicle</option>
+			<option value="animal">Animal</option>
 		</select>
+		<div class="form-tips" style="margin-top:11px">
+			This allows filtering by object type, IF your camera provides this information in the event data.
+		 </div>
 	</div>
 	<div class="form-row">
-        <label for="node-input-channelID"><i class="fa fa-tasks"></i> React to Channel</label>
+        <label for="node-input-channelID"><i class="fa fa-television"></i> React to Channel</label>
 		<select id="node-input-channelID">
 			<option value="0">All channels</option>
 			<option value="1">Channel 1</option>
@@ -98,63 +119,172 @@
 			<option value="32">Channel 32</option>
 		</select>
 	</div>
-	<div class="form-row">
-        <label for="node-input-filterzone"><i class="fa fa-tasks"></i> React to Zone </label>
-		<select id="node-input-filterzone">
-			<option value="0">All zones</option>
-			<option value="1">Zone 1</option>
-			<option value="2">Zone 2</option>
-			<option value="3">Zone 3</option>
-			<option value="4">Zone 4</option>
-			<option value="5">Zone 5</option>
-			<option value="6">Zone 6</option>
-			<option value="7">Zone 7</option>
-			<option value="8">Zone 8</option>
-			<option value="9">Zone 9</option>
-			<option value="10">Zone 10</option>
-			<option value="11">Zone 11</option>
-			<option value="12">Zone 12</option>
-			<option value="13">Zone 13</option>
-			<option value="14">Zone 14</option>
-			<option value="15">Zone 15</option>
-			<option value="16">Zone 16</option>
+	<br/>
+	<div class="form-row" id="ui_alarmfilterduration">
+		<i class="fa fa-filter"></i>&nbsp&nbsp<b>False alarms filtering options</b>
+		<br/>	<br/>
+        <label for="node-input-alarmfilterduration"><i class="fa fa-hourglass-half"></i> Alarm duration</label>
+		<select id="node-input-alarmfilterduration">
+			<option value=0>No wait. Immediate alarm.</option>
+			<option value=1>more than 1 Second</option>
+			<option value=2>more than 2 Seconds</option>
+			<option value=3>more than 3 Seconds</option>
+			<option value=4>more than 4 Seconds</option>
+			<option value=5>more than 5 Seconds</option>
+			<option value=6>more than 6 Seconds</option>
+			<option value=7>more than 7 Seconds</option>
+			<option value=8>more than 8 Seconds</option>
+			<option value=9>more than 9 Seconds</option>
+			<option value=10>more than 10 Seconds</option>
+			<option value=11>more than 11 Seconds</option>
+			<option value=12>more than 12 Seconds</option>
+			<option value=13>more than 13 Seconds</option>
+			<option value=14>more than 14 Seconds</option>
+			<option value=15>more than 15 Seconds</option>
+			<option value=16>more than 16 Seconds</option>
+			<option value=17>more than 17 Seconds</option>
+			<option value=18>more than 18 Seconds</option>
+			<option value=19>more than 19 Seconds</option>
+			<option value=20>more than 20 Seconds</option>
+		</select>
+	</div>
+	<div class="form-row" id="ui_alarmfilterperiod">
+		<label for="node-input-alarmfilterperiod"><i class="fa fa-clock-o"></i> Evaluation period</label>
+		<select id="node-input-alarmfilterperiod">
+			<option value=1>1 Second</option>
+			<option value=2>2 Seconds</option>
+			<option value=3>3 Seconds</option>
+			<option value=4>4 Seconds</option>
+			<option value=5>5 Seconds</option>
+			<option value=6>6 Seconds</option>
+			<option value=7>7 Seconds</option>
+			<option value=8>8 Seconds</option>
+			<option value=9>9 Seconds</option>
+			<option value=10>10 Seconds</option>
+			<option value=11>11 Seconds</option>
+			<option value=12>12 Seconds</option>
+			<option value=13>13 Seconds</option>
+			<option value=14>14 Seconds</option>
+			<option value=15>15 Seconds</option>
+			<option value=16>16 Seconds</option>
+			<option value=17>17 Seconds</option>
+			<option value=18>18 Seconds</option>
+			<option value=19>19 Seconds</option>
+			<option value=20>20 Seconds</option>
+			<option value=21>21 Seconds</option>
+			<option value=22>22 Seconds</option>
+			<option value=23>23 Seconds</option>
+			<option value=24>24 Seconds</option>
+			<option value=25>25 Seconds</option>
+			<option value=26>26 Seconds</option>
+			<option value=27>27 Seconds</option>
+			<option value=28>28 Seconds</option>
+			<option value=29>29 Seconds</option>
+			<option value=30>30 Seconds</option>
 		</select>
 		<div class="form-tips" style="margin-top:11px">
-			For NVR, the Channel represents the CAMERA number, while for Cameras, represents the sensor number (by default 1). The zone represents the region number for the smart event.
-		 </div>
+		Above options: the node will emit an alarm msg only if the alarm persists (remains TRUE) or repeats (in this case, the persisting time of each TRUE value is evaluated) for the time specified in "Alarm duration", during the "Evaluation period".
+		</div>
 	</div>
 </script>
 
 <script type="text/markdown" data-help-name="hikvisionUltimateIntelligent">
-<p>Receives "Intelligent" or "Smart" events from a Hikvision camera/NVR.</p>
+<p>Receives "Intelligent" / "Smart" events from a Hikvision camera/NVR.</p>
 
-<h3>Details</h3>
-<p>This node connects to a Hikvision device and outputs messages for smart events like human detection, vehicle detection, intrusion detection, and more. These events are typically configured in the camera's own web interface.</p>
-<p>The node will output the full event object as a JSON payload, which may include information like the event type, the state (active/inactive), and custom data about the detected object (e.g., "person", "vehicle").</p>
+## INTELLIGENT EVENT NODE
 
-<h3>Outputs</h3>
-<ol>
-    <li><b>Payload</b>: The main output. Emits a message containing the event details.</li>
-    <li><b>Error</b>: Emits messages related to connection status and errors.</li>
-    <li><b>Image</b>: Emits the image associated with the event, if available.</li>
-</ol>
+This node connects to ***Hikvision cameras and NVRs*** and listens to so‑called **Intelligent / Smart events**, such as:
+- Intrusion / field detection
+- Human / vehicle detection
+- Line crossing, face detection, etc. (depending on your firmware)
 
-<h3>Example Payload</h3>
-<pre>
-{
-    "payload": {
-        "SmartEvent": {
-            "eventType": "fielddetection",
-            "eventState": "active",
-            "eventDescription": "Intrusion Detection",
-            "customData": {
-                "objectType": "person",
-                "confidence": 95
-            }
-        }
-    },
-    "topic": "MyCamera/IntelligentEvent",
-    "description": "Intrusion Detection"
+The events are configured in the camera/NVR web interface (Smart/Intelligent events menu).  
+Be sure to enable **Notify alarm center / Send to center** in the event settings, otherwise the device will not send any event to this node.
+
+### Properties
+
+- **Server**: the shared Hikvision configuration node.
+- **Name**: friendly name for the node.
+- **Node topic**: custom topic propagated to the output messages.
+- **React to Channel**:  
+  - `0` = all channels.  
+  - For NVR/DVR, this is the camera number.  
+  - For standalone cameras, this is usually the image sensor number (normally `1`).
+- **React to Object Type**:
+  - `All Events`: no object‑type filter.
+  - `Human`: only smart events that the camera classifies as person/human.
+  - `Vehicle`: only smart events classified as vehicle.
+  - `Animal`: only smart events classified as animal (if the camera provides this information).
+- **False alarms filtering options**:
+  - **Alarm duration**: number of seconds the alarm must stay active (or repeatedly active) before the node outputs a real alarm on PIN 1.
+  - **Evaluation period**: time window in which the **total active time** is evaluated.
+
+The filtering logic is:
+- If *Alarm duration* = `0` the filter is disabled and every event is forwarded immediately.
+- If *Alarm duration* > `0`, the node accumulates the time where the event is `true` during the *Evaluation period*.  
+  Only if the accumulated active time reaches the selected *Alarm duration* the node outputs an alarm on PIN 1.  
+  This is useful to ignore very short or noisy triggers.
+
+### Flow Messages
+
+The node uses the same pin convention as the standard **Camera Event** node.
+
+**Output PIN 1 – Intelligent event**
+
+```javascript
+msg = {
+  "payload": true,              // true on alarm start, false on alarm end
+  "topic": "MyCamera/IntelligentEvent",
+  "channelid": "1",             // camera/NVR channel ID
+  "zone": 0,                    // region/zone ID if provided by the event
+  "description": "Intrusion Detection",
+
+  // Full parsed event object (SmartEvent or EventNotificationAlert)
+  "event": { /* ... full event ... */ },
+
+  // Optional fields populated when the camera includes image info
+  "imageName": "202011301142008600", // picture name, if present (picName, etc.)
+  "imageUrl": "/ISAPI/ContentMgmt/StreamingProxy/channels/101/picture", // picture URL/path, if present
+
+  "_msgid": "abcd1234.5678efgh"
 }
-</pre>
+```
+
+Notes:
+- The node internally parses both JSON smart events (`SmartEvent`) and XML smart events (`EventNotificationAlert`) and normalizes them to the structure above.
+- If the camera includes fields such as `picName`, `picUrl` (or similar variants) either at the root of the event or inside `customData`, the node exposes them as:
+  - `msg.imageName`
+  - `msg.imageUrl`
+  so that you can perform a separate HTTP GET to retrieve the related picture (using an `http request` node or the **Picture** node).
+
+**Output PIN 2 – Connection status / error**
+
+```javascript
+msg = {
+  "topic": "MyCamera/IntelligentEvent",
+  "errorDescription": "",   // non-empty string in case of connection error
+  "payload": false          // true = error, false = connection OK
+}
+```
+
+**Output PIN 3 – Image (if sent by the device)**
+
+```javascript
+msg = {
+  "topic": "MyCamera/IntelligentEvent",
+  "payload": <Buffer ...>,  // image bytes
+  "extension": "jpg"        // "jpg" or "png"
+}
+```
+
+This pin emits a message only if the camera/NVR actually sends an image together with the event on the alert stream.  
+On many firmwares this is controlled by the event configuration (for example: send snapshots to center / send picture on event).
+
+### Example use with Picture node
+
+A common pattern is:
+- Use the **Intelligent Event** node (PIN 1) to detect human/vehicle/intrusion events.
+- Trigger the **Picture** node to grab a fresh snapshot when a `true` event is received.
+
+This lets you combine the smart detection of the camera with a separate, on‑demand high‑quality snapshot.
 </script>

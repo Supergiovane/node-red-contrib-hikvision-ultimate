@@ -45,7 +45,8 @@ module.exports = (RED) => {
 
         // 14/07/2021 custom agent as global variable, to avoid issue with self signed certificates
         const customHttpsAgent = new https.Agent({
-            rejectUnauthorized: false
+            rejectUnauthorized: false,
+            keepAlive: true
         });
 
         // 14/12/2020 Get the infos from the camera
