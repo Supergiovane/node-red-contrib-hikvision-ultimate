@@ -22,6 +22,38 @@ module.exports = function (RED) {
 		node.alarmfilterduration = config.alarmfilterduration !== undefined ? Number(config.alarmfilterduration) : 0;
 		node.alarmfilterperiod = config.alarmfilterperiod !== undefined ? Number(config.alarmfilterperiod) : 0;
 
+		const EVENT_DESCRIPTION_MAP = {
+			illaccess: "Illegal access"
+		};
+
+		const getIntelligentEventDescription = (event) => {
+			if (!event || typeof event !== "object") return "Intelligent event";
+
+			const rawType = event.eventType ? event.eventType.toString() : "";
+			const normalizedType = rawType.toLowerCase().replace(/\s+/g, "").replace(/_/g, "");
+			const rawDescription = event.eventDescription ? event.eventDescription.toString() : "";
+
+			const mappedBase = EVENT_DESCRIPTION_MAP[normalizedType];
+
+			if (mappedBase) {
+				if (rawDescription) {
+					const descLower = rawDescription.toLowerCase().trim();
+					// Example: \"illaccess alarm\" -> \"Illegal access alarm\"
+					if (descLower.startsWith(normalizedType) && descLower.endsWith("alarm")) {
+						return `${mappedBase} alarm`;
+					}
+					// Otherwise keep the camera-provided description
+					return rawDescription;
+				}
+				return mappedBase;
+			}
+
+			// Fallback to original description/type if no mapping is available
+			if (rawDescription) return rawDescription;
+			if (rawType) return rawType;
+			return "Intelligent event";
+		};
+
 		node.setNodeStatus = ({ fill, shape, text }) => {
 			var dDate = new Date();
 			node.status({ fill: fill, shape: shape, text: text + " (" + dDate.getDate() + ", " + dDate.toLocaleTimeString() + ")" })
@@ -155,7 +187,7 @@ module.exports = function (RED) {
 							oRetMsg.topic = node.topic;
 							oRetMsg.channelid = sChannelID; 
 							oRetMsg.zone = iRegionID; 
-							oRetMsg.description = event.eventDescription || event.eventType;
+							oRetMsg.description = getIntelligentEventDescription(event);
 
 							// Attach full parsed event for downstream processing
 							oRetMsg.event = event;
