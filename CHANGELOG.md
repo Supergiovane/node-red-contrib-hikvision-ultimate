@@ -3,6 +3,10 @@
 
 [![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square)](https://www.paypal.me/techtoday) 
 
+<p>
+<b>Version 1.2.18</b> December 2026<br/>
+- You can now use DNS name in the camera's IP address field.<br/>
+</p>
 
 <p>
 <b>Version 1.2.16</b> December 2026<br/>
