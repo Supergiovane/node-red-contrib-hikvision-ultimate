@@ -144,7 +144,7 @@ msg = {
 
 ---
 
-## INTELLIGENT EVENT NODE
+## INTELLIGENT EVENT NODE (NOT PUBLISHED YET!!!!!!)
 
 <img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/intelligent.jpg'>  
 
