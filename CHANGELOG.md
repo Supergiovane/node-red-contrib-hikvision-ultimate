@@ -1,7 +1,6 @@
 <p align="center"><img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/logo.png' width="40%"></p>
 
-
-[![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square)](https://www.paypal.me/techtoday) 
+[![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square)](https://www.paypal.me/techtoday)
 
 <p>
 <b>Version 1.2.20</b> March 2026<br/>
@@ -9,22 +8,22 @@
 </p>
 
 <p>
-<b>Version 1.2.18</b> December 2026<br/>
+<b>Version 1.2.18</b> December 2025<br/>
 - You can now use DNS name in the camera's IP address field.<br/>
 </p>
 
 <p>
-<b>Version 1.2.16</b> December 2026<br/>
+<b>Version 1.2.16</b> December 2025<br/>
 - All config and runtime nodes: ensured all recurring setTimeout/setInterval timers are cleared on node close, preventing RAM growth on every Node-RED deploy.<br/>
 </p>
 <p>
 
 <p>
-<b>Version 1.2.15</b> December 2026<br/>
+<b>Version 1.2.15</b> December 2025<br/>
 - Access Control Terminal: avoid crashes on devices that omit the eventDescription property by synthesizing a fallback description.<br/>
 </p>
 <p>
-<b>Version 1.2.14</b> December 2026<br/>
+<b>Version 1.2.14</b> December 2025<br/>
 - Runtime nodes: added optional debug logs (alarms, ANPR, PTZ, picture, AX Pro, doorbell, speaker, text, XML) when debug level is enabled.<br/>
 - All config nodes: added Debug level option aligned with Hikvision-config.<br/>
 - ANPR config: added detailed debug logs (request picName, HTTP status, body length, parsed plate count) and safer parsing warnings.<br/>
