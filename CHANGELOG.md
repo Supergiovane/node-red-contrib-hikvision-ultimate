@@ -4,6 +4,11 @@
 [![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square)](https://www.paypal.me/techtoday) 
 
 <p>
+<b>Version 1.2.20</b> March 2026<br/>
+- Alarm (Camera Event): added support for Temperature Measurement Alarm events (`eventType: TMA`) and exposes `msg.tma` details when provided by the device.<br/>
+</p>
+
+<p>
 <b>Version 1.2.18</b> December 2026<br/>
 - You can now use DNS name in the camera's IP address field.<br/>
 </p>

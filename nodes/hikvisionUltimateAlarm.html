@@ -235,6 +235,7 @@
 			<option value="retention">Overstay detection (Camera/NVR)</option>
 			<option value="running">Running (Camera/NVR)</option>
 			<option value="thermometry">Temperature measurement (Camera/NVR)</option>
+			<option value="tma">Temperature measurement alarm (TMA) (Camera/NVR)</option>
 			<option value="heatmapPDC">Heat map people counting (Camera/NVR)</option>
 			<option value="heatmapDuration">Heat map people staying duration (Camera/NVR)</option>
 			<option value="intersectionAnalysis">Intersection analysis (Camera/NVR)</option>
@@ -435,6 +436,7 @@ You can choose from many different alarms, including: <br/>
 The node outputs a payload on **PIN 1** (***TRUE*** on alarm start, ***FALSE*** on alarm end). Some alarm types only support the alarm start event.</br>
 The node outputs a payload on **PIN 2**, representing a connection error. ***TRUE*** if error, otherwise ***FALSE***</br>
 The node outputs a payload on **PIN 3**, with the captured image (as byte array), that you can directly save to disk or attach on an email or so. This pin emits a message only if the camera sends the captured image. This usually happens with "smart" events (but many firmwares out there, allow you to do it even with the basic events). You can check that by attaching a debug node on the third pin, then set a rule in the smart event and set the camera to send pictures in case of events (usually, you'll find this option in the "Archive management" menu of your camera).
+Some thermal cameras send **Temperature Measurement Alarm** events as `eventType: "TMA"`; when these are detected, the node also adds `msg.tma` (if present) with the temperature details sent by the device.
 This below is an example of msg output:</br>
 
 

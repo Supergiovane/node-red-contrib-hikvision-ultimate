@@ -249,6 +249,13 @@ module.exports = function (RED) {
 				var bAlarmStatus = false;
 				let sEventDesc = "";
 				sEventDesc = (_msg.payload.hasOwnProperty("eventDescription") ? _msg.payload.eventDescription : "");
+				const isMatchingEventType = (eventType, reactTo) => {
+					// Some firmwares use different names for the same event
+					if (eventType === reactTo) return true;
+					// Temperature Measurement Alarm (TMA) is commonly used for thermometry/temperature measurement events
+					if ((reactTo === "thermometry" && eventType === "tma") || (reactTo === "tma" && eventType === "thermometry")) return true;
+					return false;
+				};
 
 				if (_msg.payload.hasOwnProperty("eventType")) {
 					// Check if it's only a hearbeat alarm
@@ -273,7 +280,12 @@ module.exports = function (RED) {
 
 				// Filter regionID (Zone)
 				let iRegionID = 0;
-				if (_msg.payload.hasOwnProperty("DetectionRegionList") && _msg.payload.DetectionRegionList.hasOwnProperty("DetectionRegionEntry") && _msg.payload.DetectionRegionList.DetectionRegionEntry.hasOwnProperty("regionID")) iRegionID = Number(_msg.payload.DetectionRegionList.DetectionRegionEntry.regionID);// Era + 1;
+				let oDetectionRegionEntry = null;
+				if (_msg.payload.hasOwnProperty("DetectionRegionList") && _msg.payload.DetectionRegionList.hasOwnProperty("DetectionRegionEntry")) {
+					oDetectionRegionEntry = _msg.payload.DetectionRegionList.DetectionRegionEntry;
+					if (Array.isArray(oDetectionRegionEntry)) oDetectionRegionEntry = oDetectionRegionEntry[0];
+				}
+				if (oDetectionRegionEntry && oDetectionRegionEntry.hasOwnProperty("regionID")) iRegionID = Number(oDetectionRegionEntry.regionID);// Era + 1;
 
 				if (Number(node.channelID) === 0 || Number(node.channelID) === Number(sChannelID)) {  // Filter only selcted channel
 
@@ -291,12 +303,16 @@ module.exports = function (RED) {
 						var aReactTo = node.reactto.split(","); // node.reactto can contain multiple names for the same event, depending on firmware
 						for (let index = 0; index < aReactTo.length; index++) {
 							const element = aReactTo[index];
-							if (element !== null && element !== undefined && element.trim() !== "" && sEventType === element) {
+							if (element === null || element === undefined) continue;
+							const reactToEvent = element.trim();
+							if (reactToEvent !== "" && isMatchingEventType(sEventType, reactToEvent)) {
 								oRetMsg.payload = bAlarmStatus;
 								oRetMsg.topic = _msg.topic;
 								oRetMsg.channelid = sChannelID; // Channel ID (in case of NVR)
 								oRetMsg.zone = iRegionID; // Zone
 								oRetMsg.description = sEventDesc;
+								// Attach thermometry/TMA details if present (useful for thermal cameras)
+								if (oDetectionRegionEntry && oDetectionRegionEntry.hasOwnProperty("TMA")) oRetMsg.tma = oDetectionRegionEntry.TMA;
 								node.isNodeInAlarm = bAlarmStatus;
 								logDebug(`Event ${sEventType} state ${bAlarmStatus ? "active" : "inactive"} channel ${sChannelID} zone ${iRegionID}`);
 								break; // Find first occurrence, exit.
