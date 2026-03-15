@@ -1,6 +1,6 @@
 {
     "name": "node-red-contrib-hikvision-ultimate",
-    "version": "1.2.20",
+    "version": "1.2.21",
     "description": "A native set of nodes for Hikvision (and compatible) Cameras, Alarms, Radars, NVR, Doorbells, etc.",
     "author": "Supergiovane (https://github.com/Supergiovane)",
     "scripts": {
@@ -55,7 +55,8 @@
             "hikvisionUltimateDoorbell": "nodes/hikvisionUltimateDoorbell.js",
             "hikvisionUltimateAxPro": "nodes/hikvisionUltimateAxPro.js",
             "hikvisionUltimateAccessControlTerminal": "nodes/hikvisionUltimateAccessControlTerminal.js",
-            "hikvisionUltimateSpeaker": "nodes/hikvisionUltimateSpeaker.js"
+            "hikvisionUltimateSpeaker": "nodes/hikvisionUltimateSpeaker.js",
+            "hikvisionUltimateIntelligent": "nodes/hikvisionUltimateIntelligent.js"
         }
     }
 }

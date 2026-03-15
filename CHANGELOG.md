@@ -3,8 +3,16 @@
 [![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square)](https://www.paypal.me/techtoday)
 
 <p>
+<b>Version 1.2.21</b> March 2026<br/>
+- NEW: Intelligent Alarm Node.<br/>
+- PTZ Node: added option to wait until the camera really reached the position.<br/>
+</p>
+
+<p>
 <b>Version 1.2.20</b> March 2026<br/>
 - Alarm (Camera Event): added support for Temperature Measurement Alarm events (`eventType: TMA`) and exposes `msg.tma` details when provided by the device.<br/>
+- PTZ node: ignore unrelated alert stream events on PIN 1 and clarify that `payload: true` means the goto command was accepted, not that the preset has already been reached.<br/>
+- PTZ node: added optional <i>Wait for camera position reached</i> mode, which polls the PTZ absolute position and emits PIN 1 only after the camera movement settles.<br/>
 </p>
 
 <p>

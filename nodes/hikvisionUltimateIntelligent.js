@@ -10,11 +10,13 @@ module.exports = function (RED) {
 			if (isDebug) RED.log.info(`hikvisionUltimateIntelligent: ${text}`);
 		};
 
-		// Current state of the node
-		node.currentAlarmMSG = {}; // Stores the current alarm object
-		node.total_alarmfilterduration = 0; // stores the total time an alarm has been true in the alarmfilterperiod time.
-		node.isNodeInAlarm = false; // Stores the current state of the filtered alarm.
-		node.isRunningTimerFilterPeriod = false; // Indicates wether the period timer is running;
+			// Current state of the node
+			node.currentAlarmMSG = {}; // Stores the current alarm object
+			node.total_alarmfilterduration = 0; // stores the total time an alarm has been true in the alarmfilterperiod time.
+			node.isNodeInAlarm = false; // Stores the current state of the filtered alarm.
+			node.isRunningTimerFilterPeriod = false; // Indicates wether the period timer is running;
+			node.timer_alarmfilterduration = null;
+			node.timer_alarmfilterperiod = null;
 		
 		// Get the node config
 		node.channelID = config.channelID || "0";
@@ -54,17 +56,17 @@ module.exports = function (RED) {
 			return "Intelligent event";
 		};
 
-		node.setNodeStatus = ({ fill, shape, text }) => {
-			var dDate = new Date();
-			node.status({ fill: fill, shape: shape, text: text + " (" + dDate.getDate() + ", " + dDate.toLocaleTimeString() + ")" })
-		}
+			node.setNodeStatus = ({ fill, shape, text }) => {
+				var dDate = new Date();
+				node.status({ fill: fill, shape: shape, text: text + " (" + dDate.getDate() + ", " + dDate.toLocaleTimeString() + ")" })
+			}
 
-		// Starts the timer that counts the time the alarm has been true
-		startTimerAlarmFilterDuration = () => {
-			node.timer_alarmfilterduration = setInterval(() => {
-				if (node.currentAlarmMSG.hasOwnProperty("payload")) {
-					if (node.currentAlarmMSG.payload === true) {
-						node.total_alarmfilterduration += 1;
+			// Starts the timer that counts the time the alarm has been true
+			const startTimerAlarmFilterDuration = () => {
+				node.timer_alarmfilterduration = setInterval(() => {
+					if (node.currentAlarmMSG.hasOwnProperty("payload")) {
+						if (node.currentAlarmMSG.payload === true) {
+							node.total_alarmfilterduration += 1;
 						if (node.isRunningTimerFilterPeriod) node.setNodeStatus({ fill: "red", shape: "ring", text: "Zone " + node.currentAlarmMSG.zone + " pre alert count " + node.total_alarmfilterduration });
 						if (node.total_alarmfilterduration >= node.alarmfilterduration) {
 							if (!node.isNodeInAlarm) {
@@ -80,15 +82,15 @@ module.exports = function (RED) {
 					}
 				}
 			}, 1000);
-		}
+			}
 
-		// This timer resets the node.total_alarmfilterduration
-		startTimerAlarmFilterPeriod = () => {
-			node.isRunningTimerFilterPeriod = true;
-			node.total_alarmfilterduration = 0;
-			node.timer_alarmfilterperiod = setTimeout(() => {
+			// This timer resets the node.total_alarmfilterduration
+			const startTimerAlarmFilterPeriod = () => {
+				node.isRunningTimerFilterPeriod = true;
 				node.total_alarmfilterduration = 0;
-				node.isRunningTimerFilterPeriod = false;
+				node.timer_alarmfilterperiod = setTimeout(() => {
+					node.total_alarmfilterduration = 0;
+					node.isRunningTimerFilterPeriod = false;
 			}, node.alarmfilterperiod * 1000);
 		}
 
@@ -143,13 +145,16 @@ module.exports = function (RED) {
 					// Filter channel
 					let sChannelID = event.channelID || event.dynChannelID || "0";
 
-					// Filter regionID (Zone)
-					let iRegionID = 0;
-					if (event.hasOwnProperty("DetectionRegionList") && event.DetectionRegionList.hasOwnProperty("DetectionRegionEntry") && event.DetectionRegionList.DetectionRegionEntry.hasOwnProperty("regionID")) {
-						iRegionID = Number(event.DetectionRegionList.DetectionRegionEntry.regionID);
-					}
+						// Filter regionID (Zone)
+						let iRegionID = 0;
+						let oDetectionRegionEntry = null;
+						if (event.hasOwnProperty("DetectionRegionList") && event.DetectionRegionList.hasOwnProperty("DetectionRegionEntry")) {
+							oDetectionRegionEntry = event.DetectionRegionList.DetectionRegionEntry;
+							if (Array.isArray(oDetectionRegionEntry)) oDetectionRegionEntry = oDetectionRegionEntry[0];
+						}
+						if (oDetectionRegionEntry && oDetectionRegionEntry.hasOwnProperty("regionID")) iRegionID = Number(oDetectionRegionEntry.regionID);
 
-					if (Number(node.channelID) === 0 || Number(node.channelID) === Number(sChannelID)) {
+						if (Number(node.channelID) === 0 || Number(node.channelID) === Number(sChannelID)) {
 
 						// Filter by object type (human/vehicle)
 						let sHumanReadableObjectType = "";
@@ -226,15 +231,13 @@ module.exports = function (RED) {
 									oRetMsg.imageUrl = imageUrl;
 								}
 							} catch (err) {
-								// Ignore errors while extracting optional image info
-							}
+									// Ignore errors while extracting optional image info
+								}
 
-							node.isNodeInAlarm = bAlarmStatus;
-							
-							logDebug(`Event ${sEventType} state ${bAlarmStatus ? "active" : "inactive"} channel ${sChannelID} zone ${iRegionID} object ${sHumanReadableObjectType}`);
+								logDebug(`Event ${sEventType} state ${bAlarmStatus ? "active" : "inactive"} channel ${sChannelID} zone ${iRegionID} object ${sHumanReadableObjectType}`);
+							}
 						}
 					}
-				}
 			}
 
 			// Check whether the filter is enabled or not

@@ -2,13 +2,14 @@
 	RED.nodes.registerType('hikvisionUltimatePTZ', {
 		category: 'Hikvision Ultimate',
 		color: '#C0C0C0',
-		defaults: {
-			name: { value: "" },
-			topic: { value: "" },
-			server: { type: "Hikvision-config", required: true },
-			channelID: { value: "1" },
-			PTZPreset: { value: "1" }
-		},
+			defaults: {
+				name: { value: "" },
+				topic: { value: "" },
+				server: { type: "Hikvision-config", required: true },
+				channelID: { value: "1" },
+				PTZPreset: { value: "1" },
+				waitForCameraPositionReached: { value: false }
+			},
 		inputs: 1,
 		outputs: 2,
 		outputLabels: function (i) {
@@ -108,9 +109,9 @@
            Leave 1 if your camera has only one channel (most of the time)
         </div>
 	</div>
-	<div class="form-row">
-        <label for="node-input-PTZPreset"><i class="fa fa-tasks"></i> Preset</label>
-		<select id="node-input-PTZPreset">
+		<div class="form-row">
+	        <label for="node-input-PTZPreset"><i class="fa fa-tasks"></i> Preset</label>
+			<select id="node-input-PTZPreset">
 			<option value="1">Preset 1</option>
 			<option value="2">Preset 2</option>
 			<option value="3">Preset 3</option>
@@ -124,19 +125,37 @@
 			<option value="11">Preset 11</option>
 			<option value="12">Preset 12</option>
 			<option value="13">Preset 13</option>
-		</select>
+			</select>
+			
+		</div>
+		<div class="form-row">
+			<label for="node-input-waitForCameraPositionReached"><i class="fa fa-clock-o"></i> Wait mode</label>
+			<input type="checkbox" id="node-input-waitForCameraPositionReached" style="display:inline-block; width:auto; vertical-align:top;">
+			<span style="margin-left:8px;">Wait for camera position reached</span>
+			<div class="form-tips" style="margin-top:11px">
+	           Disabled: PIN 1 outputs <b>true</b> as soon as the camera accepts the PTZ goto command.<br/>
+	           Enabled: PIN 1 waits until the camera position settles, by polling the PTZ absolute position (`/absoluteEx`).
+	        </div>
+		</div>
 		
-	</div>
-	
-</script>
+	</script>
 
-<script type="text/x-red" data-help-name="hikvisionUltimatePTZ">
+	<script type="text/x-red" data-help-name="hikvisionUltimatePTZ">
 	<p>
         <a href="https://www.paypal.me/techtoday" target="_blank"><img src='https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square' width='30%'></a>
-        
-	</p>
-	<p>
-		The node outputs nothing on PIN 1 and a connection ERROR on PIN 2 (true if the node is DISCONNECTED to the server, otherwise false IF IT'S RECONNECTED).
-	</p>
-	
+	        
+		</p>
+		<p>
+			<b>Default mode</b>: the node outputs <b>true</b> on PIN 1 as soon as the camera accepts the PTZ goto request. This is the historical behavior and it does <b>not</b> verify that the camera has already reached the preset position.
+		</p>
+		<p>
+			<b>Wait for camera position reached</b>: when enabled, the node first sends the PTZ goto command and then polls the camera absolute PTZ position until the movement settles. Only then it outputs <b>true</b> on PIN 1.
+		</p>
+		<p>
+			This mode is slower by design and requires the camera to support absolute PTZ position reading via <code>/ISAPI/PTZCtrl/channels/&lt;ID&gt;/absoluteEx</code>. If the camera does not support it, or if the position cannot be confirmed within the timeout, PIN 2 reports an error.
+		</p>
+		<p>
+			PIN 2 reports connection/request errors in both modes.
+		</p>
+			
 </script>
