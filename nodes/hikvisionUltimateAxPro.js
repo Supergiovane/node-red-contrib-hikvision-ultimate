@@ -88,6 +88,16 @@ module.exports = function (RED) {
 					logDebug(`Arm stay area ${msg.armStayArea}`);
 					node.server.armStayArea(msg.armStayArea)
 				}
+				// Arm Away All Areas in a batch
+				if (msg.hasOwnProperty("armAwayAllAreas")) {
+					logDebug("Arm away all areas");
+					node.server.armAwayAllAreas()
+				}
+				// Arm Stay All Areas in a batch
+				if (msg.hasOwnProperty("armStayAllAreas")) {
+					logDebug("Arm stay all areas");
+					node.server.armStayAllAreas()
+				}
 				// Clear Alarm Area
 				if (msg.hasOwnProperty("clearAlarmArea")) {
 					logDebug(`Clear alarm area ${msg.clearAlarmArea}`);

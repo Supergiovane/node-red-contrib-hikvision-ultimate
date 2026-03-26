@@ -1191,6 +1191,31 @@ You can also arm, disarm, silence alarm etc...<br/>
 
 <img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/axpro.png' >
 
+### Inputs
+
+: armAwayArea (number): Area number (for example 1). Arm Away the selected area.
+: armStayArea (number): Area number (for example 1). Arm Stay the selected area.
+: armAwayAllAreas (boolean): **true** to Arm Away all areas at once.
+: armStayAllAreas (boolean): **true** to Arm Stay all areas at once.
+: disarmArea (number): Area number (for example 1). Disarm the selected area.
+: disarmAllAreas (boolean): **true** to disarm all areas at once.
+: clearAlarmArea (number): Area number (for example 1). Clear alarm of the selected area.
+: clearAllAlarmAreas (boolean): **true** to clear the alarm of all areas at once.
+
+Examples:
+
+```javascript
+msg.armAwayArea = 1 // To Arm Away Area 1
+msg.armStayArea = 1 // To Arm Stay Area 1
+msg.armAwayAllAreas = true // To Arm Away all areas at once
+msg.armStayAllAreas = true // To Arm Stay all areas at once
+msg.disarmArea = 1 // To Disarm Area 1
+msg.disarmAllAreas = true // To disarm all areas at once
+msg.clearAlarmArea = 1 // To clear alarm on Area 1
+msg.clearAllAlarmAreas = true // To clear alarm of all areas at once
+return msg;
+```
+
 **Copy this code and paste it into your flow**
 
 <details><summary>View code</summary>

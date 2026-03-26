@@ -3,6 +3,12 @@
 [![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square)](https://www.paypal.me/techtoday)
 
 <p>
+<b>Version 1.2.22</b> March 2026<br/>
+- AX Pro node: added `msg.armAwayAllAreas` and `msg.armStayAllAreas` to arm all partitions in a single batch command, reducing duplicate Hik-Connect notifications.<br/>
+- AX Pro docs: documented the new batch arming commands in the node help and README.<br/>
+</p>
+
+<p>
 <b>Version 1.2.21</b> March 2026<br/>
 - NEW: Intelligent Alarm Node.<br/>
 - PTZ Node: added option to wait until the camera really reached the position.<br/>

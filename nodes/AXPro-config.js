@@ -585,6 +585,42 @@ module.exports = (RED) => {
                 if (node.debug) RED.log.error("AXPro-config: control/armStay: " + (error.message || " unknown error"));
             }
         }
+        // Arm Away All Areas
+        node.armAwayAllAreas = async function () {
+            try {
+                let sURL = '/ISAPI/SecurityCP/control/arm?format=json'
+                node.optionsAlarmStream.method = 'PUT'
+                const SubSysList = [];
+                for (let index = 1; index <= 32; index++) {
+                    const SubSys = { id: index, armType: "away" };
+                    SubSysList.push({ SubSys: SubSys });
+                }
+                let body = JSON.stringify({ SubSysList: SubSysList });
+                node.optionsAlarmStream.body = body;
+                await node.clientAlarmStream.fetch(node.protocol + "://" + node.host + sURL, node.optionsAlarmStream);
+            } catch (error) {
+                node.errorDescription = "control/armAwayAllArea " + (error.message || " unknown error");
+                if (node.debug) RED.log.error("AXPro-config: control/armAwayAllArea: " + (error.message || " unknown error"));
+            }
+        }
+        // Arm Stay All Areas
+        node.armStayAllAreas = async function () {
+            try {
+                let sURL = '/ISAPI/SecurityCP/control/arm?format=json'
+                node.optionsAlarmStream.method = 'PUT'
+                const SubSysList = [];
+                for (let index = 1; index <= 32; index++) {
+                    const SubSys = { id: index, armType: "stay" };
+                    SubSysList.push({ SubSys: SubSys });
+                }
+                let body = JSON.stringify({ SubSysList: SubSysList });
+                node.optionsAlarmStream.body = body;
+                await node.clientAlarmStream.fetch(node.protocol + "://" + node.host + sURL, node.optionsAlarmStream);
+            } catch (error) {
+                node.errorDescription = "control/armStayAllArea " + (error.message || " unknown error");
+                if (node.debug) RED.log.error("AXPro-config: control/armStayAllArea: " + (error.message || " unknown error"));
+            }
+        }
         // Clear Alarm Area
         node.clearAlarmArea = async function (_area) {
             try {
