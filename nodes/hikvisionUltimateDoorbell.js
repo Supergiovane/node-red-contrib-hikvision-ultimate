@@ -16,6 +16,19 @@ module.exports = function (RED) {
 		node.zoneNo = (config.zoneNo === null || config.zoneNo === undefined) ? "all" : config.zoneNo;
 		node.buildingNo = (config.buildingNo === null || config.buildingNo === undefined) ? "all" : config.buildingNo;
 		node.currentEmittedMSG = {}; // To keep the current status and avoid emitting msg if already emitted.
+		const extractPressedButton = (callerInfo) => {
+			if (!callerInfo || typeof callerInfo !== "object") return null;
+			const candidates = [
+				callerInfo.buttonNo,
+				callerInfo.devNo,
+				callerInfo.keyNo,
+				callerInfo.callButtonNo
+			];
+			for (const candidate of candidates) {
+				if (candidate !== undefined && candidate !== null && candidate !== "") return candidate;
+			}
+			return null;
+		};
 
 		node.setNodeStatus = ({ fill, shape, text }) => {
 			var dDate = new Date();
@@ -60,13 +73,28 @@ module.exports = function (RED) {
 			}; // It's a connection error/restore comunication.
 			//node.send([_msg, null]);
 			if (_msg.hasOwnProperty("CallerInfo") && _msg.CallerInfo.hasOwnProperty("status")) {
+				const callerInfo = _msg.CallerInfo;
+				const normalizedStatus = callerInfo.status.toString().toLowerCase();
+				const pressedButton = extractPressedButton(callerInfo);
+
+				// Backward compatible output aliases.
+				_msg.callerInfo = callerInfo;
+				_msg.ringStatus = normalizedStatus;
+				_msg.buildingNo = callerInfo.buildingNo;
+				_msg.floorNo = callerInfo.floorNo;
+				_msg.zoneNo = callerInfo.zoneNo;
+				_msg.unitNo = callerInfo.unitNo;
+				_msg.devNo = callerInfo.devNo;
+				_msg.devType = callerInfo.devType;
+				_msg.lockNum = callerInfo.lockNum;
+				if (pressedButton !== null) _msg.pressedButton = pressedButton;
 
 				if (
-					((node.ringStatus === "all" || node.ringStatus === _msg.CallerInfo.status.toString()))
-					&& (node.floorNo === "all" || node.floorNo === _msg.CallerInfo.floorNo.toString())
-					&& (node.unitNo === "all" || node.unitNo === _msg.CallerInfo.unitNo.toString())
-					&& (node.zoneNo === "all" || node.zoneNo === _msg.CallerInfo.zoneNo.toString())
-					&& (node.buildingNo === "all" || node.buildingNo === _msg.CallerInfo.buildingNo.toString())
+					((node.ringStatus === "all" || node.ringStatus === normalizedStatus))
+					&& (node.floorNo === "all" || node.floorNo === callerInfo.floorNo.toString())
+					&& (node.unitNo === "all" || node.unitNo === callerInfo.unitNo.toString())
+					&& (node.zoneNo === "all" || node.zoneNo === callerInfo.zoneNo.toString())
+					&& (node.buildingNo === "all" || node.buildingNo === callerInfo.buildingNo.toString())
 				) {
 					delete _msg._msgid; // To allow objects compare
 					delete node.currentEmittedMSG._msgid; // To allow objects compare
@@ -77,8 +105,8 @@ module.exports = function (RED) {
 					}
 					node.currentEmittedMSG = _msg;
 					// Oputputs only msg that are no "idle"
-					if (_msg.CallerInfo.status.toString() !== "idle") {
-						logDebug(`Forwarding CallerInfo status ${_msg.CallerInfo.status}`);
+					if (normalizedStatus !== "idle") {
+						logDebug(`Forwarding CallerInfo status ${normalizedStatus}`);
 						node.send([_msg, null]);
 					} else {
 						logDebug("CallerInfo status is idle, not forwarding");

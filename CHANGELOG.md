@@ -3,6 +3,14 @@
 [![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square)](https://www.paypal.me/techtoday)
 
 <p>
+<b>Version 1.2.23</b> May 2026<br/>
+- Doorbell node: added normalized and convenience output fields on PIN 1 (`msg.callerInfo`, `msg.ringStatus`, `msg.pressedButton`, plus top-level caller properties) while preserving backward compatibility (`msg.payload` remains boolean).<br/>
+- Doorbell node: made status matching case-insensitive (`onCall` and `oncall` now match consistently).<br/>
+- Documentation: clarified that some Hikvision intercom/doorbell models may return `401 Unauthorized` on RAW CAMERA Event when `/ISAPI/Event/notification/alertStream` is not exposed for the configured user.<br/>
+- Documentation: added `msg.pressedButton` usage details for multi-button door stations.<br/>
+</p>
+
+<p>
 <b>Version 1.2.22</b> March 2026<br/>
 - AX Pro node: added `msg.armAwayAllAreas` and `msg.armStayAllAreas` to arm all partitions in a single batch command, reducing duplicate Hik-Connect notifications.<br/>
 - AX Pro docs: documented the new batch arming commands in the node help and README.<br/>

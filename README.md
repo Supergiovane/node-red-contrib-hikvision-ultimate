@@ -910,6 +910,7 @@ If an **_error_** occurs, the XML node will output a msg with the error
 
 The RAW CAMERA Event node reacts to every message sent by the device. You can use this node when the other nodes doesn't fit your needs. It connects to **_NVR, Camera, Radars etc..._** and outputs the event received. <br/>
 On the third pin, the node will output the event's picture (if any). You can save it directly to disk or user where you want.<br/>
+Some video intercom/doorbell models do not expose `/ISAPI/Event/notification/alertStream` for regular users and may return **401 Unauthorized** on this node.
 
 <img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/RawAlarm.png' >
 
@@ -1161,10 +1162,15 @@ msg = {
     lockNum: 1,
     status: "idle",
   },
+  callerInfo: { ...same as CallerInfo... }, // lowercase alias
+  ringStatus: "ring", // lowercase normalized status
+  pressedButton: 88, // when available (buttonNo/devNo/keyNo/callButtonNo)
   topic: "",
   payload: true,
 };
 ```
+
+For multi-button door stations, `msg.pressedButton` is the easiest field to use in automations.
 
 **Output PIN 2 (connection error)**
 
