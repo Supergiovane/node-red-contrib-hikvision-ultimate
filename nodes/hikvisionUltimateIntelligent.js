@@ -61,6 +61,12 @@ module.exports = function (RED) {
 				node.status({ fill: fill, shape: shape, text: text + " (" + dDate.getDate() + ", " + dDate.toLocaleTimeString() + ")" })
 			}
 
+			if (!node.server) {
+				node.setNodeStatus({ fill: "red", shape: "ring", text: "Missing/disabled Hikvision config" });
+				node.warn("Missing or disabled Hikvision config node: " + (config.server || "not configured"));
+				return;
+			}
+
 			// Starts the timer that counts the time the alarm has been true
 			const startTimerAlarmFilterDuration = () => {
 				node.timer_alarmfilterduration = setInterval(() => {
@@ -158,11 +164,15 @@ module.exports = function (RED) {
 
 						// Filter by object type (human/vehicle)
 						let sHumanReadableObjectType = "";
-						if (event.hasOwnProperty("customData") && event.customData.hasOwnProperty("objectType")) {
-							sHumanReadableObjectType = event.customData.objectType.toString().toLowerCase(); // should be "person" or "vehicle"
-						} else if (event.hasOwnProperty("targetType")) {
-							sHumanReadableObjectType = event.targetType.toString().toLowerCase(); // should be "human" or "vehicle"
-						}
+							if (event.hasOwnProperty("customData") && event.customData.hasOwnProperty("objectType")) {
+								sHumanReadableObjectType = event.customData.objectType.toString().toLowerCase(); // should be "person" or "vehicle"
+							} else if (event.hasOwnProperty("targetType")) {
+								sHumanReadableObjectType = event.targetType.toString().toLowerCase(); // should be "human" or "vehicle"
+							} else if (event.hasOwnProperty("detectionTarget")) {
+								sHumanReadableObjectType = event.detectionTarget.toString().toLowerCase();
+							} else if (oDetectionRegionEntry && oDetectionRegionEntry.hasOwnProperty("detectionTarget")) {
+								sHumanReadableObjectType = oDetectionRegionEntry.detectionTarget.toString().toLowerCase();
+							}
 
 						let bObjectMatch = false;
 						const hasClassification = sHumanReadableObjectType && sHumanReadableObjectType.length > 0;

@@ -29,6 +29,12 @@ module.exports = function (RED) {
 			node.status({ fill: fill, shape: shape, text: text + " (" + dDate.getDate() + ", " + dDate.toLocaleTimeString() + ")" })
 		}
 
+		if (!node.server) {
+			node.setNodeStatus({ fill: "red", shape: "ring", text: "Missing/disabled Hikvision config" });
+			node.warn("Missing or disabled Hikvision config node: " + (config.server || "not configured"));
+			return;
+		}
+
 		function clearPollTimer() {
 			if (node.timerPollPosition !== null) {
 				clearTimeout(node.timerPollPosition);

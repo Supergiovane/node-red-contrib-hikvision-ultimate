@@ -19,6 +19,12 @@ module.exports = function (RED) {
 			node.status({ fill: fill, shape: shape, text: text + " (" + dDate.getDate() + ", " + dDate.toLocaleTimeString() + ")" })
 		}
 
+		if (!node.server) {
+			node.setNodeStatus({ fill: "red", shape: "ring", text: "Missing/disabled Hikvision config" });
+			node.warn("Missing or disabled Hikvision config node: " + (config.server || "not configured"));
+			return;
+		}
+
 		// Called from config node, to send output to the flow
 		node.sendPayload = (_msg) => {
 			if (_msg.type !== undefined && _msg.type === 'img') {

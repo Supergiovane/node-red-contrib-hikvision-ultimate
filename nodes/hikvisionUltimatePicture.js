@@ -23,6 +23,12 @@ module.exports = function (RED) {
 			node.status({ fill: fill, shape: shape, text: text + " (" + dDate.getDate() + ", " + dDate.toLocaleTimeString() + ")" })
 		}
 
+		if (!node.server) {
+			node.setNodeStatus({ fill: "red", shape: "ring", text: "Missing/disabled Hikvision config" });
+			node.warn("Missing or disabled Hikvision config node: " + (config.server || "not configured"));
+			return;
+		}
+
 		// 15/12/2020 apply the manipulation to the node's variable
 		node.variabilizeManipulation = (_config) => {
 			node.channelID = (_config.channelID === null || _config.channelID === undefined) ? "1" : _config.channelID;

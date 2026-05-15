@@ -27,6 +27,12 @@ module.exports = function (RED) {
 			node.status({ fill: fill, shape: shape, text: text + " (" + dDate.getDate() + ", " + dDate.toLocaleTimeString() + ")" })
 		}
 
+		if (!node.server) {
+			node.setNodeStatus({ fill: "red", shape: "ring", text: "Missing/disabled Hikvision config" });
+			node.warn("Missing or disabled Hikvision config node: " + (config.server || "not configured"));
+			return;
+		}
+
 		// 29/01/2021 start the timer that counts the time the alarm has been true
 		// ###################################
 		startTimerAlarmFilterDuration = () => {

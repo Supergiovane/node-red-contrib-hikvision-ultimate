@@ -3,9 +3,19 @@
 [![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square)](https://www.paypal.me/techtoday)
 
 <p>
-<b>Version 1.2.23</b> May 2026<br/>
+<b>Version 1.3.0</b> May 2026<br/>
 - Doorbell node: added normalized and convenience output fields on PIN 1 (`msg.callerInfo`, `msg.ringStatus`, `msg.pressedButton`, plus top-level caller properties) while preserving backward compatibility (`msg.payload` remains boolean).<br/>
 - Doorbell node: made status matching case-insensitive (`onCall` and `oncall` now match consistently).<br/>
+- Hikvision config: improved alert stream resiliency by keeping stream state per config node, reconnecting explicitly on stream close/end/error, and adding targeted debug logs for multipart parsing failures.<br/>
+- Hikvision config: XML alarm parser now normalizes `EventNotificationAlert` batches/arrays and forwards each event separately, avoiding dropped events on malformed/burst multipart chunks.<br/>
+- Hikvision config: on recovered XML batches after reconnect, stale/backlog events are now filtered by `dateTime` and capped per batch to avoid replaying old alarms and flooding flows.<br/>
+- Hikvision config: alert stream HTTP/Digest handling now drains the initial `401` response before opening the authenticated stream and uses a dedicated single-socket stream agent with curl-like headers to avoid silent stale sockets on some firmwares.<br/>
+- Hikvision config: prevent uncaught `socket hang up` exceptions during intentional alert stream teardown on newer Node.js/TLS runtimes.<br/>
+- Hikvision config: when Debug level is enabled, startup, client registration, and alert stream opening are logged at info level so they are visible with Node-RED's default log level.<br/>
+- Hikvision config: replaced legacy verbose `BANANA` stream logs with concise event/image diagnostics and demoted heartbeat XML dumps from the normal info log path.<br/>
+- Config nodes: added LAN auto-discovery for Hikvision devices using the SADP/Probe multicast discovery protocol and a selectable device list that fills host, port, and name fields.<br/>
+- Hikvision camera nodes: show an explicit red status and warning when their linked Hikvision config node is missing or disabled, instead of silently doing nothing.<br/>
+- Intelligent event node: reads `detectionTarget` from nested `DetectionRegionEntry` objects so Hikvision field-detection targets such as `human` are exposed in logs and filters.<br/>
 - Documentation: clarified that some Hikvision intercom/doorbell models may return `401 Unauthorized` on RAW CAMERA Event when `/ISAPI/Event/notification/alertStream` is not exposed for the configured user.<br/>
 - Documentation: added `msg.pressedButton` usage details for multi-button door stations.<br/>
 </p>

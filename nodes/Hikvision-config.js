@@ -1,5 +1,6 @@
 module.exports = (RED) => {
     const { createHttpClient } = require('./utils/httpClient');
+    const hikDiscovery = require('./utils/hikDiscovery');
 
 
     const NONCE_COUNT = '00000001';
@@ -9,27 +10,80 @@ module.exports = (RED) => {
     const http = require('http');
     const Dicer = require('dicer');
     const crypto = require('crypto');
-    let transferProtocol; // can be http or https class
-    let stream;
 
     // Helper function to parse the WWW-Authenticate header
     function parseDigestHeader(header) {
+        if (!header) return {};
+        const trimmed = header.trim();
+        const paramsPart = trimmed.replace(/^digest\s+/i, '');
         const challenge = {};
-        const parts = header.substring(7).split(',');
+        const regex = /([a-z0-9_-]+)=("(?:[^"\\]|\\.)*"|[^,]*)/ig;
+        let match;
 
-        for (const part of parts) {
-            const [key, value] = part.trim().split('=');
-            challenge[key] = value?.replace(/"/g, '') || '';
+        while ((match = regex.exec(paramsPart)) !== null) {
+            let value = match[2].trim();
+            if (value.startsWith('"') && value.endsWith('"')) {
+                value = value.slice(1, -1);
+            }
+            challenge[match[1]] = value;
         }
 
         return challenge;
     }
+
+    function pickDigestQop(qop) {
+        if (!qop) return null;
+        const qops = qop.split(",").map(item => item.trim().toLowerCase()).filter(Boolean);
+        if (qops.includes("auth")) return "auth";
+        return qops[0] || null;
+    }
+
+    function normalizeDiscoveredDevice(device) {
+        const normalized = Object.assign({}, device);
+        const host = normalized.IPv4Address || normalized.ipv4Address || normalized.IPAddress || normalized.ipAddress || "";
+        const port = normalized.HttpPort || normalized.httpPort || normalized.Port || normalized.port || 80;
+        const description = normalized.DeviceDescription || normalized.deviceDescription || normalized.DeviceName || normalized.deviceName || "";
+        const model = normalized.Model || normalized.model || "";
+        const firmware = normalized.SoftwareVersion || normalized.softwareVersion || normalized.FirmwareVersion || normalized.firmwareVersion || "";
+        const serial = normalized.DeviceSN || normalized.SerialNO || normalized.SerialNumber || normalized.serialNumber || "";
+
+        normalized.host = host.toString();
+        normalized.port = port.toString();
+        normalized.name = description ? description.toString() : (model ? model.toString() : normalized.host);
+        normalized.model = model ? model.toString() : "";
+        normalized.firmware = firmware ? firmware.toString() : "";
+        normalized.serialNumber = serial ? serial.toString() : "";
+        normalized.label = [
+            normalized.name,
+            normalized.host ? "(" + normalized.host + ":" + normalized.port + ")" : "",
+            normalized.model,
+            normalized.firmware
+        ].filter(Boolean).join(" ");
+
+        return normalized;
+    }
+
+    RED.httpAdmin.get("/hikvisionUltimateDiscoverOnlineDevices", RED.auth.needsPermission('Hikvisionconfig.read'), async function (req, res) {
+        try {
+            const timeoutMs = Number(req.query.timeoutMs);
+            const devices = await hikDiscovery.Discover(Number.isFinite(timeoutMs) && timeoutMs > 0 ? timeoutMs : 2500);
+            const normalizedDevices = devices
+                .map(normalizeDiscoveredDevice)
+                .filter(device => device.host)
+                .sort((a, b) => a.host.localeCompare(b.host, undefined, { numeric: true }));
+            res.json(normalizedDevices);
+        } catch (error) {
+            RED.log.error("Hikvision-config: discovery failed: " + (error.message || " unknown error"));
+            res.json([]);
+        }
+    });
 
     function Hikvisionconfig(config) {
         RED.nodes.createNode(this, config)
         var node = this
         node.port = config.port || 80;
         node.debug = (config.debuglevel === undefined || config.debuglevel === "no") ? false : true;
+        node.name = config.name || config.host || "";
         node.host = config.host;// + ":" + node.port;
         node.protocol = config.protocol || "http";
         node.nodeClients = []; // Stores the registered clients
@@ -47,7 +101,17 @@ module.exports = (RED) => {
         node.heartBeatTimerDisconnectionCounter = 0;
         node.heartbeattimerdisconnectionlimit = config.heartbeattimerdisconnectionlimit || 2;
         var controller = null; // AbortController
+        let transferProtocol = null; // can be http or https class (per-node)
+        let streamRequest = null; // Per-node alert stream request
+        let reconnectTimer = null;
+        let reconnectReason = "";
+        const intentionallyClosedRequests = new WeakSet();
+        let reconnectDelayMs = 2000;
+        const MAX_ABSOLUTE_EVENT_AGE_MS = 2 * 60 * 1000; // Drop events older than 2 minutes
+        const MAX_RELATIVE_BATCH_EVENT_AGE_MS = 20 * 1000; // In large recovered batches, keep only near-tail events
+        const MAX_FORWARD_EVENTS_PER_BATCH = 128; // Safety cap to avoid flooding downstream nodes
         node.onLineHikvisionDevicesDiscoverList = null; // 12/01/2023 holds the online devices, used in the HTML
+        if (node.debug) RED.log.info("Hikvision-config: initialized " + (node.name || node.host) + " (" + node.protocol + "://" + node.host + ":" + node.port + ")");
 
         node.setAllClientsStatus = ({ fill, shape, text }) => {
             function nextStatus(oClient) {
@@ -194,16 +258,44 @@ module.exports = (RED) => {
             return match[1].trim().replace(/^--/, '');
         }
 
+        function clearReconnectTimer() {
+            if (reconnectTimer !== null) {
+                clearTimeout(reconnectTimer);
+                reconnectTimer = null;
+            }
+        }
+
+        function scheduleReconnect(reason, delayMs) {
+            if (node.isClosing) return;
+            if (reconnectTimer !== null) return;
+            reconnectReason = reason || "unknown";
+            const effectiveDelayMs = delayMs || reconnectDelayMs;
+            reconnectDelayMs = Math.min(reconnectDelayMs * 2, 30000);
+            reconnectTimer = setTimeout(() => {
+                reconnectTimer = null;
+                if (node.isClosing) return;
+                try {
+                    if (node.debug) RED.log.warn("Hikvision-config: reconnecting stream (" + reconnectReason + ")");
+                    startAlarmStream();
+                } catch (error) {
+                    if (node.debug) RED.log.error("Hikvision-config: reconnect scheduling failed: " + (error.message || " unknown error"));
+                }
+            }, effectiveDelayMs);
+        }
+
         // Function to continue with authenticated request
         function continueWithAuthenticatedRequest(options) {
-            if (node.debug) RED.log.debug('Hikvision-config: Starting authenticated stream...');
+            if (node.debug) RED.log.info('Hikvision-config: Starting authenticated stream...');
             try {
                 node.setAllClientsStatus({ fill: 'green', shape: 'dot', text: 'Stream running' });
+                clearReconnectTimer();
 
-                stream = transferProtocol.request(options, continueWithStream);
+                streamRequest = transferProtocol.request(options, continueWithStream);
+                const activeStreamRequest = streamRequest;
+                reconnectDelayMs = 2000;
 
                 if (node.streamTimeoutMs > 0) {
-                    stream.setTimeout(node.streamTimeoutMs, () => {
+                    streamRequest.setTimeout(node.streamTimeoutMs, () => {
                         if (node.debug) {
                             const minutes = node.streamtimeout;
                             RED.log.error(`Hikvision-config: Connection timeout after ${minutes} minute${minutes === 1 ? '' : 's'}`);
@@ -212,25 +304,29 @@ module.exports = (RED) => {
                             stopStream();
                         } catch (error) {
                         }
-
+                        scheduleReconnect("request timeout");
                     });
                 }
 
-                stream.on('error', (err) => {
+                streamRequest.on('error', (err) => {
+                    if (intentionallyClosedRequests.has(activeStreamRequest)) return;
                     if (node.debug) RED.log.error('Hikvision-config: Stream error: ' + err.message);
                     try {
                         stopStream();
                     } catch (error) {
                     }
+                    scheduleReconnect("request error: " + (err.message || "unknown"));
                 });
 
-                stream.on('close', () => {
-
+                streamRequest.on('close', () => {
+                    if (node.isClosing || intentionallyClosedRequests.has(activeStreamRequest)) return;
+                    scheduleReconnect("request closed");
                 });
 
-                stream.end();
+                streamRequest.end();
             } catch (err) {
                 if (node.debug) RED.log.error('Hikvision-config: continueWithAuthenticatedRequest: Stream error: ' + err.message);
+                scheduleReconnect("request setup exception");
             }
 
         }
@@ -261,12 +357,15 @@ module.exports = (RED) => {
                     node.errorDescription = ""; // Reset the error
                 }
                 node.isConnected = true;
+                reconnectDelayMs = 2000;
                 node.resetHeartBeatTimer();
                 try {
                     const contentType = res.headers['content-type'];
                     if (!contentType) {
                         if (node.debug) RED.log.error("Hikvision-config: No Content-Type in response");
-
+                        stopStream();
+                        scheduleReconnect("missing content-type");
+                        return;
                     }
                     if (contentType.includes('multipart')) {
                         let boundary = extractBoundary(contentType);
@@ -297,6 +396,7 @@ module.exports = (RED) => {
                                         extension = 'json';  // Estensione corretta per immagini PNG
                                     }
                                 } catch (error) {
+                                    if (node.debug) RED.log.error("Hikvision-config: part header parse error: " + (error.message || " unknown error"));
                                 }
                             });
 
@@ -305,6 +405,7 @@ module.exports = (RED) => {
                                     node.resetHeartBeatTimer();
                                     partData.push(data);  // Aggiungi i chunk di dati alla parte
                                 } catch (error) {
+                                    if (node.debug) RED.log.error("Hikvision-config: part data handling error: " + (error.message || " unknown error"));
                                 }
                             });
 
@@ -326,13 +427,15 @@ module.exports = (RED) => {
                                             handleIMG(fullData, extension);
                                             break;
                                         default:
+                                            if (node.debug) RED.log.warn("Hikvision-config: unsupported multipart part content type");
                                             break;
                                     }
                                 } catch (error) {
+                                    if (node.debug) RED.log.error("Hikvision-config: part end handling error: " + (error.message || " unknown error"));
                                 }
                             });
                             part.on('error', (err) => {
-                                //console.error('Error in part:', err);
+                                if (node.debug) RED.log.error("Hikvision-config: Error in multipart part: " + (err.message || " unknown error"));
                             });
 
                         });
@@ -343,6 +446,7 @@ module.exports = (RED) => {
 
                         dicer.on('error', (err) => {
                             if (node.debug) RED.log.error("Hikvision-config: Error in Dicer:" + err.stack);
+                            scheduleReconnect("multipart parser error");
                         });
 
                         const onRawData = () => {
@@ -358,16 +462,39 @@ module.exports = (RED) => {
                         res.once('end', cleanupRawDataListener);
                         res.once('close', cleanupRawDataListener);
                         res.once('error', cleanupRawDataListener);
+                        res.once('end', () => {
+                            if (node.isClosing) return;
+                            if (node.debug) RED.log.warn("Hikvision-config: stream response ended, reconnecting");
+                            stopStream();
+                            scheduleReconnect("response ended");
+                        });
+                        res.once('close', () => {
+                            if (node.isClosing) return;
+                            if (node.debug) RED.log.warn("Hikvision-config: stream response closed, reconnecting");
+                            stopStream();
+                            scheduleReconnect("response closed");
+                        });
+                        res.once('error', (err) => {
+                            if (node.isClosing) return;
+                            if (node.debug) RED.log.error("Hikvision-config: stream response error: " + (err.message || " unknown error"));
+                            stopStream();
+                            scheduleReconnect("response error");
+                        });
 
                         // Pipa lo stream multipart in Dicer
                         res.pipe(dicer);
 
                     } else {
-                        throw new Error('Unsupported Content-Type');
+                        node.errorDescription = "Unsupported Content-Type: " + contentType;
+                        if (node.debug) RED.log.error("Hikvision-config: Unsupported Content-Type " + contentType);
+                        stopStream();
+                        scheduleReconnect("unsupported content-type");
                     }
 
                 } catch (error) {
                     if (node.debug) RED.log.error("Hikvision-config: streamPipeline: Please be sure to have the latest Node.JS version installed: " + (error.message || " unknown error"));
+                    stopStream();
+                    scheduleReconnect("stream pipeline exception");
                 }
 
             } catch (error) {
@@ -376,6 +503,7 @@ module.exports = (RED) => {
                 //node.errorDescription = "Fetch error " + JSON.stringify(error, Object.getOwnPropertyNames(error));
                 node.errorDescription = "Request error " + (error.message || " unknown error");
                 if (node.debug) RED.log.error("Hikvision-config: REQUEST ERROR: " + (error.message || " unknown error"));
+                scheduleReconnect("response handling error");
             };
 
             // ++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -383,13 +511,17 @@ module.exports = (RED) => {
         // Function to stop the stream
         function stopStream() {
             try {
-                if (stream) {
-                    // Remove all listeners to prevent reconnection logic
-                    stream.removeAllListeners();
-                    stream.destroy();
-                    stream = null;
+                if (streamRequest) {
+                    const requestToStop = streamRequest;
+                    intentionallyClosedRequests.add(requestToStop);
+                    // Keep an error listener attached while destroying the request.
+                    // Node 24 can still emit ECONNRESET/socket hang up during TLS teardown.
+                    requestToStop.on('error', () => { });
+                    requestToStop.destroy();
+                    streamRequest = null;
                 }
             } catch (err) {
+                if (node.debug) RED.log.error("Hikvision-config: stopStream error " + (err.message || " unknown error"));
             }
         }
 
@@ -398,6 +530,9 @@ module.exports = (RED) => {
         async function startAlarmStream() {
 
             if (node.isClosing) return;
+            if (node.debug) RED.log.info("Hikvision-config: opening alert stream for " + (node.name || node.host) + " using " + node.authentication);
+            stopStream();
+            clearReconnectTimer();
 
             node.resetHeartBeatTimer(); // First thing, start the heartbeat timer.
             node.setAllClientsStatus({ fill: "grey", shape: "ring", text: "Connecting..." });
@@ -405,12 +540,17 @@ module.exports = (RED) => {
             // Make an initial request to get authentication challenge
             if (node.protocol === "http") transferProtocol = require('http');
             if (node.protocol === "https") transferProtocol = require('https');
-            // 14/07/2021 custom agent as global variable, to avoid issue with self signed certificates
+            // Reuse one socket for the digest 401 challenge and the authenticated stream, like curl does.
             const transferProtocolAgent = new transferProtocol.Agent({
                 rejectUnauthorized: false,
-                keepAlive: true, // Mantiene vive le connessioni
-                maxSockets: 10,  // Numero massimo di connessioni simultanee
+                keepAlive: true,
+                maxSockets: 1
             });
+            const streamHeaders = {
+                "Accept": "*/*",
+                "Cache-Control": "no-cache",
+                "User-Agent": "node-red-contrib-hikvision-ultimate"
+            };
 
             if (node.authentication === 'basic') {
                 const options = {
@@ -419,9 +559,11 @@ module.exports = (RED) => {
                     path: '/ISAPI/Event/notification/alertStream',
                     method: 'GET',
                     headers: {
+                        ...streamHeaders,
                         'Authorization': 'Basic ' + Buffer.from(`${node.credentials.user}:${node.credentials.password}`).toString('base64')
                     },
-                    protocol: node.protocol + ":"
+                    protocol: node.protocol + ":",
+                    agent: transferProtocolAgent
                 };
                 continueWithAuthenticatedRequest(options);
                 return;
@@ -433,6 +575,7 @@ module.exports = (RED) => {
                 port: node.port,
                 path: '/ISAPI/Event/notification/alertStream',
                 method: 'GET',
+                headers: streamHeaders,
                 agent: transferProtocolAgent,
                 protocol: node.protocol + ":"
             };
@@ -445,29 +588,47 @@ module.exports = (RED) => {
                         const authHeader = response.headers['www-authenticate'];
                         if (!authHeader) {
                             if (node.debug) RED.log.error('Hikvision-config: Missing WWW-Authenticate header in response');
+                            response.resume();
+                            scheduleReconnect("missing digest challenge");
                             return;
                         }
                         if (!authHeader.startsWith('Digest ')) {
                             if (node.debug) RED.log.error('Hikvision-config: Server does not support Digest authentication');
+                            response.resume();
+                            scheduleReconnect("digest not supported by server");
                             return;
                         }
 
                         // Parse the challenge
                         const challenge = parseDigestHeader(authHeader);
+                        const qop = pickDigestQop(challenge.qop);
+                        const algorithm = (challenge.algorithm || 'MD5').toUpperCase();
+                        const nonceCount = NONCE_COUNT;
 
                         // Create digest authentication header
                         const ha1 = crypto.createHash('md5').update(`${node.credentials.user}:${challenge.realm}:${node.credentials.password}`).digest('hex');
                         const ha2 = crypto.createHash('md5').update(`${'GET'}:${'/ISAPI/Event/notification/alertStream'}`).digest('hex');
                         const cnonce = crypto.randomBytes(8).toString('hex');
 
-                        const digestResponse = crypto.createHash('md5').update(
-                            `${ha1}:${challenge.nonce}:${NONCE_COUNT}:${cnonce}:${challenge.qop}:${ha2}`
-                        ).digest('hex');
+                        let digestInput = `${ha1}:${challenge.nonce}:${ha2}`;
+                        if (qop) digestInput = `${ha1}:${challenge.nonce}:${nonceCount}:${cnonce}:${qop}:${ha2}`;
+                        const digestResponse = crypto.createHash('md5').update(digestInput).digest('hex');
 
-                        const authString = `Digest username="${node.credentials.user}", realm="${challenge.realm}", ` +
-                            `nonce="${challenge.nonce}", uri="${'/ISAPI/Event/notification/alertStream'}", ` +
-                            `cnonce="${cnonce}", nc=${NONCE_COUNT}, qop=${challenge.qop}, ` +
-                            `response="${digestResponse}", algorithm="${challenge.algorithm || 'MD5'}"`;
+                        const authParts = [
+                            `username="${node.credentials.user}"`,
+                            `realm="${challenge.realm || ''}"`,
+                            `nonce="${challenge.nonce || ''}"`,
+                            `uri="${'/ISAPI/Event/notification/alertStream'}"`,
+                            `response="${digestResponse}"`,
+                            `algorithm="${algorithm}"`
+                        ];
+                        if (challenge.opaque) authParts.push(`opaque="${challenge.opaque}"`);
+                        if (qop) {
+                            authParts.push(`qop=${qop}`);
+                            authParts.push(`nc=${nonceCount}`);
+                            authParts.push(`cnonce="${cnonce}"`);
+                        }
+                        const authString = `Digest ${authParts.join(', ')}`;
 
                         // Now make the authenticated request
                         const options = {
@@ -476,26 +637,44 @@ module.exports = (RED) => {
                             path: '/ISAPI/Event/notification/alertStream',
                             method: 'GET',
                             headers: {
+                                ...streamHeaders,
                                 'Authorization': authString
                             },
-                            agent: transferProtocolAgent
+                            agent: transferProtocolAgent,
+                            protocol: node.protocol + ":"
                         };
 
-                        // Continue with normal stream setup using the options object
-                        continueWithAuthenticatedRequest(options);
+                        response.once('end', () => {
+                            continueWithAuthenticatedRequest(options);
+                        });
+                        response.once('error', (err) => {
+                            if (node.debug) RED.log.error('Hikvision-config: Initial digest response error: ' + (err.message || " unknown error"));
+                            scheduleReconnect("initial digest response error");
+                        });
+                        // Drain the 401 body before opening the authenticated long-lived stream, mirroring curl's digest flow.
+                        response.resume();
                     } else {
                         // If no auth needed (unlikely but possible)
                         continueWithStream(response);
                     }
                 });
+                streamRequest = initialReq;
 
                 initialReq.on('error', (err) => {
+                    if (node.isClosing || intentionallyClosedRequests.has(initialReq)) return;
                     if (node.debug) RED.log.error('Hikvision-config: Initial request error: ' + err.message);
+                    scheduleReconnect("initial request error: " + (err.message || "unknown"));
+                });
+                initialReq.setTimeout(15000, () => {
+                    if (node.debug) RED.log.error('Hikvision-config: Initial request timeout');
+                    stopStream();
+                    scheduleReconnect("initial request timeout");
                 });
 
                 initialReq.end();
             } catch (error) {
-                if (node.debug) RED.log.error('Hikvision-config: StartAlarmStream: ' + err.message);
+                if (node.debug) RED.log.error('Hikvision-config: StartAlarmStream: ' + (error.message || " unknown error"));
+                scheduleReconnect("start stream exception");
             }
         };
 
@@ -504,30 +683,123 @@ module.exports = (RED) => {
         // ###################################
         async function handleIMG(result, extension) {
             try {
-                if (node.debug) RED.log.error("BANANA SBANANATO IMG -> JSON buffer length " + result.length + " ext " + extension);
+                if (node.debug) RED.log.info("Hikvision-config: image part received (" + result.length + " bytes, " + extension + ")");
                 node.nodeClients.forEach(oClient => {
                     oClient.sendPayload({ topic: oClient.topic || "", payload: result, type: 'img', extension: extension });
                 });
             } catch (error) {
-                if (node.debug) RED.log.error("BANANA ERRORE fast-xml-parser(sRet, function (err, result) " + error.message || "");
+                if (node.debug) RED.log.error("Hikvision-config: image part handling error: " + (error.message || " unknown error"));
             }
         }
         async function handleXML(result) {
             try {
+                const isHeartbeatEvent = (eventEntry) => {
+                    if (!eventEntry || typeof eventEntry !== "object") return false;
+                    const eventType = eventEntry.eventType !== undefined ? eventEntry.eventType.toString().toLowerCase() : "";
+                    const eventState = eventEntry.eventState !== undefined ? eventEntry.eventState.toString().toLowerCase() : "";
+                    const activePostCount = Number(eventEntry.activePostCount);
+                    return eventType === "videoloss" && eventState === "inactive" && (activePostCount === 0 || activePostCount === 1);
+                };
+
+                const summarizeEvent = (eventEntry) => {
+                    if (!eventEntry || typeof eventEntry !== "object") return "unknown event";
+                    const eventType = eventEntry.eventType || "unknown";
+                    const eventState = eventEntry.eventState || "unknown";
+                    const channelID = eventEntry.channelID || eventEntry.dynChannelID || "unknown";
+                    const dateTime = eventEntry.dateTime || "no timestamp";
+                    return eventType + " " + eventState + " channel " + channelID + " at " + dateTime;
+                };
+
+                const parseEventDateMs = (eventEntry) => {
+                    if (!eventEntry || typeof eventEntry !== "object") return null;
+                    if (!eventEntry.dateTime) return null;
+                    const parsed = Date.parse(eventEntry.dateTime.toString());
+                    return Number.isFinite(parsed) ? parsed : null;
+                };
+
                 const parser = new XMLParser();
-                let oXML = parser.parse(result);
-                if (oXML.EventNotificationAlert?.channelID === undefined && oXML.EventNotificationAlert?.dynChannelID !== undefined) {
-                    // API Version 1.0
-                    oXML.EventNotificationAlert.channelID = oXML.EventNotificationAlert?.dynChannelID;
-                } else {
-                    // API Version 2.0
+                const parsedXML = parser.parse(result);
+
+                // Some devices/firmwares occasionally deliver multiple EventNotificationAlert
+                // entries in a single parsed object/array: normalize to a flat events list.
+                const eventsToForward = [];
+                if (parsedXML !== null && parsedXML !== undefined) {
+                    const root = parsedXML.EventNotificationAlert !== undefined ? parsedXML.EventNotificationAlert : parsedXML;
+                    if (Array.isArray(root)) {
+                        root.forEach((ev) => {
+                            if (ev && typeof ev === "object") eventsToForward.push(ev);
+                        });
+                    } else if (root && typeof root === "object") {
+                        eventsToForward.push(root);
+                    }
                 }
-                if (node.debug) RED.log.info("BANANA SBANANATO XML -> JSON " + JSON.stringify(oXML));
-                node.nodeClients.forEach(oClient => {
-                    if (oXML !== undefined) oClient.sendPayload({ topic: oClient.topic || "", payload: oXML.EventNotificationAlert, type: 'event' });
+
+                const normalizedEvents = [];
+                eventsToForward.forEach((eventEntry) => {
+                    if (eventEntry.channelID === undefined && eventEntry.dynChannelID !== undefined) {
+                        // API Version 1.0
+                        eventEntry.channelID = eventEntry.dynChannelID;
+                    }
+                    normalizedEvents.push(eventEntry);
+                });
+
+                if (node.debug) {
+                    const interestingEvents = normalizedEvents.filter(eventEntry => !isHeartbeatEvent(eventEntry));
+                    if (interestingEvents.length > 0) {
+                        interestingEvents.forEach(eventEntry => {
+                            RED.log.info("Hikvision-config: event received " + summarizeEvent(eventEntry));
+                        });
+                    } else if (normalizedEvents.length > 0) {
+                        RED.log.debug("Hikvision-config: heartbeat event received");
+                    }
+                }
+
+                let eventsAfterStaleFilter = normalizedEvents;
+                let droppedStaleEvents = 0;
+                let droppedOverflowEvents = 0;
+
+                if (normalizedEvents.length > 1) {
+                    const nowMs = Date.now();
+                    let newestEventMs = null;
+                    normalizedEvents.forEach((eventEntry) => {
+                        const eventMs = parseEventDateMs(eventEntry);
+                        if (eventMs !== null && (newestEventMs === null || eventMs > newestEventMs)) newestEventMs = eventMs;
+                    });
+
+                    eventsAfterStaleFilter = normalizedEvents.filter((eventEntry) => {
+                        const eventMs = parseEventDateMs(eventEntry);
+                        if (eventMs === null) return true;
+                        if (nowMs >= eventMs && (nowMs - eventMs) > MAX_ABSOLUTE_EVENT_AGE_MS) {
+                            droppedStaleEvents += 1;
+                            return false;
+                        }
+                        if (newestEventMs !== null && (newestEventMs - eventMs) > MAX_RELATIVE_BATCH_EVENT_AGE_MS) {
+                            droppedStaleEvents += 1;
+                            return false;
+                        }
+                        return true;
+                    });
+                }
+
+                if (eventsAfterStaleFilter.length > MAX_FORWARD_EVENTS_PER_BATCH) {
+                    droppedOverflowEvents = eventsAfterStaleFilter.length - MAX_FORWARD_EVENTS_PER_BATCH;
+                    eventsAfterStaleFilter = eventsAfterStaleFilter.slice(-MAX_FORWARD_EVENTS_PER_BATCH);
+                }
+
+                if (node.debug && normalizedEvents.length > 1) {
+                    RED.log.warn("Hikvision-config: XML batch with " + normalizedEvents.length + " events received");
+                    if (droppedStaleEvents > 0) RED.log.warn("Hikvision-config: dropped " + droppedStaleEvents + " stale event(s) from recovered batch");
+                    if (droppedOverflowEvents > 0) RED.log.warn("Hikvision-config: dropped " + droppedOverflowEvents + " overflow event(s) from recovered batch");
+                    RED.log.warn("Hikvision-config: forwarding " + eventsAfterStaleFilter.length + " event(s) after stale/batch filtering");
+                }
+
+                eventsAfterStaleFilter.forEach((eventEntry) => {
+                    node.nodeClients.forEach(oClient => {
+                        oClient.sendPayload({ topic: oClient.topic || "", payload: eventEntry, type: 'event' });
+                    });
                 });
             } catch (error) {
-                if (node.debug) RED.log.error("BANANA ERRORE fast-xml-parser(sRet, function (err, result) " + error.message || "");
+                if (node.debug) RED.log.error("Hikvision-config: XML parse/handling error: " + (error.message || " unknown error"));
             }
         }
         async function handleJSON(result) {
@@ -663,6 +935,8 @@ module.exports = (RED) => {
         //#region "FUNCTIONS"
         node.on('close', function (removed, done) {
             node.isClosing = true;
+            clearReconnectTimer();
+            stopStream();
             if (controller !== null) {
                 try {
                     controller.abort();
@@ -682,6 +956,7 @@ module.exports = (RED) => {
                 // Add _Node to the clients array
                 node.nodeClients.push(_Node)
             }
+            if (node.debug) RED.log.info("Hikvision-config: registered client " + (_Node.type || _Node.id || "unknown") + " (" + node.nodeClients.length + " total)");
             try {
                 _Node.setNodeStatus({ fill: "grey", shape: "ring", text: "Waiting for connection" });
             } catch (error) { }

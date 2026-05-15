@@ -16,6 +16,41 @@
         },
         oneditprepare: function () {
             var node = this;
+            var discoveredDevices = [];
+            function applyDiscoveredDevice(index) {
+                var device = discoveredDevices[index];
+                if (!device) return;
+                if (device.host) $("#node-config-input-host").val(device.host);
+                if (device.port) $("#node-config-input-port").val(device.port);
+                if (device.name && (!$("#node-config-input-name").val() || $("#node-config-input-name").val() === "Access Control Terminal")) $("#node-config-input-name").val(device.name);
+            }
+            function refreshDiscoveredDevices() {
+                var button = $("#node-config-input-discover-devices");
+                var select = $("#node-config-input-discovered-device");
+                button.val("Searching...");
+                button.prop("disabled", true);
+                select.empty().append('<option value="">Searching Hikvision devices...</option>');
+                $.getJSON("hikvisionUltimateDiscoverOnlineDevices", function (data) {
+                    discoveredDevices = Array.isArray(data) ? data : [];
+                    select.empty();
+                    if (discoveredDevices.length === 0) {
+                        select.append('<option value="">No devices found</option>');
+                        return;
+                    }
+                    select.append('<option value="">Select discovered device...</option>');
+                    discoveredDevices.forEach(function (device, index) {
+                        select.append($("<option></option>").attr("value", index).text(device.label || (device.host + ":" + device.port)));
+                    });
+                }).fail(function () {
+                    select.empty().append('<option value="">Discovery unavailable</option>');
+                }).always(function () {
+                    button.val("Discover");
+                    button.prop("disabled", false);
+                });
+            }
+            $("#node-config-input-discovered-device").change(function () { applyDiscoveredDevice($(this).val()); });
+            $("#node-config-input-discover-devices").click(refreshDiscoveredDevices);
+            refreshDiscoveredDevices();
 
             $("#getinfocam").click(function () {
                 this.value = "Wait...";
@@ -102,6 +137,13 @@
         <br/>
 		<br/>
     
+    <div class="form-row">
+        <label for="node-config-input-discovered-device">
+            <i class="fa fa-search"></i> Discover
+        </label>
+        <select id="node-config-input-discovered-device" style="width:45%"></select>
+        <input type="button" id="node-config-input-discover-devices" class="ui-button ui-corner-all ui-widget" style="width:110px;margin-left:6px" value="Discover">
+    </div>
     <div class="form-row">
         <label for="node-config-input-name" >
             <i class="fa fa-tag"></i> Name
