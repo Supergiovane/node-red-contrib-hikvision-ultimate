@@ -1,6 +1,6 @@
 const sha256 = require('./utils/Sha256').sha256
 const { XMLParser, XMLBuilder } = require("fast-xml-parser");
-const Dicer = require('dicer');
+const { createAlertStreamParser } = require('./utils/alertStreamParser');
 
 module.exports = (RED) => {
 
@@ -189,7 +189,7 @@ module.exports = (RED) => {
                     const parser = new XMLParser();
                     const result = parser.parse(XMLBody);
                     jSon = JSON.parse(JSON.stringify(result));
-                    if (node.debug) RED.log.error("BANANA SBANANATO XMLBoduAuth -> JSON " + JSON.stringify(result));
+                    if (node.debug) RED.log.info("AXPro-config: auth capabilities received");
                 } catch (parseError) {
                     throw new Error("AXPro auth capabilities parse error: " + (parseError.message || "unknown parse error"));
                 }
@@ -285,125 +285,84 @@ module.exports = (RED) => {
                     node.isConnected = true;
                     node.resetHeartBeatTimer();
                     try {
-                        const contentType = res.headers.get('content-type');
-                        if (!contentType) {
-                            if (node.debug) RED.log.error("Hikvision-config: No Content-Type in response");
+                        const contentType = res.headers.get('content-type') || "";
+                        if (!contentType && node.debug) RED.log.error("AXPro-config: No Content-Type in response");
+                        const handleStreamBodyError = (err) => {
+                            if (node.debug) RED.log.error("AXPro-config: alertStream body error: " + (err.message || " unknown error"));
+                            node.errorDescription = "alertStream error " + (err.message || " unknown error");
+                            node.setAllClientsStatus({ fill: "red", shape: "ring", text: node.errorDescription });
+                            node.isConnected = false;
+                            try {
+                                if (controller) controller.abort();
+                            } catch (abortError) { }
+                            if (node.timerCheckHeartBeat !== null) clearTimeout(node.timerCheckHeartBeat);
+                            node.timerCheckHeartBeat = setTimeout(startAlarmStream, 2000);
+                        };
 
-                        }
-
-                        if (contentType.includes('multipart')) {
+                        if (contentType.toLowerCase().includes('multipart')) {
                             const boundary = extractBoundary(contentType);
                             if (!boundary) {
-                                if (node.debug) RED.log.error("Hikvision-config: Failed to extract boundary from multipart stream");
+                                if (node.debug) RED.log.error("AXPro-config: Failed to extract boundary from multipart stream");
                             }
 
-                            //console.log(`Receiving multipart stream with boundary: ${boundary}`);
-
-                            // Inizializza Dicer per il parsing del multipart
-                            const dicer = new Dicer({ boundary });
-
-                            dicer.on('part', (part) => {
-                                let partData = [];
-                                let extension = 'bin';  // Default estensione per parti non riconosciute
-
-                                part.on('header', (header) => {
-                                    try {
-                                        node.resetHeartBeatTimer();
-                                        // Verifica il tipo di parte
-                                        if (header['content-type'] && (header['content-type'][0].includes('image/jpeg') || header['content-type'][0].includes('image/jpg'))) {
-                                            extension = 'jpg';  // Estensione corretta per immagini JPEG
-                                        } else if (header['content-type'] && header['content-type'][0].includes('image/png')) {
-                                            extension = 'png';  // Estensione corretta per immagini PNG
-                                        } else if (header['content-type'] && header['content-type'][0].includes('application/xml')) {
-                                            extension = 'xml';  // Estensione corretta per immagini PNG
-                                        } else if (header['content-type'] && header['content-type'][0].includes('application/json')) {
-                                            extension = 'json';  // Estensione corretta per immagini PNG
-                                        }
-                                    } catch (error) {
-                                    }
-                                });
-
-                                part.on('data', (data) => {
-                                    try {
-                                        node.resetHeartBeatTimer();
-                                        partData.push(data);  // Aggiungi i chunk di dati alla parte   
-                                    } catch (error) {
-                                    }
-                                });
-
-                                part.on('end', () => {
-                                    try {
-                                        node.resetHeartBeatTimer();
-                                        const fullData = Buffer.concat(partData);  // Unisci i chunk di dati
-                                switch (extension) {
-                                    case 'xml':
-                                        handleXML(fullData);
-                                        break;
-                                    case 'json':
-                                        handleJSON(fullData);
-                                        break;
-                                    case 'jpg':
-                                    case 'png':
-                                        //const filename = generateFilename(extension);
-                                        //saveFile(fullData, filename);  // Salva l'immagine su disco
-                                        handleIMG(fullData, extension);
-                                        break;
-                                    default:
-                                        break;
+                            const alertStreamParser = createAlertStreamParser({
+                                boundary,
+                                scanRawXml: false,
+                                onActivity: () => node.resetHeartBeatTimer(),
+                                onXml: handleXML,
+                                onJson: handleJSON,
+                                onImage: handleIMG,
+                                onUnsupported: (partContentType) => {
+                                    if (node.debug) RED.log.warn("AXPro-config: unsupported stream part content type " + partContentType);
+                                },
+                                onError: (error) => {
+                                    if (node.debug) RED.log.error("AXPro-config: alert stream parser error: " + (error.message || " unknown error"));
                                 }
-                                    } catch (error) {
-                                    }
-                                });
-
-                                part.on('error', (err) => {
-                                    //console.error('Error in part:', err);
-                                });
-
                             });
 
-                            dicer.on('finish', () => {
-                                //console.log('Finished parsing multipart stream.');
-                                node.resetHeartBeatTimer();
-                            });
-
-                            dicer.on('error', (err) => {
-                                if (node.debug) RED.log.error('Error in Dicer:' + err.stack);
-                            });
-
-                            const onRawData = () => {
+                            const onRawData = (chunk) => {
                                 try {
-                                    node.resetHeartBeatTimer();
+                                    alertStreamParser.feed(chunk);
                                 } catch (error) {
+                                    if (node.debug) RED.log.error("AXPro-config: alert stream parser feed error: " + (error.message || " unknown error"));
                                 }
                             };
                             const cleanupRawListener = () => {
                                 res.body.removeListener('data', onRawData);
                             };
                             res.body.on('data', onRawData);
-                            res.body.once('end', cleanupRawListener);
-                            res.body.once('close', cleanupRawListener);
+                            res.body.once('end', () => {
+                                alertStreamParser.flush();
+                                cleanupRawListener();
+                            });
+                            res.body.once('close', () => {
+                                alertStreamParser.flush();
+                                cleanupRawListener();
+                            });
                             res.body.once('error', cleanupRawListener);
 
-                            // Pipa lo stream multipart in Dicer
-                            res.body.pipe(dicer);
-                            res.body.on('error', (err) => {
-                                if (node.debug) RED.log.error("AXPro-config: alertStream body error: " + (err.message || " unknown error"));
-                                node.errorDescription = "alertStream error " + (err.message || " unknown error");
-                                node.setAllClientsStatus({ fill: "red", shape: "ring", text: node.errorDescription });
-                                node.isConnected = false;
-                                try {
-                                    if (controller) controller.abort();
-                                } catch (abortError) { }
-                                if (node.timerCheckHeartBeat !== null) clearTimeout(node.timerCheckHeartBeat);
-                                node.timerCheckHeartBeat = setTimeout(startAlarmStream, 2000);
-                            });
-
                         } else {
-                            //throw new Error('Unsupported Content-Type');
+                            const alertStreamParser = createAlertStreamParser({
+                                boundary: "boundary",
+                                onActivity: () => node.resetHeartBeatTimer(),
+                                onXml: handleXML,
+                                onJson: handleJSON,
+                                onImage: handleIMG,
+                                onUnsupported: (partContentType) => {
+                                    if (node.debug) RED.log.warn("AXPro-config: unsupported stream part content type " + partContentType);
+                                },
+                                onError: (error) => {
+                                    if (node.debug) RED.log.error("AXPro-config: alert stream parser error: " + (error.message || " unknown error"));
+                                }
+                            });
+                            res.body.on('data', (chunk) => alertStreamParser.feed(chunk));
+                            res.body.once('end', () => alertStreamParser.flush());
+                            res.body.once('close', () => alertStreamParser.flush());
                         }
+                        res.body.once('error', handleStreamBodyError);
 
                     } catch (error) {
-                        if (node.debug) RED.log.error("Hikvision-config: streamPipeline: Please be sure to have the latest Node.JS version installed: " + (error.message || " unknown error"));
+                        if (node.debug) RED.log.error("AXPro-config: streamPipeline: Please be sure to have the latest Node.JS version installed: " + (error.message || " unknown error"));
                     }
 
 
@@ -429,36 +388,43 @@ module.exports = (RED) => {
         // ###################################
         async function handleIMG(result, extension) {
             try {
-                if (node.debug) RED.log.error("BANANA SBANANATO IMG -> JSON buffer length " + result.length + " ext " + extension);
+                if (node.debug) RED.log.info("AXPro-config: image part received (" + result.length + " bytes, " + extension + ")");
                 node.nodeClients.forEach(oClient => {
                     oClient.sendPayload({ topic: oClient.topic || "", payload: result, type: 'img', extension: extension });
                 });
             } catch (error) {
-                if (node.debug) RED.log.error("BANANA ERRORE fast-xml-parser(sRet, function (err, result) " + error.message || "");
+                if (node.debug) RED.log.error("AXPro-config: image part handling error: " + (error.message || " unknown error"));
             }
         }
         async function handleXML(result) {
             try {
                 const parser = new XMLParser();
-                const oXML = parser.parse(result);
-                if (node.debug) RED.log.error("BANANA SBANANATO XML -> JSON " + JSON.stringify(oXML));
+                const xmlText = Buffer.isBuffer(result) ? result.toString("utf8") : result.toString();
+                const oXML = parser.parse(xmlText);
+                if (node.debug) {
+                    const alert = oXML?.EventNotificationAlert;
+                    const eventType = alert?.eventType || "unknown";
+                    const eventState = alert?.eventState || "unknown";
+                    RED.log.info("AXPro-config: XML event received (" + eventType + "/" + eventState + ")");
+                }
                 node.nodeClients.forEach(oClient => {
-                    if (oXML !== undefined) oClient.sendPayload({ topic: oClient.topic || "", payload: oXML.EventNotificationAlert, type: 'event' });
+                    if (oXML !== undefined && oXML.EventNotificationAlert !== undefined) oClient.sendPayload({ topic: oClient.topic || "", payload: oXML.EventNotificationAlert, type: 'event' });
                 });
             } catch (error) {
-                if (node.debug) RED.log.error("BANANA ERRORE fast-xml-parser(sRet, function (err, result) " + error.message || "");
+                if (node.debug) RED.log.error("AXPro-config: XML parse/handling error: " + (error.message || " unknown error"));
             }
         }
         async function handleJSON(result) {
             try {
-                const oJSON = JSON.parse(result);
+                const jsonText = Buffer.isBuffer(result) ? result.toString("utf8") : result.toString();
+                const oJSON = JSON.parse(jsonText);
                 if (oJSON !== null && oJSON !== undefined) {
                     node.nodeClients.forEach(oClient => {
                         oClient.sendPayload({ topic: oClient.topic || "", payload: oJSON, type: 'event' });
                     })
                 }
             } catch (error) {
-                if (node.debug) RED.log.error("BANANA ERRORE fast-xml-parser(sRet, function (err, result) " + error.message || "");
+                if (node.debug) RED.log.error("AXPro-config: JSON parse/handling error: " + (error.message || " unknown error"));
             }
         }
         // ###################################

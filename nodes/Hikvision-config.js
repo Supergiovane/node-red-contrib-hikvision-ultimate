@@ -1,6 +1,7 @@
 module.exports = (RED) => {
     const { createHttpClient } = require('./utils/httpClient');
     const hikDiscovery = require('./utils/hikDiscovery');
+    const { createAlertStreamParser } = require('./utils/alertStreamParser');
 
 
     const NONCE_COUNT = '00000001';
@@ -8,7 +9,6 @@ module.exports = (RED) => {
     const { XMLParser } = require("fast-xml-parser");
     const https = require('https');
     const http = require('http');
-    const Dicer = require('dicer');
     const crypto = require('crypto');
 
     // Helper function to parse the WWW-Authenticate header
@@ -110,6 +110,8 @@ module.exports = (RED) => {
         const MAX_ABSOLUTE_EVENT_AGE_MS = 2 * 60 * 1000; // Drop events older than 2 minutes
         const MAX_RELATIVE_BATCH_EVENT_AGE_MS = 20 * 1000; // In large recovered batches, keep only near-tail events
         const MAX_FORWARD_EVENTS_PER_BATCH = 128; // Safety cap to avoid flooding downstream nodes
+        const RECENT_EVENT_DEDUP_TTL_MS = 30 * 1000;
+        const recentEventKeys = new Map();
         node.onLineHikvisionDevicesDiscoverList = null; // 12/01/2023 holds the online devices, used in the HTML
         if (node.debug) RED.log.info("Hikvision-config: initialized " + (node.name || node.host) + " (" + node.protocol + "://" + node.host + ":" + node.port + ")");
 
@@ -283,6 +285,25 @@ module.exports = (RED) => {
             }, effectiveDelayMs);
         }
 
+        function pruneRecentEventKeys(nowMs) {
+            recentEventKeys.forEach((seenMs, key) => {
+                if ((nowMs - seenMs) > RECENT_EVENT_DEDUP_TTL_MS) recentEventKeys.delete(key);
+            });
+        }
+
+        function buildEventDedupKey(eventEntry) {
+            if (!eventEntry || typeof eventEntry !== "object") return "";
+            const channelID = eventEntry.channelID !== undefined ? eventEntry.channelID : eventEntry.dynChannelID;
+            return [
+                eventEntry.dateTime || "",
+                eventEntry.eventType || "",
+                eventEntry.eventState || "",
+                channelID !== undefined ? channelID : "",
+                eventEntry.activePostCount !== undefined ? eventEntry.activePostCount : "",
+                eventEntry.targetID || eventEntry.bkgUrl || eventEntry.picName || eventEntry.eventDescription || ""
+            ].map(value => value.toString()).join("|");
+        }
+
         // Function to continue with authenticated request
         function continueWithAuthenticatedRequest(options) {
             if (node.debug) RED.log.info('Hikvision-config: Starting authenticated stream...');
@@ -374,93 +395,34 @@ module.exports = (RED) => {
                             boundary = "boundary"
                         }
 
-                        // Inizializza Dicer per il parsing del multipart
-                        const dicer = new Dicer({ boundary });
-
-                        dicer.on('part', (part) => {
-                            let partData = [];
-                            let extension = 'bin';  // Default estensione per parti non riconosciute
-
-                            part.on('header', (header) => {
-                                try {
-                                    //console.log('Part headers:', header);
-                                    node.resetHeartBeatTimer();
-                                    // Verifica il tipo di parte
-                                    if (header['content-type'] && (header['content-type'][0].includes('image/jpeg') || header['content-type'][0].includes('image/jpg'))) {
-                                        extension = 'jpg';  // Estensione corretta per immagini JPEG
-                                    } else if (header['content-type'] && header['content-type'][0].includes('image/png')) {
-                                        extension = 'png';  // Estensione corretta per immagini PNG
-                                    } else if (header['content-type'] && header['content-type'][0].includes('application/xml')) {
-                                        extension = 'xml';  // Estensione corretta per immagini PNG
-                                    } else if (header['content-type'] && header['content-type'][0].includes('application/json')) {
-                                        extension = 'json';  // Estensione corretta per immagini PNG
-                                    }
-                                } catch (error) {
-                                    if (node.debug) RED.log.error("Hikvision-config: part header parse error: " + (error.message || " unknown error"));
-                                }
-                            });
-
-                            part.on('data', (data) => {
-                                try {
-                                    node.resetHeartBeatTimer();
-                                    partData.push(data);  // Aggiungi i chunk di dati alla parte
-                                } catch (error) {
-                                    if (node.debug) RED.log.error("Hikvision-config: part data handling error: " + (error.message || " unknown error"));
-                                }
-                            });
-
-                            part.on('end', () => {
-                                try {
-                                    node.resetHeartBeatTimer();
-                                    const fullData = Buffer.concat(partData);  // Unisci i chunk di dati
-                                    switch (extension) {
-                                        case 'xml':
-                                            handleXML(fullData);
-                                            break;
-                                        case 'json':
-                                            handleJSON(fullData);
-                                            break;
-                                        case 'png':
-                                        case 'jpg':
-                                            //const filename = generateFilename(extension);
-                                            //saveFile(fullData, filename);  // Salva l'immagine su disco
-                                            handleIMG(fullData, extension);
-                                            break;
-                                        default:
-                                            if (node.debug) RED.log.warn("Hikvision-config: unsupported multipart part content type");
-                                            break;
-                                    }
-                                } catch (error) {
-                                    if (node.debug) RED.log.error("Hikvision-config: part end handling error: " + (error.message || " unknown error"));
-                                }
-                            });
-                            part.on('error', (err) => {
-                                if (node.debug) RED.log.error("Hikvision-config: Error in multipart part: " + (err.message || " unknown error"));
-                            });
-
-                        });
-
-                        dicer.on('finish', () => {
-                            //console.log('Finished parsing multipart stream.');
-                        });
-
-                        dicer.on('error', (err) => {
-                            if (node.debug) RED.log.error("Hikvision-config: Error in Dicer:" + err.stack);
-                            scheduleReconnect("multipart parser error");
-                        });
-
-                        const onRawData = () => {
-                            try {
-                                node.resetHeartBeatTimer();
-                            } catch (error) {
+                        const alertStreamParser = createAlertStreamParser({
+                            boundary,
+                            onActivity: () => node.resetHeartBeatTimer(),
+                            onXml: handleXML,
+                            onJson: handleJSON,
+                            onImage: handleIMG,
+                            onUnsupported: (contentType) => {
+                                if (node.debug) RED.log.warn("Hikvision-config: unsupported stream part content type " + contentType);
+                            },
+                            onError: (error) => {
+                                if (node.debug) RED.log.error("Hikvision-config: alert stream parser error: " + (error.message || " unknown error"));
                             }
+                        });
+                        const onRawData = (chunk) => {
+                            alertStreamParser.feed(chunk);
                         };
                         const cleanupRawDataListener = () => {
                             res.removeListener('data', onRawData);
                         };
                         res.on('data', onRawData);
-                        res.once('end', cleanupRawDataListener);
-                        res.once('close', cleanupRawDataListener);
+                        res.once('end', () => {
+                            alertStreamParser.flush();
+                            cleanupRawDataListener();
+                        });
+                        res.once('close', () => {
+                            alertStreamParser.flush();
+                            cleanupRawDataListener();
+                        });
                         res.once('error', cleanupRawDataListener);
                         res.once('end', () => {
                             if (node.isClosing) return;
@@ -481,9 +443,21 @@ module.exports = (RED) => {
                             scheduleReconnect("response error");
                         });
 
-                        // Pipa lo stream multipart in Dicer
-                        res.pipe(dicer);
-
+                    } else if (contentType.includes('application/xml') || contentType.includes('text/xml')) {
+                        const alertStreamParser = createAlertStreamParser({
+                            boundary: "boundary",
+                            onActivity: () => node.resetHeartBeatTimer(),
+                            onXml: handleXML,
+                            onJson: handleJSON,
+                            onImage: handleIMG,
+                            onUnsupported: (partContentType) => {
+                                if (node.debug) RED.log.warn("Hikvision-config: unsupported stream part content type " + partContentType);
+                            },
+                            onError: (error) => {
+                                if (node.debug) RED.log.error("Hikvision-config: alert stream parser error: " + (error.message || " unknown error"));
+                            }
+                        });
+                        res.on('data', (chunk) => alertStreamParser.feed(chunk));
                     } else {
                         node.errorDescription = "Unsupported Content-Type: " + contentType;
                         if (node.debug) RED.log.error("Hikvision-config: Unsupported Content-Type " + contentType);
@@ -718,7 +692,7 @@ module.exports = (RED) => {
                 };
 
                 const parser = new XMLParser();
-                const parsedXML = parser.parse(result);
+                const parsedXML = parser.parse(Buffer.isBuffer(result) ? result.toString("utf8") : result.toString());
 
                 // Some devices/firmwares occasionally deliver multiple EventNotificationAlert
                 // entries in a single parsed object/array: normalize to a flat events list.
@@ -786,10 +760,25 @@ module.exports = (RED) => {
                     eventsAfterStaleFilter = eventsAfterStaleFilter.slice(-MAX_FORWARD_EVENTS_PER_BATCH);
                 }
 
+                const nowForDedup = Date.now();
+                let droppedDuplicateEvents = 0;
+                pruneRecentEventKeys(nowForDedup);
+                eventsAfterStaleFilter = eventsAfterStaleFilter.filter((eventEntry) => {
+                    const dedupKey = buildEventDedupKey(eventEntry);
+                    if (!dedupKey) return true;
+                    if (recentEventKeys.has(dedupKey)) {
+                        droppedDuplicateEvents += 1;
+                        return false;
+                    }
+                    recentEventKeys.set(dedupKey, nowForDedup);
+                    return true;
+                });
+
                 if (node.debug && normalizedEvents.length > 1) {
                     RED.log.warn("Hikvision-config: XML batch with " + normalizedEvents.length + " events received");
                     if (droppedStaleEvents > 0) RED.log.warn("Hikvision-config: dropped " + droppedStaleEvents + " stale event(s) from recovered batch");
                     if (droppedOverflowEvents > 0) RED.log.warn("Hikvision-config: dropped " + droppedOverflowEvents + " overflow event(s) from recovered batch");
+                    if (droppedDuplicateEvents > 0) RED.log.warn("Hikvision-config: dropped " + droppedDuplicateEvents + " duplicate event(s) from stream parser fallback");
                     RED.log.warn("Hikvision-config: forwarding " + eventsAfterStaleFilter.length + " event(s) after stale/batch filtering");
                 }
 
@@ -811,7 +800,7 @@ module.exports = (RED) => {
                     })
                 }
             } catch (error) {
-                if (node.debug) RED.log.error("BANANA ERRORE fast-xml-parser(sRet, function (err, result) " + error.message || "");
+                if (node.debug) RED.log.error("Hikvision-config: JSON parse/handling error: " + (error.message || " unknown error"));
             }
         }
         // ###################################
