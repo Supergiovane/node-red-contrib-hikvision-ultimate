@@ -3,6 +3,11 @@
 [![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square)](https://www.paypal.me/techtoday)
 
 <p>
+<b>Version 1.4.1</b> July 2026<br/>
+- DOCS: new Max Supervibe README banner and app-icon logo.<br/>
+</p>
+
+<p>
 <b>Version 1.4.0</b> May 2026<br/>
 - Doorbell node: made status matching case-insensitive (`onCall` and `oncall` now match consistently).<br/>
 - Hikvision config: improved alert stream resiliency by keeping stream state per config node, reconnecting explicitly on stream close/end/error, and adding targeted debug logs for multipart parsing failures.<br/>
