@@ -17,16 +17,26 @@
     },
     "keywords": [
         "node-red",
+        "node-red-contrib",
         "hikvision",
+        "isapi",
         "alarm",
         "camera",
+        "cctv",
+        "nvr",
+        "ptz",
+        "surveillance",
+        "video",
         "radar",
         "ANPR",
         "license plate",
         "doorbell",
         "door intercom",
         "access control terminal",
-        "Ax Pro"
+        "Ax Pro",
+        "security",
+        "iot",
+        "home-automation"
     ],
     "engines": {
         "node": ">=20.18.1"
