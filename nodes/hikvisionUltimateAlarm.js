@@ -317,8 +317,9 @@ module.exports = function (RED) {
 								oRetMsg.channelid = sChannelID; // Channel ID (in case of NVR)
 								oRetMsg.zone = iRegionID; // Zone
 								oRetMsg.description = sEventDesc;
-								// Attach thermometry/TMA details if present (useful for thermal cameras)
+								// Attach thermometry alarm/prealarm details if present (useful for thermal cameras)
 								if (oDetectionRegionEntry && oDetectionRegionEntry.hasOwnProperty("TMA")) oRetMsg.tma = oDetectionRegionEntry.TMA;
+								if (oDetectionRegionEntry && oDetectionRegionEntry.hasOwnProperty("TMPA")) oRetMsg.tmpa = oDetectionRegionEntry.TMPA;
 								node.isNodeInAlarm = bAlarmStatus;
 								logDebug(`Event ${sEventType} state ${bAlarmStatus ? "active" : "inactive"} channel ${sChannelID} zone ${iRegionID}`);
 								break; // Find first occurrence, exit.

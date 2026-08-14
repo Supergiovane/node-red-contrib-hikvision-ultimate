@@ -3,6 +3,11 @@
 [![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square)](https://www.paypal.me/techtoday)
 
 <p>
+<b>Version 1.4.2</b> August 2026<br/>
+- Alarm (Camera Event): added support for Temperature Measurement Precautionary Alarm events (`eventType: TMPA`) and exposes `msg.tmpa` details when provided by the device.<br/>
+</p>
+
+<p>
 <b>Version 1.4.1</b> July 2026<br/>
 - DOCS: new Max Supervibe README banner and app-icon logo.<br/>
 </p>
