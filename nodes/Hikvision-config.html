@@ -20,6 +20,15 @@
         },
         oneditprepare: function () {
             var node = this;
+            if (node._hikvisionConfigCleanup) node._hikvisionConfigCleanup();
+            var closed = false;
+            var infoRequest = null;
+            var discoveryRequest = null;
+            var infoGeneration = 0;
+            var discoveryGeneration = 0;
+            var $connect = $("#getinfocam");
+            var $discover = $("#node-config-input-discover-devices");
+            var $discovered = $("#node-config-input-discovered-device");
 
             const timeoutSelect = $("#node-config-input-streamtimeout");
             timeoutSelect.empty();
@@ -43,12 +52,15 @@
             }
 
             function refreshDiscoveredDevices() {
-                var button = $("#node-config-input-discover-devices");
-                var select = $("#node-config-input-discovered-device");
+                var serial = ++discoveryGeneration;
+                if (discoveryRequest) discoveryRequest.abort();
+                var button = $discover;
+                var select = $discovered;
                 button.val("Searching...");
                 button.prop("disabled", true);
                 select.empty().append('<option value="">Searching Hikvision devices...</option>');
-                $.getJSON("hikvisionUltimateDiscoverOnlineDevices", function (data) {
+                discoveryRequest = $.getJSON("hikvisionUltimateDiscoverOnlineDevices").done(function (data) {
+                    if (closed || serial !== discoveryGeneration) return;
                     discoveredDevices = Array.isArray(data) ? data : [];
                     select.empty();
                     if (discoveredDevices.length === 0) {
@@ -61,73 +73,109 @@
                     discoveredDevices.forEach(function (device, index) {
                         select.append($("<option></option>").attr("value", index).text(device.label || (device.host + ":" + device.port)));
                     });
-                }).fail(function () {
+                }).fail(function (xhr, reason) {
+                    if (closed || serial !== discoveryGeneration || reason === "abort") return;
                     select.empty().append('<option value="">Discovery unavailable</option>');
                     RED.notify("Unable to run Hikvision discovery. Save/deploy once and reopen this config if this is a new install.",
                         { modal: false, fixed: false, type: 'warning' });
                 }).always(function () {
+                    if (closed || serial !== discoveryGeneration) return;
+                    discoveryRequest = null;
                     button.val("Discover");
                     button.prop("disabled", false);
                 });
             }
 
-            $("#node-config-input-discovered-device").change(function () {
+            $discovered.on("change.hikvisionConfig", function () {
                 applyDiscoveredDevice($(this).val());
             });
-            $("#node-config-input-discover-devices").click(refreshDiscoveredDevices);
+            $discover.on("click.hikvisionConfig", refreshDiscoveredDevices);
             refreshDiscoveredDevices();
 
-            $("#getinfocam").click(function () {
-                this.value = "Wait...";
-                this.disabled = true;
-                // If the node is newly created, the backend cannot get the infos, so i must pass each parameter back
-                var sQueryString = "";
-                var jManipulate = {};
-                // Read all data needed to backend to call the camera URL
-                jManipulate.host = $("#node-config-input-host").val();
-                jManipulate.port = $("#node-config-input-port").val();
-                jManipulate.protocol = $("#node-config-input-protocol").val();
-                jManipulate.user = $("#node-config-input-user").val();
-                jManipulate.password = $("#node-config-input-password").val();
-                jManipulate.authentication = $("#node-config-input-authentication").val();
-                sQueryString = "?nodeID=" + node.id + "&params=" + encodeURIComponent(JSON.stringify(jManipulate));
-
-                $.getJSON("hikvisionUltimateGetInfoCam" + sQueryString, (data) => {
-                    this.value = "Connect";
-                    this.disabled = false;
-                    if (!data.hasOwnProperty("DeviceInfo")) {
-                        RED.notify("Problem reading infostream from camera: " + JSON.stringify(data) + ". Check your credentials and connection properties.",
-                            {
-                                modal: false,
-                                fixed: false,
-                                type: 'warning'
-                            });
+            function renderDeviceInfo(data, heading) {
+                if (!data || typeof data.DeviceInfo !== "object" || data.DeviceInfo === null) return false;
+                var target = $("#labeldeviceinfo").empty();
+                target.append($("<b></b>").text(heading));
+                [["Name", "deviceName"], ["Model", "model"], ["Firmware", "firmwareVersion"]].forEach(function (field) {
+                    target.append($("<br>"));
+                    target.append($("<span></span>").text(field[0] + ": "));
+                    target.append($("<b></b>").text(data.DeviceInfo[field[1]] == null ? "" : String(data.DeviceInfo[field[1]])));
+                });
+                return true;
+            }
+            function connectionParameters() {
+                return {
+                    nodeID: node.id,
+                    host: $("#node-config-input-host").val(),
+                    port: $("#node-config-input-port").val(),
+                    protocol: $("#node-config-input-protocol").val(),
+                    user: $("#node-config-input-user").val(),
+                    password: $("#node-config-input-password").val(),
+                    authentication: $("#node-config-input-authentication").val()
+                };
+            }
+            $connect.on("click.hikvisionConfig", function () {
+                var serial = ++infoGeneration;
+                if (infoRequest) infoRequest.abort();
+                $connect.val("Wait...").prop("disabled", true);
+                // The existing password sentinel is resolved against nodeID by the backend.
+                // Credentials stay in the request body, outside URLs and access-log queries.
+                var parameters = JSON.stringify(connectionParameters());
+                function isCurrent() {
+                    return !closed && serial === infoGeneration;
+                }
+                infoRequest = $.ajax({
+                    url: "hikvisionUltimateGetInfoCam",
+                    type: "POST",
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "json",
+                    data: parameters,
+                    timeout: 20000
+                }).done(function (data) {
+                    if (!isCurrent()) return;
+                    if (JSON.stringify(connectionParameters()) !== parameters) {
+                        RED.notify("Connection settings changed while reading device information. Click Connect again to use the current settings.",
+                            { modal: false, fixed: false, type: 'warning' });
                         return;
                     }
-                    $("#node-config-input-name").val(data.DeviceInfo.deviceName);
+                    if (!renderDeviceInfo(data, "DEVICE INFORMATION")) {
+                        RED.notify("The device did not return valid device information. Check your credentials and connection properties.",
+                            { modal: false, fixed: false, type: 'warning' });
+                        return;
+                    }
+                    $("#node-config-input-name").val(data.DeviceInfo.deviceName || "");
                     $("#node-config-input-deviceinfo").val(JSON.stringify(data));
-                    $("#labeldeviceinfo").html("<b>DEVICE INFORMATION</b><br/>Name: <b>" + data.DeviceInfo.deviceName + "</b><br/>Model: <b>" + data.DeviceInfo.model + "</b><br/>Firmware: <b>" + data.DeviceInfo.firmwareVersion + "</b>");
-
-                }).error(function (jqXHR, textStatus, errorThrown) {
-                    RED.notify("THIS IS YOUR FIRST CAMERA NODE EVER. PLEASE SAVE AND DEPLOY. THEN REOPEN THIS WINDOW AGAIN.",
-                        {
-                            modal: false,
-                            fixed: false,
-                            type: 'warning'
-                        })
+                }).fail(function (xhr, reason) {
+                    if (!isCurrent() || reason === "abort") return;
+                    RED.notify("Unable to read device information. Check the device address, credentials and connection properties, then try again.",
+                        { modal: false, fixed: false, type: 'warning' });
+                }).always(function () {
+                    if (!isCurrent()) return;
+                    infoRequest = null;
+                    $connect.val("Connect").prop("disabled", false);
                 });
             });
 
-            var dati = JSON.parse(this.deviceinfo);
-            if (dati !== null) {
-                try {
-                    $("#labeldeviceinfo").html("<b>LAST DEVICE INFORMATION SAVED</b><br/>Name: <b>" + dati.DeviceInfo.deviceName + "</b><br/>Model: <b>" + dati.DeviceInfo.model + "</b><br/>Firmware: <b>" + dati.DeviceInfo.firmwareVersion + "</b>");
-                } catch (error) { }
-            }
+            try {
+                var saved = typeof node.deviceinfo === "string" ? JSON.parse(node.deviceinfo) : node.deviceinfo;
+                renderDeviceInfo(saved, "LAST DEVICE INFORMATION SAVED");
+            } catch (_) { /* An empty or older saved value must not prevent editing the config. */ }
 
+            node._hikvisionConfigCleanup = function () {
+                closed = true;
+                infoGeneration++;
+                discoveryGeneration++;
+                if (infoRequest) infoRequest.abort();
+                if (discoveryRequest) discoveryRequest.abort();
+                [$connect, $discover, $discovered].forEach(function (element) { element.off(".hikvisionConfig"); });
+                delete node._hikvisionConfigCleanup;
+            };
         },
         oneditsave: function () {
-
+            if (this._hikvisionConfigCleanup) this._hikvisionConfigCleanup();
+        },
+        oneditcancel: function () {
+            if (this._hikvisionConfigCleanup) this._hikvisionConfigCleanup();
         },
         label: function () {
             return typeof this.name === undefined ? (this.host + ":" + this.port) : this.name + " " + (this.host + ":" + this.port);

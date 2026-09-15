@@ -45,82 +45,453 @@
 		},
 		oneditprepare: function () {
 			var node = this;
+			if (node._alarmDiscoveryCleanup) node._alarmDiscoveryCleanup();
+			var $event = $("#node-input-reactto");
+			var $channel = $("#node-input-channelID");
+			var $zone = $("#node-input-filterzone");
+			var $metadataStatus = $("#node-alarm-metadata-status");
+			var $server = $("#node-input-server");
+			var $device = $("#node-input-devicetype");
+			var $refresh = $("#node-alarm-discovery-refresh");
+			var $status = $("#node-alarm-discovery-status");
+			var $custom = $("#node-alarm-custom-event");
+			var $customBox = $("#node-alarm-custom-event-box");
+			var $useCustom = $("#node-alarm-use-custom-event");
+			var customEventOption = "#custom-event-id";
+			var customMode = false;
+			var $duration = $("#node-input-alarmfilterduration");
+			var catalog = [];
+			$event.find("option").each(function () {
+				catalog.push({ id: this.value, label: $(this).text() });
+			});
+			// Most ISAPI aliases are already comma-separated in the catalog.
+			// Keep single-ID defaults and existing flow values compatible too.
+			// Behavioral tests check this catalog against alarmEventAliases.js.
+			var supplementalEventAliases = {
+				vmd: ["motionDetection"],
+				shelteralarm: ["tamperDetection"],
+				// Older catalogs accidentally included an invisible U+200B here.
+				AID_congestion: ["AID_\u200bcongestion"],
+				AID_construction: ["AID_\u200bconstruction"],
+				AID_trafficAccident: ["AID_\u200btrafficAccident"],
+				AID_fogDetection: ["AID_\u200bfogDetection"],
+				TFS_wrongDirection: ["TFS_\u200bwrongDirection"]
+			};
+			// Offer recognition events in the dedicated Intelligent Event node.
+			// This only filters editor suggestions: saved flows and custom IDs
+			// retain their runtime behavior. Match explicit event IDs, never labels
+			// or target metadata (e.g. a line alarm detecting a person stays here).
+			var recognitionEvents = Object.create(null);
+			[
+				"facedetection", "faceCapture", "faceSnap", "faceRecognition", "faceDetect",
+				"peopleDetection", "humanDetection", "personDetection", "personRecognition",
+				"targetCapture", "humanRecognition", "ANPR", "vehicleDetection",
+				"vehicleRecognition", "vehicleCapture", "vehicleRcogResult", "vehicleControl",
+				"alarmResult", "faceContrast", "mixedTargetDetection", "MTD_face", "MTD_human",
+				"MTD_vehicle", "MTD_nonMotor", "faceSnapModeling", "HVTVehicleDetection",
+				"PictureCaptureComparision", "animalDetection", "animalRecognition",
+				"animalCapture", "zoologyDetection"
+			].forEach(function (id) { recognitionEvents[id.toLowerCase()] = true; });
+			function isRecognitionEvent(value) {
+				return typeof value === "string" && value.split(",").some(function (id) { return recognitionEvents[id.trim().toLowerCase()] === true; });
+			}
+			var currentDevice = String(node.devicetype == null ? 0 : node.devicetype);
+			var selectedByDevice = Object.create(null);
+			selectedByDevice[currentDevice] = node.reactto || "vmd";
+			var selectedChannel = String(node.channelID == null ? "0" : node.channelID);
+			var selectedZone = String(node.filterzone == null ? "0" : node.filterzone);
+			var metadata = { channels: [], zones: [] };
+			var metadataRequest = null;
+			var metadataGeneration = 0;
+			var metadataPending = false;
+			var metadataForce = false;
+			var metadataAmbiguousChannels = false;
+			var metadataAmbiguousScenes = false;
+			var capabilitiesLoading = false;
+			var discovery = { events: [], channels: [] };
+			var request = null;
+			var generation = 0;
+			var closed = false;
 
-			// 28/01/2021 Filter events based on device type
-			// #################################################################
-			var alarmList = $("#node-input-reactto").html();
-			function filterReactTo(_val) {
-				let textFilter = "";
-				switch (Number(_val)) {
-					case 0:
-						textFilter = "(Camera/NVR)";
-						break;
-					case 1:
-						textFilter = "(Security system)";
-						break;
-					case 2:
-						textFilter = "(Radar)";
-						break;
-					default:
-						break;
+			function appendOption(parent, id, label, title) {
+				var option = $("<option></option>").val(id).text(label);
+				if (title) option.attr("title", title);
+				parent.append(option);
+			}
+			function group(parent, label) {
+				var result = $("<optgroup></optgroup>").attr("label", label);
+				parent.append(result);
+				return result;
+			}
+			function renderEvents() {
+				var wanted = selectedByDevice[currentDevice];
+				var marker = ["(Camera/NVR)", "(Security system)", "(Radar)"][Number(currentDevice)];
+				var wantedAliases = typeof wanted === "string" ? wanted.split(",").map(function (id) { return id.trim().toLowerCase(); }) : [];
+				var entries = catalog.filter(function (entry) { return entry.label.indexOf(marker) !== -1; }).map(function (entry) {
+					var names = entry.id.split(",").concat(supplementalEventAliases[entry.id] || []).map(function (id) { return id.trim().toLowerCase(); });
+					// A saved alias (or list within one group) uses the friendly option
+					// without changing its exact stored value or adding a duplicate.
+					var preserveSaved = wantedAliases.length && wantedAliases.every(function (id) { return id && names.indexOf(id) !== -1; });
+					return { id: preserveSaved ? wanted : entry.id, label: entry.label, aliases: names };
+				});
+				var aliases = Object.create(null);
+				var available = Object.create(null);
+				var discoveredIDs = Object.create(null);
+				var supported = [];
+				var observed = [];
+				entries.forEach(function (entry) {
+					entry.aliases.forEach(function (alias) { aliases[alias] = entry; });
+				});
+				if (currentDevice === "0") discovery.events.forEach(function (event) {
+					if (!event || typeof event.id !== "string" || !event.id || event.id.length > 512) return;
+					if (isRecognitionEvent(event.id)) return;
+					if (selectedChannel !== "0" && Array.isArray(event.channels) && event.channels.length &&
+						!event.channels.some(function (id) { return String(id) === selectedChannel; })) return;
+					var eventKey = event.id.toLowerCase();
+					var known = aliases[eventKey];
+					var savedUnknown = !known && wantedAliases.length && wantedAliases.every(function (id) { return id === eventKey; });
+					var id = known ? known.id : (discoveredIDs[eventKey] || (savedUnknown ? wanted : event.id));
+					discoveredIDs[eventKey] = id;
+					var entry = available[id];
+					if (!entry) {
+						entry = available[id] = {
+							id: id,
+							label: known ? known.label : (event.label && event.label !== id ? event.label + " [" + id + "]" : id),
+							capability: false, observed: false, hasState: false
+						};
+					}
+					var sources = Array.isArray(event.sources) ? event.sources : [];
+					entry.capability = entry.capability || sources.indexOf("capability") !== -1;
+					entry.observed = entry.observed || sources.indexOf("observed") !== -1;
+					entry.hasState = entry.hasState || event.hasState === true;
+				});
+				Object.keys(available).forEach(function (id) {
+					var entry = available[id];
+					if (entry.capability) supported.push(entry);
+					else if (entry.observed) observed.push(entry);
+					else delete available[id];
+				});
+				$event.empty();
+				function addDiscovered(items, label) {
+					if (!items.length) return;
+					var parent = group($event, label);
+					items.sort(function (a, b) { return a.label.localeCompare(b.label); }).forEach(function (entry) {
+						var title = entry.id;
+						if (entry.capability && entry.observed) title += " — also observed in the event stream";
+						if (entry.observed && !entry.hasState) title += " — no active/inactive alarm state observed";
+						appendOption(parent, entry.id, entry.label, title);
+					});
 				}
-				$("#node-input-reactto").html(alarmList);
-				$('#node-input-reactto option').each(function () {
-					if ($(this).text().indexOf(textFilter) == -1) {
-						$(this).remove();
+				addDiscovered(supported, "Supported by the device");
+				addDiscovered(observed, "Observed in the event stream");
+				if (currentDevice !== "0" && entries.length) {
+					var parent = group($event, "Device event catalog");
+					entries.forEach(function (entry) { appendOption(parent, entry.id, entry.label, entry.id); available[entry.id] = entry; });
+				}
+				if (!wanted && entries.length) wanted = entries[0].id;
+				// Keep only the saved/custom selection when it was not discovered.
+				// The catalog supplies its label and aliases without adding extra choices.
+				if (wanted && !available[wanted]) {
+					var current = entries.find(function (entry) { return entry.id === wanted; });
+					appendOption(group($event, "Current / custom event"), wanted, current ? current.label : wanted,
+						isRecognitionEvent(wanted) ? "Current selection — use Intelligent Event for recognition events" : "Current selection");
+				}
+				appendOption($event, customEventOption, "CUSTOM EVENT ID");
+				$event.val(customMode ? customEventOption : wanted);
+				$customBox.toggle(customMode);
+				selectedByDevice[currentDevice] = wanted;
+			}
+			function renderChannels() {
+				$channel.empty();
+				appendOption($channel, "0", "All channels");
+				var channels = Object.create(null);
+				if (currentDevice === "0") discovery.channels.forEach(function (channel) {
+					if (!channel || !/^[1-9][0-9]*$/.test(String(channel.id))) return;
+					channels[String(channel.id)] = channel;
+				});
+				if (currentDevice === "0") metadata.channels.forEach(function (channel) {
+					if (!channel || !/^[1-9][0-9]*$/.test(String(channel.id))) return;
+					var id = String(channel.id);
+					var previous = channels[id];
+					channels[id] = { id: id, name: channel.name || (previous && previous.name) };
+				});
+				var ids = Object.keys(channels).sort(function (a, b) { return Number(a) - Number(b); });
+				if (ids.length) {
+					var discovered = group($channel, "Discovered channels");
+					ids.forEach(function (id) {
+						var channel = channels[id];
+						appendOption(discovered, id, "Channel " + id + (channel.name ? " — " + channel.name : ""));
+					});
+				}
+				if (selectedChannel !== "0" && !channels[selectedChannel]) {
+					appendOption(group($channel, "Current selection"), selectedChannel, "Channel " + selectedChannel + " (current selection)");
+				}
+				$channel.val(selectedChannel);
+			}
+			function eventAliases(value) {
+				var names = String(value || "").split(",").map(function (id) { return id.trim().toLowerCase(); }).filter(Boolean);
+				catalog.forEach(function (entry) {
+					var aliases = entry.id.split(",").concat(supplementalEventAliases[entry.id] || []).map(function (id) { return id.trim().toLowerCase(); });
+					if (aliases.some(function (id) { return names.indexOf(id) !== -1; })) {
+						aliases.forEach(function (id) { if (names.indexOf(id) === -1) names.push(id); });
 					}
 				});
-				$("#node-input-reactto").val(node.reactto);
+				return names;
 			}
-			$("#node-input-devicetype").change(function (e) {
-				filterReactTo(this.value);
-				if (this.value == 0) {
-					$("#ui_alarmfilterduration").hide();
-					$("#ui_alarmfilterperiod").hide();
-				} else {
-					$("#ui_alarmfilterduration").show();
-					$("#ui_alarmfilterperiod").show();
+			function renderZones() {
+				var zones = Object.create(null);
+				var ambiguousZoneIDs = Object.create(null);
+				var channelIDs = Object.create(null);
+				var allowedEvents = eventAliases(selectedByDevice[currentDevice]);
+				metadataAmbiguousChannels = false;
+				metadataAmbiguousScenes = false;
+				if (currentDevice === "0" && !customMode) {
+					metadata.channels.concat(discovery.channels).forEach(function (channel) {
+						if (channel && /^[1-9][0-9]*$/.test(String(channel.id))) channelIDs[String(Number(channel.id))] = true;
+					});
+					metadata.zones.forEach(function (zone) {
+						if (zone && /^[1-9][0-9]*$/.test(String(zone.channelID))) channelIDs[String(Number(zone.channelID))] = true;
+					});
+					metadataAmbiguousChannels = selectedChannel === "0" && Object.keys(channelIDs).length > 1;
+					if (!metadataAmbiguousChannels) metadata.zones.forEach(function (zone) {
+						if (!zone || !/^[1-9][0-9]*$/.test(String(zone.id)) || !/^[1-9][0-9]*$/.test(String(zone.channelID))) return;
+						if (selectedChannel !== "0" && Number(zone.channelID) !== Number(selectedChannel)) return;
+						if (!zone.eventType || !eventAliases(zone.eventType).some(function (id) { return allowedEvents.indexOf(id) !== -1; })) return;
+						var id = String(zone.id);
+						if (ambiguousZoneIDs[id]) return;
+						var previous = zones[id];
+						if (previous && String(previous.sceneID == null ? "" : previous.sceneID) !== String(zone.sceneID == null ? "" : zone.sceneID)) {
+							delete zones[id];
+							ambiguousZoneIDs[id] = true;
+							metadataAmbiguousScenes = true;
+							return;
+						}
+						zones[id] = zone;
+					});
 				}
-
+				$zone.empty();
+				appendOption($zone, "0", "All zones");
+				var ids = Object.keys(zones).sort(function (a, b) { return Number(a) - Number(b); });
+				if (ids.length) {
+					var configured = group($zone, "Configured regions / rules");
+					ids.forEach(function (id) {
+						var zone = zones[id];
+						var scene = zone.sceneID == null || zone.sceneID === "" ? "" : " (scene " + String(zone.sceneID) + ")";
+						appendOption(configured, id, "Zone " + id + (zone.name ? " — " + zone.name : "") + scene);
+					});
+				}
+				if (selectedZone !== "0" && !zones[selectedZone]) {
+					appendOption(group($zone, "Current selection"), selectedZone, "Zone " + selectedZone + " (current selection)");
+				}
+				$zone.val(selectedZone);
+			}
+			function cancelMetadata() {
+				metadataGeneration++;
+				var pending = metadataRequest;
+				metadataRequest = null;
+				if (pending) pending.abort();
+			}
+			function showMetadataStatus(result) {
+				var messages = {
+					ok: "Channel and zone names updated.",
+					cached: "Showing cached channel and zone names.",
+					partial: "Some channel or zone names are unavailable. Current selections are preserved.",
+					unavailable: "Names are unavailable. Current selections are preserved."
+				};
+				var message = messages[result.status] || messages.partial;
+				if (metadataAmbiguousChannels) message += " Select a channel to see its region/rule names.";
+				if (metadataAmbiguousScenes) message += " Conflicting zone names across scenes are omitted.";
+				if (Array.isArray(result.warnings) && result.warnings.length) message += " " + result.warnings.map(function (warning) { return String(warning); }).join(" ");
+				$metadataStatus.text(message);
+			}
+			function requestMetadata() {
+				if (closed || capabilitiesLoading || !metadataPending || currentDevice !== "0" || customMode) return;
+				var serverID = String($server.val() || "");
+				if (!serverID || serverID === "_ADD_") return;
+				var serial = metadataGeneration;
+				var channelID = selectedChannel;
+				var eventType = selectedByDevice[currentDevice];
+				if (!eventType || eventType === customEventOption) return;
+				var data = { nodeID: serverID, channelID: channelID, eventType: eventType };
+				if (metadataForce) data.refresh = "true";
+				metadataPending = false;
+				metadataForce = false;
+				$metadataStatus.text("Reading channel and zone names…");
+				function isCurrent() {
+					return !closed && serial === metadataGeneration && currentDevice === "0" && !customMode &&
+						String($server.val() || "") === serverID && selectedChannel === channelID && selectedByDevice[currentDevice] === eventType;
+				}
+				metadataRequest = $.ajax({
+					url: "hikvisionUltimateAlarmMetadata", type: "GET", dataType: "json", data: data, timeout: 45000
+				}).done(function (result) {
+					if (!isCurrent()) return;
+					if (!result || !Array.isArray(result.channels) || !Array.isArray(result.zones)) {
+						showMetadataStatus({ status: "unavailable" });
+						return;
+					}
+					metadata = result;
+					renderChannels();
+					renderZones();
+					showMetadataStatus(result);
+				}).fail(function (xhr, reason) {
+					if (!isCurrent() || reason === "abort") return;
+					showMetadataStatus({ status: "unavailable" });
+				}).always(function () { if (isCurrent()) metadataRequest = null; });
+			}
+			function queueMetadata(force) {
+				cancelMetadata();
+				metadata = { channels: [], zones: [] };
+				metadataPending = true;
+				metadataForce = metadataForce || force;
+				renderChannels();
+				renderZones();
+				$metadataStatus.toggle(currentDevice === "0");
+				if (currentDevice !== "0" || customMode) {
+					metadataPending = false;
+					$metadataStatus.text("");
+					return;
+				}
+				var serverID = String($server.val() || "");
+				if (!serverID || serverID === "_ADD_") {
+					metadataPending = false;
+					$metadataStatus.text("Select and deploy a server to read channel and zone names.");
+					return;
+				}
+				$metadataStatus.text("Reading channel and zone names…");
+				requestMetadata();
+			}
+			function cancelRequest() {
+				generation++;
+				capabilitiesLoading = false;
+				var pending = request;
+				request = null;
+				if (pending) pending.abort();
+			}
+			function showStatus(result) {
+				var messages = {
+					ok: "Device capabilities updated. Supported does not mean enabled.",
+					partial: "Discovery is partial. The current selection is preserved.",
+					cached: "Showing cached capabilities and observed events.",
+					unavailable: "Device discovery is unavailable. The current selection is preserved."
+				};
+				var message = messages[result.status] || messages.partial;
+				if (Array.isArray(result.warnings) && result.warnings.length) message += " " + result.warnings.map(function (warning) { return String(warning); }).join(" ");
+				$status.text(message);
+			}
+			function loadDiscovery(force, keepChannels) {
+				cancelRequest();
+				capabilitiesLoading = true;
+				metadataForce = !!force;
+				queueMetadata(force);
+				var serial = generation;
+				var serverID = String($server.val() || "");
+				var channelID = selectedChannel;
+				if (!force) {
+					discovery = { events: [], channels: keepChannels ? discovery.channels : [] };
+					renderEvents();
+					renderChannels();
+				}
+				$("#node-alarm-discovery").toggle(currentDevice === "0");
+				if (currentDevice !== "0") { capabilitiesLoading = false; return; }
+				$refresh.prop("disabled", !serverID || serverID === "_ADD_");
+				if (!serverID || serverID === "_ADD_") {
+					capabilitiesLoading = false;
+					$status.text("Select and deploy a server to discover its available events and channels.");
+					return;
+				}
+				$status.text("Reading device capabilities…");
+				var data = { nodeID: serverID, channelID: channelID };
+				if (force) data.refresh = "true";
+				function isCurrent() {
+					return !closed && serial === generation && currentDevice === "0" &&
+						String($server.val() || "") === serverID && selectedChannel === channelID;
+				}
+				request = $.ajax({
+					url: "hikvisionUltimateAlarmCapabilities", type: "GET", dataType: "json", data: data, timeout: 45000
+				}).done(function (result) {
+					if (!isCurrent()) return;
+					if (!result || !Array.isArray(result.events) || !Array.isArray(result.channels)) {
+						showStatus({ status: "unavailable" });
+						return;
+					}
+					discovery = result;
+					renderEvents();
+					renderChannels();
+					showStatus(result);
+				}).fail(function (xhr, reason) {
+					if (!isCurrent() || reason === "abort") return;
+					$status.text(xhr.status === 404 ?
+						"Deploy this server before discovering capabilities. The current selection is preserved." :
+						"Cannot read device capabilities. The current selection is preserved.");
+				}).always(function () {
+					if (!isCurrent()) return;
+					request = null;
+					capabilitiesLoading = false;
+					requestMetadata();
+				});
+			}
+			function updateFilters() {
+				var enabled = currentDevice !== "0";
+				$("#ui_alarmfilterduration").toggle(enabled);
+				$("#ui_alarmfilterperiod").toggle(enabled && Number($duration.val()) !== 0);
+			}
+			$event.on("change.alarmDiscovery", function () {
+				customMode = $event.val() === customEventOption;
+				if (!customMode) selectedByDevice[currentDevice] = $event.val();
+				else if (!$custom.val() && !catalog.some(function (entry) { return entry.id === selectedByDevice[currentDevice]; })) {
+					$custom.val(selectedByDevice[currentDevice] || "");
+				}
+				$customBox.toggle(customMode);
+				$("#node-alarm-custom-status").text("");
+				queueMetadata(false);
 			});
-			filterReactTo($("#node-input-devicetype :selected").val());
-			// #################################################################
-
-			// 15/01/2021 Hide parts of the ui
-			// ##########################################################
-			if (node.alarmfilterduration == 0) {
-				$("#ui_alarmfilterperiod").hide();
-			} else {
-				$("#ui_alarmfilterperiod").show();
-			}
-			$("#node-input-alarmfilterduration").change(function (e) {
-				if ($("#node-input-alarmfilterduration").val() == 0) {
-					$("#ui_alarmfilterperiod").hide();
-				} else {
-					$("#ui_alarmfilterperiod").show();
-				}
-				if ($("#node-input-devicetype").val() == 0) {
-					$("#ui_alarmfilterduration").hide();
-					$("#ui_alarmfilterperiod").hide();
-				}
-
+			$zone.on("change.alarmDiscovery", function () { selectedZone = String($zone.val() || "0"); });
+			$channel.on("change.alarmDiscovery", function () {
+				selectedChannel = String($channel.val() || "0");
+				loadDiscovery(false, true);
 			});
-			// ##########################################################
-
-			// 29/01/2021 Hide the filter duration if the devicetype is not a security system
-			// ##########################################################
-			if (this.devicetype == 0) {
-				$("#ui_alarmfilterduration").hide();
-				$("#ui_alarmfilterperiod").hide();
-			} else {
-				$("#ui_alarmfilterduration").show();
-				$("#ui_alarmfilterperiod").show();
-			}
-			// ##########################################################
-
+			$server.on("change.alarmDiscovery", function () { loadDiscovery(false, false); });
+			$device.on("change.alarmDiscovery", function () {
+				customMode = false;
+				currentDevice = String($device.val());
+				loadDiscovery(false, false);
+				updateFilters();
+			});
+			$refresh.on("click.alarmDiscovery", function (event) { event.preventDefault(); loadDiscovery(true, true); });
+			$useCustom.on("click.alarmDiscovery", function (event) {
+				event.preventDefault();
+				if (!customMode) return;
+				var value = String($custom.val() || "").trim();
+				if (!value || value.length > 512 || !/^[A-Za-z0-9_:-]+(?:,[A-Za-z0-9_:-]+)*$/.test(value)) {
+					$("#node-alarm-custom-status").text("Enter an event ID, or comma-separated IDs without spaces.");
+					return;
+				}
+				selectedByDevice[currentDevice] = value;
+				customMode = false;
+				renderEvents();
+				$custom.val("");
+				$("#node-alarm-custom-status").text("Selected custom event: " + value);
+				queueMetadata(false);
+			});
+			$duration.on("change.alarmDiscovery", updateFilters);
+			node._alarmDiscoveryCleanup = function () {
+				closed = true;
+				// The menu action is editor-only. Until Use event is clicked, keep
+				// the actual selection when Node-RED saves the form.
+				if (customMode) $event.val(selectedByDevice[currentDevice]);
+				cancelRequest();
+				cancelMetadata();
+				[$event, $channel, $zone, $server, $device, $refresh, $custom, $useCustom, $duration].forEach(function (element) { element.off(".alarmDiscovery"); });
+				delete node._alarmDiscoveryCleanup;
+			};
+			updateFilters();
+			loadDiscovery(false, false);
 		},
 		oneditsave: function () {
-
+			if (this._alarmDiscoveryCleanup) this._alarmDiscoveryCleanup();
+		},
+		oneditcancel: function () {
+			if (this._alarmDiscoveryCleanup) this._alarmDiscoveryCleanup();
 		}
 	});
 
@@ -242,13 +613,13 @@
 			<option value="intersectionAnalysis">Intersection analysis (Camera/NVR)</option>
 			<option value="AID_abandonedObject">Thrown object in traffic events (Camera/NVR)</option>
 			<option value="AID_pedestrian">Pedestrian detection in traffic events (Camera/NVR)</option>
-			<option value="AID_​congestion">Congestion detection in traffic events (Camera/NVR)</option>
+			<option value="AID_congestion">Congestion detection in traffic events (Camera/NVR)</option>
 			<option value="AID_roadBlock">Roadblock detection in traffic events (Camera/NVR)</option>
-			<option value="AID_​construction">Construction detection in traffic events (Camera/NVR)</option>
-			<option value="AID_​trafficAccident">Traffic accident detection in traffic events (Camera/NVR)</option>
-			<option value="AID_​fogDetection">Fog detection in traffic events (Camera/NVR)</option>
+			<option value="AID_construction">Construction detection in traffic events (Camera/NVR)</option>
+			<option value="AID_trafficAccident">Traffic accident detection in traffic events (Camera/NVR)</option>
+			<option value="AID_fogDetection">Fog detection in traffic events (Camera/NVR)</option>
 			<option value="TFS_illegalParking">Illegal parking of enforcement events (Camera/NVR)</option>
-			<option value="TFS_​wrongDirection">Wrong-way driving of enforcement events (Camera/NVR)</option>
+			<option value="TFS_wrongDirection">Wrong-way driving of enforcement events (Camera/NVR)</option>
 			<option value="TFS_crossLane">Driving on lane line of enforcement events (Camera/NVR)</option>
 			<option value="TFS_laneChange">Lane change of enforcement events (Camera/NVR)</option>
 			<option value="TFS_vehicleExist">Vehicle existing of enforcement events (Camera/NVR)</option>
@@ -277,61 +648,24 @@
         <label for="node-input-channelID"><i class="fa fa-tasks"></i> React to Channel</label>
 		<select id="node-input-channelID">
 			<option value="0">All channels</option>
-			<option value="1">Channel 1</option>
-			<option value="2">Channel 2</option>
-			<option value="3">Channel 3</option>
-			<option value="4">Channel 4</option>
-			<option value="5">Channel 5</option>
-			<option value="6">Channel 6</option>
-			<option value="7">Channel 7</option>
-			<option value="8">Channel 8</option>
-			<option value="9">Channel 9</option>
-			<option value="10">Channel 10</option>
-			<option value="11">Channel 11</option>
-			<option value="12">Channel 12</option>
-			<option value="13">Channel 13</option>
-			<option value="14">Channel 14</option>
-			<option value="15">Channel 15</option>
-			<option value="16">Channel 16</option>
-			<option value="17">Channel 17</option>
-			<option value="18">Channel 18</option>
-			<option value="19">Channel 19</option>
-			<option value="20">Channel 20</option>
-			<option value="21">Channel 21</option>
-			<option value="22">Channel 22</option>
-			<option value="23">Channel 23</option>
-			<option value="24">Channel 24</option>
-			<option value="25">Channel 25</option>
-			<option value="26">Channel 26</option>
-			<option value="27">Channel 27</option>
-			<option value="28">Channel 28</option>
-			<option value="29">Channel 29</option>
-			<option value="30">Channel 30</option>
-			<option value="31">Channel 31</option>
-			<option value="32">Channel 32</option>
 		</select>
+	</div>
+	<div class="form-row" id="node-alarm-discovery">
+		<button type="button" class="red-ui-button" id="node-alarm-discovery-refresh"><i class="fa fa-refresh"></i> Refresh from device</button>
+		<div id="node-alarm-discovery-status" role="status" aria-live="polite" style="margin-top:8px"></div>
+	</div>
+	<div class="form-row" id="node-alarm-custom-event-box" style="display:none">
+		<label for="node-alarm-custom-event">Custom event</label>
+		<input type="text" id="node-alarm-custom-event" placeholder="Event ID or comma-separated aliases" style="width:49%" maxlength="512">
+		<button type="button" class="red-ui-button" id="node-alarm-use-custom-event">Use event</button>
+		<div id="node-alarm-custom-status" role="status" aria-live="polite"></div>
 	</div>
 	<div class="form-row">
         <label for="node-input-filterzone"><i class="fa fa-tasks"></i> React to Zone </label>
 		<select id="node-input-filterzone">
 			<option value="0">All zones</option>
-			<option value="1">Zone 1</option>
-			<option value="2">Zone 2</option>
-			<option value="3">Zone 3</option>
-			<option value="4">Zone 4</option>
-			<option value="5">Zone 5</option>
-			<option value="6">Zone 6</option>
-			<option value="7">Zone 7</option>
-			<option value="8">Zone 8</option>
-			<option value="9">Zone 9</option>
-			<option value="10">Zone 10</option>
-			<option value="11">Zone 11</option>
-			<option value="12">Zone 12</option>
-			<option value="13">Zone 13</option>
-			<option value="14">Zone 14</option>
-			<option value="15">Zone 15</option>
-			<option value="16">Zone 16</option>
 		</select>
+		<div id="node-alarm-metadata-status" role="status" aria-live="polite" style="margin-top:8px;font-size:0.9em"></div>
 		<div class="form-tips" style="margin-top:11px">
 			The above option allow the node to react to alarms coming from one of these events. For NVR, the Channel represents the CAMERA number, while for Cameras, represents the sensor number (by default 1, if the camera has only one image sensor). The zone represents the alarm zone for RADARS AND SECURITY SYSTEM, otherwise the region (for example the intrusion alert region number)
 		 </div>
@@ -358,7 +692,7 @@
 			<option value=13>more than 13 Seconds</option>
 			<option value=14>more than 14 Seconds</option>
 			<option value=15>more than 15 Seconds</option>
-			<option value=16>more than 16 Seconds</option
+			<option value=16>more than 16 Seconds</option>
 			<option value=17>more than 17 Seconds</option>
 			<option value=18>more than 18 Seconds</option>
 			<option value=19>more than 19 Seconds</option>
@@ -383,7 +717,7 @@
 			<option value=13>13 Seconds</option>
 			<option value=14>14 Seconds</option>
 			<option value=15>15 Seconds</option>
-			<option value=16>16 Seconds</option
+			<option value=16>16 Seconds</option>
 			<option value=17>17 Seconds</option>
 			<option value=18>18 Seconds</option>
 			<option value=19>19 Seconds</option>

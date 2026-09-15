@@ -1,6 +1,8 @@
 
 
 module.exports = function (RED) {
+	const { isSameEventType } = require('./utils/alarmEventAliases');
+	const hasOwn = (object, key) => Object.prototype.hasOwnProperty.call(object, key);
 	function hikvisionUltimateAlarm(config) {
 		RED.nodes.createNode(this, config);
 		var node = this;
@@ -10,13 +12,16 @@ module.exports = function (RED) {
 		const logDebug = (text) => {
 			if (isDebug) RED.log.info(`hikvisionUltimateAlarm: ${text}`);
 		};
-		node.reactto = (config.reactto === null || config.reactto === undefined) ? "vmd" : config.reactto.toLowerCase();// Rect to alarm coming from...
+		node.reactto = (config.reactto === null || config.reactto === undefined) ? "vmd" : String(config.reactto).toLowerCase();// Rect to alarm coming from...
 		node.filterzone = config.filterzone || "0";// Rect to alarm coming from zone...
 		node.channelID = config.channelID || "0";// Rect to alarm coming from channelID...
 		node.currentAlarmMSG = {}; // Stores the current alarm object
 		node.total_alarmfilterduration = 0; // stores the total time an alarm has been true in the alarmfilterperiod time.
 		node.isNodeInAlarm = false; // Stores the current state of the filtered alarm.
 		node.isRunningTimerFilterPeriod = false; // Indicates wether the period timer is running;
+		node.timer_alarmfilterduration = null;
+		node.timer_alarmfilterperiod = null;
+		let isClosing = false;
 		node.alarmfilterduration = config.alarmfilterduration !== undefined ? Number(config.alarmfilterduration) : 0;
 		node.alarmfilterperiod = config.alarmfilterperiod !== undefined ? Number(config.alarmfilterperiod) : 0;
 		node.devicetype = config.devicetype !== undefined ? config.devicetype : 0;
@@ -35,9 +40,9 @@ module.exports = function (RED) {
 
 		// 29/01/2021 start the timer that counts the time the alarm has been true
 		// ###################################
-		startTimerAlarmFilterDuration = () => {
+		const startTimerAlarmFilterDuration = () => {
 			node.timer_alarmfilterduration = setInterval(() => {
-				if (node.currentAlarmMSG.hasOwnProperty("payload")) {
+				if (hasOwn(node.currentAlarmMSG, "payload")) {
 					if (node.currentAlarmMSG.payload === true) {
 						node.total_alarmfilterduration += 1;
 						if (node.isRunningTimerFilterPeriod) node.setNodeStatus({ fill: "red", shape: "ring", text: "Zone " + node.currentAlarmMSG.zone + " pre alert count " + node.total_alarmfilterduration });
@@ -58,7 +63,7 @@ module.exports = function (RED) {
 			}, 1000);
 		}
 		// 29/01/2021 This timer resets the node.total_alarmfilterduration
-		startTimerAlarmFilterPeriod = () => {
+		const startTimerAlarmFilterPeriod = () => {
 			//node.setNodeStatus({ fill: "yellow", shape: "ring", text: "START TimerFilterPeriod" });
 			node.isRunningTimerFilterPeriod = true;
 			node.total_alarmfilterduration = 0;
@@ -74,23 +79,29 @@ module.exports = function (RED) {
 
 
 		// Called from config node, to send output to the flow
-		node.sendPayload = (_msg, extension = '') => {
-			if (_msg === null || _msg === undefined) return;
+		node.sendPayload = (_msg, extension = '', depth = 0) => {
+			if (isClosing || depth > 8 || _msg === null || typeof _msg !== 'object') return;
 			_msg.topic = node.topic;
-			if (_msg.hasOwnProperty("errorDescription")) {
+			if (hasOwn(_msg, "errorDescription")) {
 				logDebug(`Connection status message: ${_msg.errorDescription || ""}`);
 				node.send([null, _msg, null]);
 				return;
 			}; // It's a connection error/restore comunication.
-			if (!_msg.hasOwnProperty("payload") || (_msg.hasOwnProperty("payload") && _msg.payload === undefined)) {
+			if (!hasOwn(_msg, "payload") || (hasOwn(_msg, "payload") && _msg.payload === undefined)) {
 				logDebug("Discarded incoming message without payload");
 				return;
 			}
 
 			if (_msg.type === 'img') {
-				_msg.extension = extension;
+				_msg.extension = extension || _msg.extension;
 				logDebug("Forwarding image payload");
 				node.send([null, null, _msg]);
+				return;
+			}
+			if (_msg.payload === null || typeof _msg.payload !== 'object') return;
+			if (Array.isArray(_msg.payload) || _msg.payload.EventNotificationAlert) {
+				const entries = Array.isArray(_msg.payload) ? _msg.payload : [_msg.payload.EventNotificationAlert];
+				entries.forEach(payload => node.sendPayload({ ..._msg, payload }, extension, depth + 1));
 				return;
 			}
 			var oRetMsg = {}; // Return message
@@ -100,12 +111,18 @@ module.exports = function (RED) {
 			//#region "CID"
 			// #################################
 			if ((node.devicetype == 1 || node.devicetype == 2)
-				&& _msg.payload.hasOwnProperty("CIDEvent")
-				&& _msg.payload.CIDEvent.type.toString().toLowerCase() === "zonealarm"
-				&& _msg.payload.CIDEvent.hasOwnProperty("zone")) {
+				&& _msg.payload.CIDEvent && typeof _msg.payload.CIDEvent === 'object'
+				&& typeof _msg.payload.CIDEvent.type === 'string'
+				&& String(_msg.payload.CIDEvent.type).toLowerCase() === "zonealarm"
+				&& ['number', 'string'].includes(typeof _msg.payload.CIDEvent.code)
+				&& /^\d+$/.test(String(_msg.payload.CIDEvent.code))
+				&& ['number', 'string'].includes(typeof _msg.payload.CIDEvent.zone)
+				&& /^\d+$/.test(String(_msg.payload.CIDEvent.zone))
+				&& Number.isSafeInteger(Number(_msg.payload.CIDEvent.zone))
+				&& /^cid:\d+-\d+$/.test(node.reactto)) {
 				oRetMsg.topic = _msg.topic;
 				oRetMsg.alarm = _msg.payload; // Put the full alarm description here.
-				oRetMsg.zone = _msg.payload.CIDEvent.zone + 1; // The zone on device's ISAPI is base 0, while the zone on UI is base 1.
+				oRetMsg.zone = Number(_msg.payload.CIDEvent.zone) + 1; // The zone on device's ISAPI is base 0, while the zone on UI is base 1.
 
 				// CID Alarm (node.reactto is CID:startAlarmCode-endAlarmCode)
 				let sAlarmCodeStart = node.reactto.split(":")[1].split("-")[0];
@@ -113,7 +130,7 @@ module.exports = function (RED) {
 
 				if (Number(node.filterzone) === 0 || Number(node.filterzone) === Number(oRetMsg.zone)) { // Filter only selcted zones
 					// Get the Hikvision alarm codes, that differs from standard SIA codes.
-					switch (_msg.payload.CIDEvent.code.toString().toLowerCase()) {
+					switch (String(_msg.payload.CIDEvent.code).toLowerCase()) {
 						// Standard SIA Code is _msg.payload.CIDEvent.standardCIDcode
 						case sAlarmCodeStart:
 							// Starts alarm
@@ -254,54 +271,70 @@ module.exports = function (RED) {
 				var sEventType = "";
 				var bAlarmStatus = false;
 				let sEventDesc = "";
-				sEventDesc = (_msg.payload.hasOwnProperty("eventDescription") ? _msg.payload.eventDescription : "");
+				sEventDesc = typeof _msg.payload.eventDescription === 'string' ? _msg.payload.eventDescription : "";
 				const isMatchingEventType = (eventType, reactTo) => {
-					// Some firmwares use different names for the same event
-					if (eventType === reactTo) return true;
-					// Temperature Measurement Alarm (TMA) is commonly used for thermometry/temperature measurement events
+					if (isSameEventType(eventType, reactTo)) return true;
+					// Preserve existing thermal compatibility separately from documented ISAPI aliases.
 					if ((reactTo === "thermometry" && eventType === "tma") || (reactTo === "tma" && eventType === "thermometry")) return true;
 					return false;
 				};
 
-				if (_msg.payload.hasOwnProperty("eventType")) {
+				if (hasOwn(_msg.payload, "eventType")) {
+					if (typeof _msg.payload.eventType !== 'string') return;
 					// Check if it's only a hearbeat alarm
-					sEventType = _msg.payload.eventType.toString().toLowerCase();
-					if (sEventType === "videoloss" && _msg.payload.hasOwnProperty("activePostCount") && _msg.payload.activePostCount == "0") {
+					sEventType = String(_msg.payload.eventType).toLowerCase();
+					if (sEventType === "videoloss" && typeof _msg.payload.eventState === 'string' && _msg.payload.eventState.toLowerCase() === 'inactive'
+						&& ['number', 'string'].includes(typeof _msg.payload.activePostCount) && [0, 1].includes(Number(_msg.payload.activePostCount))) {
 						node.setNodeStatus({ fill: "green", shape: "ring", text: "Received HeartBeat (the device is online)" });
 						logDebug("Heartbeat received, ignoring");
 						return; // It's a Heartbeat
 					}
-					if (sEventType === "duration" && !node.isNodeInAlarm) {
+					if (sEventType === "duration") {
 
 						// This is a duration event of an alarm, so i must get the real alarm event from the relationEvent prop
-						if (_msg.payload.hasOwnProperty("DurationList") && _msg.payload.DurationList.hasOwnProperty("Duration") && _msg.payload.DurationList.Duration.hasOwnProperty("relationEvent")) {
-							sEventType = _msg.payload.DurationList.Duration.relationEvent.toString().toLowerCase();
+						if (_msg.payload.DurationList && _msg.payload.DurationList.Duration) {
+							const list = _msg.payload.DurationList.Duration;
+							const relations = (Array.isArray(list) ? list : [list]).filter(relation => relation && typeof relation.relationEvent === 'string');
+							const related = relations.find(relation => node.reactto.split(',').some(type => isMatchingEventType(relation.relationEvent.toLowerCase(), type.trim()))) || relations[0];
+							if (!related) return;
+							sEventType = related.relationEvent.toLowerCase();
 							sEventDesc = sEventDesc + " of " + sEventType + ". Zone number will be ignored.";
 						}
 					}
 				}
 
 				// Filter channel
-				let sChannelID = _msg.payload.channelID;
+				let sChannelID = _msg.payload.channelID !== undefined ? _msg.payload.channelID : _msg.payload.dynChannelID;
+				if (sChannelID !== undefined && (!['number', 'string'].includes(typeof sChannelID) || !/^\d+$/.test(String(sChannelID)) || !Number.isSafeInteger(Number(sChannelID)))) return;
 
 				// Filter regionID (Zone)
 				let iRegionID = 0;
+				let hasRegionID = false;
 				let oDetectionRegionEntry = null;
-				if (_msg.payload.hasOwnProperty("DetectionRegionList") && _msg.payload.DetectionRegionList.hasOwnProperty("DetectionRegionEntry")) {
+				if (_msg.payload.DetectionRegionList && _msg.payload.DetectionRegionList.DetectionRegionEntry) {
 					oDetectionRegionEntry = _msg.payload.DetectionRegionList.DetectionRegionEntry;
-					if (Array.isArray(oDetectionRegionEntry)) oDetectionRegionEntry = oDetectionRegionEntry[0];
+					if (Array.isArray(oDetectionRegionEntry)) {
+						const entries = oDetectionRegionEntry.filter(entry => entry && typeof entry === 'object');
+						// Match the selected region anywhere in the batch, not just the first entry.
+						oDetectionRegionEntry = entries.find(entry => Number(entry.regionID) === Number(node.filterzone)) || entries[0];
+					}
 				}
-				if (oDetectionRegionEntry && oDetectionRegionEntry.hasOwnProperty("regionID")) iRegionID = Number(oDetectionRegionEntry.regionID);// Era + 1;
+				if (oDetectionRegionEntry && hasOwn(oDetectionRegionEntry, "regionID")) {
+					const region = oDetectionRegionEntry.regionID;
+					if (!['number', 'string'].includes(typeof region) || !/^\d+$/.test(String(region)) || !Number.isSafeInteger(Number(region))) return;
+					iRegionID = Number(region);
+					hasRegionID = true;
+				}
 
 				if (Number(node.channelID) === 0 || Number(node.channelID) === Number(sChannelID)) {  // Filter only selcted channel
 
-					if (Number(node.filterzone) === 0 || Number(node.filterzone) === iRegionID || iRegionID === 0) {  // Filter only selcted regionID (zone). iRegionID is 0 when the eventtype is "duration"
+					if (Number(node.filterzone) === 0 || Number(node.filterzone) === iRegionID || !hasRegionID) {  // Events without region metadata (e.g. duration) retain the existing fallback.
 
-						if (_msg.payload.hasOwnProperty("eventState")) {
-							bAlarmStatus = (_msg.payload.eventState.toString().toLowerCase() === "active" ? true : false);
+						if (typeof _msg.payload.eventState === 'string' && /^(active|inactive)$/i.test(_msg.payload.eventState)) {
+							bAlarmStatus = String(_msg.payload.eventState).toLowerCase() === "active";
 						} else {
 							// Mmmm.... no event state?
-							node.setNodeStatus({ fill: "red", shape: "ring", text: "Received alarm but no state!" });
+							node.setNodeStatus({ fill: "red", shape: "ring", text: "Received alarm with missing/unknown state" });
 							return;
 						}
 
@@ -318,8 +351,8 @@ module.exports = function (RED) {
 								oRetMsg.zone = iRegionID; // Zone
 								oRetMsg.description = sEventDesc;
 								// Attach thermometry alarm/prealarm details if present (useful for thermal cameras)
-								if (oDetectionRegionEntry && oDetectionRegionEntry.hasOwnProperty("TMA")) oRetMsg.tma = oDetectionRegionEntry.TMA;
-								if (oDetectionRegionEntry && oDetectionRegionEntry.hasOwnProperty("TMPA")) oRetMsg.tmpa = oDetectionRegionEntry.TMPA;
+								if (oDetectionRegionEntry && hasOwn(oDetectionRegionEntry, "TMA")) oRetMsg.tma = oDetectionRegionEntry.TMA;
+								if (oDetectionRegionEntry && hasOwn(oDetectionRegionEntry, "TMPA")) oRetMsg.tmpa = oDetectionRegionEntry.TMPA;
 								node.isNodeInAlarm = bAlarmStatus;
 								logDebug(`Event ${sEventType} state ${bAlarmStatus ? "active" : "inactive"} channel ${sChannelID} zone ${iRegionID}`);
 								break; // Find first occurrence, exit.
@@ -332,7 +365,7 @@ module.exports = function (RED) {
 			//#endregion
 
 			// 29/01/2020 check wether the filter is enabled or not
-			if (oRetMsg.hasOwnProperty("payload")) {
+			if (hasOwn(oRetMsg, "payload")) {
 				if (node.alarmfilterduration == 0) {
 					node.send([oRetMsg, null, null]);
 					logDebug(`Forwarded alarm immediately (${oRetMsg.description || "no description"})`);
@@ -362,80 +395,14 @@ module.exports = function (RED) {
 			node.server.addClient(node);
 		}
 
-		this.on('input', function (msg) {
-			// TEST VERSION 2.0
-			msg.payload = `{
-				"$": {
-				  "version": "2.0",
-				  "xmlns": "http://www.hikvision.com/ver20/XMLSchema"
-				},
-				"ipAddress": "10.0.0.2",
-				"ipv6Address": "::ffff:10.0.0.2",
-				"portNo": "80",
-				"protocol": "HTTP",
-				"macAddress": "08:a1:89:6a:3d:59",
-				"channelID": "1",
-				"dateTime": "2021-04-24T16:59:47+08:00",
-				"activePostCount": "1",
-				"eventType": "duration",
-				"eventState": "active",
-				"eventDescription": "duration alarm",
-				"channelName": "Hik",
-				"DurationList": {
-				  "Duration": {
-					"relationEvent": "fielddetection"
-				  }
-				},
-				"isDataRetransmission": "false"
-			  }`;
-			// TEST VERSION 1.0
-			msg.payload = `{
-				   "$":{
-					  "version":"1.0",
-					  "xmlns":"http://www.hikvision.com/ver20/XMLSchema"
-				   },
-				   "ipAddress":"192.168.60.25",
-				   "portNo":"80",
-				   "protocol":"HTTP",
-				   "macAddress":"44:47:cc:cf:82:17",
-				   "dynChannelID":"4",
-				   "dateTime":"2021-07-01T09:11:21+02:00",
-				   "activePostCount":"1",
-				   "eventType":"VMD",
-				   "eventState":"active",
-				   "eventDescription":"Motion alarm"
-				}`;
-
-			try {
-				msg.payload = JSON.parse(msg.payload);
-				node.sendPayload(msg);
-
-				setTimeout(() => {
-					msg.payload = `{"$":{"version":"2.0","xmlns":"http://www.hikvision.com/ver20/XMLSchema"},"ipAddress":"10.0.0.2","ipv6Address":"::ffff:10.0.0.2","portNo":"80","protocol":"HTTP","macAddress":"08:a1:89:6a:3d:59","channelID":"1","dateTime":"2021-04-24T16:59:56+08:00","activePostCount":"1","eventType":"fielddetection","eventState":"inactive","eventDescription":"fielddetection alarm","channelName":"Hik"}`;
-					try {
-						msg.payload = JSON.parse(msg.payload);
-						node.sendPayload(msg);
-					} catch (error) {
-					}
-
-				}, 5000);
-			} catch (error) {
-
-			}
-
-
-		});
-
 		node.on("close", function (done) {
+			isClosing = true;
 			if (node.server) {
 				node.server.removeClient(node);
 			}
 			if (node.timer_alarmfilterduration !== null) clearInterval(node.timer_alarmfilterduration);
 			if (node.timer_alarmfilterperiod !== null) clearTimeout(node.timer_alarmfilterperiod);
-			if (node.server) {
-				node.server.removeClient(node);
-			}
-			done();
+			if (typeof done === "function") done();
 		});
 
 	}

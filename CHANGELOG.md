@@ -3,6 +3,13 @@
 [![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square)](https://www.paypal.me/techtoday)
 
 <p>
+<b>Version 1.4.3</b> September 2026<br/>
+- NEW: Device Status node checks configured Hikvision devices via deviceInfo, with overall availability on PIN 1 and individual device status on PIN 2.<br/>
+- Camera Event: discovers supported events, channel and zone names from the device, removes duplicate event choices and simplifies the editor.<br/>
+- Improved HTTP authentication, alarm stream parsing and reconnection reliability.<br/>
+</p>
+
+<p>
 <b>Version 1.4.2</b> August 2026<br/>
 - Alarm (Camera Event): added support for Temperature Measurement Precautionary Alarm events (`eventType: TMPA`) and exposes `msg.tmpa` details when provided by the device.<br/>
 </p>

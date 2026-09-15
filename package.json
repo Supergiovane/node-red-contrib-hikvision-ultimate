@@ -1,6 +1,6 @@
 {
     "name": "node-red-contrib-hikvision-ultimate",
-    "version": "1.4.2",
+    "version": "1.4.3",
     "description": "A native set of nodes for Hikvision (and compatible) Cameras, Alarms, Radars, NVR, Doorbells, etc.",
     "author": {
         "name": "Massimo Saccani",
@@ -8,6 +8,17 @@
         "url": "https://youtube.com/@maxsupervibe"
     },
     "scripts": {
+        "test": "node --test tools/test-*.js",
+        "test:alarm-capabilities": "node --test tools/test-alarm-capabilities.js",
+        "test:alarm-metadata": "node --test tools/test-alarm-metadata.js",
+        "test:alarm-runtime": "node tools/test-alarm-runtime.js",
+        "test:alarm-editor": "node tools/test-alarm-editor.js",
+        "test:alert-stream": "node tools/test-alert-stream-parser.js",
+        "test:connection": "node tools/test-hikvision-connection.js",
+        "test:connection-health": "node --test tools/test-hikvision-health.js",
+        "test:config-editor": "node tools/test-config-editor.js",
+        "test:http-client": "node --test tools/test-http-client.js",
+        "test:device-status": "node --test tools/test-device-reachability.js tools/test-device-status.js tools/test-device-status-editor.js",
         "release:beta": "npm version prerelease --preid=beta && npm publish --tag beta",
         "node-red:noauth": "npx node-red -s tools/node-red/settings-noauth.js",
         "node-red:auth": "npx node-red -s tools/node-red/settings-auth.js",
@@ -70,7 +81,8 @@
             "hikvisionUltimateAxPro": "nodes/hikvisionUltimateAxPro.js",
             "hikvisionUltimateAccessControlTerminal": "nodes/hikvisionUltimateAccessControlTerminal.js",
             "hikvisionUltimateSpeaker": "nodes/hikvisionUltimateSpeaker.js",
-            "hikvisionUltimateIntelligent": "nodes/hikvisionUltimateIntelligent.js"
+            "hikvisionUltimateIntelligent": "nodes/hikvisionUltimateIntelligent.js",
+            "hikvisionUltimateDeviceStatus": "nodes/hikvisionUltimateDeviceStatus.js"
         }
     }
 }

@@ -1,0 +1,177 @@
+<script type="text/javascript">
+(function () {
+    var deviceTypes = ['Hikvision-config', 'AXPro-config', 'Doorbell-config', 'ANPR-config', 'Speaker-config', 'AccessControl-config'];
+    function integerBetween(value, min, max) {
+        return String(value).trim() !== '' && Number.isInteger(Number(value)) && Number(value) >= min && Number(value) <= max;
+    }
+    function referenceKey(type, index) { return 'device_' + type.replace('-config', '') + '_' + index; }
+    function references(node) {
+        var result = [];
+        deviceTypes.forEach(function (type) {
+            for (var index = 0; index < 64; index++) {
+                var id = node[referenceKey(type, index)];
+                if (typeof id === 'string' && id) result.push({ id: id, type: type });
+            }
+        });
+        return result;
+    }
+    function updateUsers(node, action) {
+        if (typeof RED.nodes.updateConfigNodeUsers === 'function') {
+            RED.nodes.updateConfigNodeUsers(node, { action: action });
+            return;
+        }
+        // Compatibility with editors predating updateConfigNodeUsers.
+        references(node).forEach(function (item) {
+            var config = RED.nodes.node(item.id);
+            if (!config || !Array.isArray(config.users)) return;
+            var index = config.users.indexOf(node);
+            if (action === 'remove' && index !== -1) config.users.splice(index, 1);
+            else if (action === 'add' && index === -1) config.users.push(node);
+            else return;
+            RED.events.emit('nodes:change', config);
+        });
+    }
+    var defaults = {
+            name: { value: '' },
+            topic: { value: '' },
+            deviceCount: {
+                value: 0, label: 'Devices', required: true,
+                validate: function (count) {
+                    var node = this;
+                    var selected = references(node);
+                    return integerBetween(count, 1, 64) && selected.length === Number(count)
+                        && new Set(selected.map(function (item) { return item.id; })).size === selected.length && selected.every(function (item) {
+                        var device = RED.nodes.node(item.id);
+                        return device && device.type === item.type && (!device.z || device.z === node.z) && device.d !== true && device.valid !== false;
+                    });
+                }
+            },
+            interval: { value: 30, required: true, validate: function (v) { return integerBetween(v, 0, 0) || integerBetween(v, 5, 86400); } },
+            timeout: { value: 5, required: true, validate: function (v) { return integerBetween(v, 1, 60); } },
+            failureThreshold: { value: 2, required: true, validate: function (v) { return integerBetween(v, 1, 10); } },
+            changesOnly: { value: true }
+    };
+    // Node-RED exports arrays of config references, but its user counts,
+    // subflow remapping and partial-deploy dependencies require scalar refs.
+    // Unused fields stay undefined, so they are omitted from the flow JSON.
+    deviceTypes.forEach(function (type) {
+        for (var index = 0; index < 64; index++) defaults[referenceKey(type, index)] = { type: type, required: false };
+    });
+    RED.nodes.registerType('hikvisionUltimateDeviceStatus', {
+        category: 'Hikvision Ultimate',
+        color: '#C0C0C0',
+        defaults: defaults,
+        inputs: 1,
+        outputs: 2,
+        inputLabels: 'Check devices now',
+        outputLabels: ['All devices available (AND)', 'Per-device status (one message per device)'],
+        icon: 'font-awesome/fa-heartbeat',
+        paletteLabel: 'Device Status',
+        label: function () { return this.name || 'Device Status'; },
+        oneditprepare: function () {
+            var node = this;
+            var selected = new Set(references(node).map(function (item) { return item.id; }));
+            var list = $('#node-device-status-list').empty();
+            var candidates = [];
+            RED.nodes.eachConfig(function (device) {
+                if (deviceTypes.indexOf(device.type) !== -1 && (!device.z || device.z === node.z || selected.has(device.id))) candidates.push(device);
+            });
+            candidates.sort(function (a, b) { return String(a.name || a.host || a.id).localeCompare(String(b.name || b.host || b.id), undefined, { numeric: true }); });
+            selected.forEach(function (id) {
+                if (!candidates.some(function (device) { return device.id === id; })) candidates.push({ id: id, name: 'Missing device: ' + id, missing: true });
+            });
+            function updateCount() {
+                var count = list.find('input:checked').length;
+                $('#node-input-deviceCount').val(count);
+                $('#node-device-status-count').text(count + ' selected (maximum 64)');
+                list.find('input').each(function () {
+                    $(this).prop('disabled', !this.checked && (count >= 64 || $(this).data('unavailable')));
+                });
+            }
+            candidates.forEach(function (device) {
+                var unavailable = !!(device.missing || device.z && device.z !== node.z || device.d === true);
+                var row = $('<label>').css({ display: 'flex', width: '100%', alignItems: 'center', padding: '4px 0', margin: 0 }).appendTo(list);
+                $('<input>', { type: 'checkbox' }).val(device.id).prop('checked', selected.has(device.id))
+                    .data('unavailable', unavailable).css({ width: 'auto', margin: '0 10px 0 0', flexShrink: 0 }).appendTo(row).on('change', updateCount);
+                var caption = device.name || device.host || device.id;
+                var address = device.host ? device.host + (device.port ? ':' + device.port : '') : '';
+                var detail = [address, device.type, unavailable ? 'unavailable configuration' : ''].filter(Boolean).join(' — ');
+                var text = $('<span>').css({ minWidth: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' })
+                    .prop('title', caption + (detail ? ' — ' + detail : '')).appendTo(row);
+                $('<span>').text(caption).appendTo(text);
+                $('<small>').css({ opacity: 0.8 }).text(detail ? ' — ' + detail : '').appendTo(text);
+            });
+            if (!candidates.length) $('<div>').text('No configured devices. Add a Hikvision Ultimate server configuration first.').appendTo(list);
+            updateCount();
+        },
+        oneditsave: function () {
+            var node = this;
+            var previous = references(node);
+            var selected = $('#node-device-status-list input:checked').map(function () { return $(this).val(); }).get();
+            updateUsers(node, 'remove');
+            deviceTypes.forEach(function (type) {
+                for (var index = 0; index < 64; index++) node[referenceKey(type, index)] = undefined;
+                var matching = selected.filter(function (id) {
+                    var device = RED.nodes.node(id);
+                    var saved = previous.find(function (item) { return item.id === id; });
+                    return (device ? device.type : saved && saved.type) === type;
+                });
+                matching.forEach(function (id, index) { node[referenceKey(type, index)] = id; });
+            });
+            node.deviceCount = selected.length;
+            updateUsers(node, 'add');
+        }
+    });
+})();
+</script>
+
+<script type="text/html" data-template-name="hikvisionUltimateDeviceStatus">
+    <input type="hidden" id="node-input-deviceCount">
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Device Status">
+    </div>
+    <div class="form-row">
+        <label for="node-input-topic"><i class="fa fa-tasks"></i> Topic</label>
+        <input type="text" id="node-input-topic" placeholder="Optional message topic">
+    </div>
+    <div class="form-row">
+        <label><i class="fa fa-server"></i> Devices</label>
+        <div id="node-device-status-list" style="display:inline-block;vertical-align:top;box-sizing:border-box;width:70%;max-height:260px;overflow-y:auto;padding:6px 10px;border:1px solid var(--red-ui-form-input-border-color,#ccc);border-radius:4px"></div>
+        <div id="node-device-status-count" role="status" style="margin:6px 0 0 105px;font-size:0.9em"></div>
+    </div>
+    <div class="form-row">
+        <label for="node-input-interval"><i class="fa fa-clock-o"></i> Check every</label>
+        <input type="number" id="node-input-interval" min="0" max="86400" step="1" style="width:100px"> seconds
+        <div class="form-tips" style="margin-top:8px">Use 5–86400 seconds, or 0 to check only when a message arrives.</div>
+    </div>
+    <div class="form-row">
+        <label for="node-input-timeout">Timeout</label>
+        <input type="number" id="node-input-timeout" min="1" max="60" step="1" style="width:100px"> seconds per device
+    </div>
+    <div class="form-row">
+        <label for="node-input-failureThreshold">Offline after</label>
+        <input type="number" id="node-input-failureThreshold" min="1" max="10" step="1" style="width:100px"> consecutive failed checks
+    </div>
+    <div class="form-row">
+        <label style="width:auto" for="node-input-changesOnly"><input type="checkbox" id="node-input-changesOnly" style="width:auto;margin-right:8px"> Output 2: only initial status and changes for each device</label>
+    </div>
+    <div class="form-tips" style="margin-bottom:8px">
+        <b>Output 1 — All devices (AND):</b> one summary per cycle. Its payload is true when every selected device has confirmed availability, false when any is confirmed unavailable, or null while the initial result is pending.<br>
+        <b>Output 2 — Individual devices:</b> each message describes one device. Use <code>msg.device.id</code> or <code>msg.device.name</code> to identify it.
+    </div>
+    <div class="form-tips">Reads <code>/ISAPI/System/deviceInfo</code> using each selected server's connection settings. Select from existing Hikvision Ultimate configurations available to this flow. A successful check requires a complete, valid device response.</div>
+</script>
+
+<script type="text/html" data-help-name="hikvisionUltimateDeviceStatus">
+    <p>Checks up to 64 configured Hikvision devices by reading <code>/ISAPI/System/deviceInfo</code>. Supports Camera/NVR, AX Pro, Doorbell, ANPR, Speaker and Access Control configurations in global scope or the same flow/subflow.</p>
+    <p><b>Checks:</b> a complete HTTP 2xx response containing valid XML or JSON <code>DeviceInfo</code> is required. Empty bodies, login pages, malformed or truncated responses and HTTP errors fail the check. Each request has a total timeout and a 1 MiB response limit. HTTPS uses the same self-signed certificate policy as the other Hikvision Ultimate nodes.</p>
+    <p><b>Input:</b> any message starts a check. Triggers received during a cycle do not queue more requests. Each device is checked at most once every 5 seconds, or every 30 seconds after HTTP 401/403/429/503. Summaries include the actual last check time for each device.</p>
+    <p><b>Scheduling:</b> by default, the first check starts one second after deploy. Subsequent cycles start 30 seconds after the previous cycle finishes. Set the interval to 0 for input-only operation. Up to four devices are checked concurrently.</p>
+    <p><b>Output 1 — All devices available (AND):</b> emitted after every cycle, with a <code>devices</code> array and <code>total</code>, <code>available</code>, <code>unavailable</code>, <code>unknown</code> counts. Each array entry also includes top-level <code>name</code> and <code>ip</code> fields. <code>ip</code> is the configured address without its port or IPv6 brackets; configured hostnames are retained. <code>msg.payload</code> is true when all devices have confirmed availability, false when any is confirmed unavailable, and null while any initial status is unknown and none is confirmed unavailable. During the failure threshold grace period, inspect <code>reachable</code> for the latest individual result.</p>
+    <p><b>Output 2 — Per-device status:</b> emits separate messages for individual devices. Every message identifies its device with <code>msg.device.id</code>, <code>msg.device.name</code> and <code>msg.device.host</code>. Use this output to handle each device's disconnection or recovery, for example with a Switch node on <code>msg.device.id</code>.</p>
+    <p><code>msg.payload</code> describes only that device: <code>true</code> when available and <code>false</code> after the configured number of consecutive failures (default 2). One success restores availability immediately. By default, each device emits its first confirmed status and subsequent changes. Other devices whose states remain unchanged emit nothing. Disable the Output 2 checkbox to emit each device's status after every fresh check once its initial state is confirmed. Multiple selected devices share the same output, and their messages can arrive in any order.</p>
+    <p>Messages contain <code>device</code> (configuration ID, name, host, type), <code>reachable</code> (latest check result), <code>available</code> (confirmed state), <code>httpStatus</code>, <code>responseTime</code> in milliseconds, <code>checkedAt</code>, <code>lastSuccess</code>, <code>consecutiveFailures</code>, <code>changed</code> and <code>error</code> (code and message, or null).</p>
+    <p><b>Example with two devices:</b> camera A is confirmed offline and speaker B recovers. Output 1 emits <code>payload: false</code> because A is still offline. Output 2 emits <code>payload: true</code> for B, identified by <code>msg.device</code>. Use Output 1 for a single boolean representing the whole group.</p>
+    <p>Settings and credentials are reused from deployed configurations. AX Pro with salted authentication reuses its existing session cookie; an absent or rejected session is reported as a failed check. This measures access to the device information API; the alarm nodes separately monitor their event streams.</p>
+</script>

@@ -8,7 +8,7 @@ This is a set of nodes to handle ISAPI Hikvision messages. It works exclusively 
 Works with cameras, NVR, Security Systems, Doorbells and also with specialized devices, like Radar (for example DS-PR1-60, DS-PR1-100 and DS-PR1-120).<br/>
 Digest authentication: it should work with all devices.<br/>
 All nodes are capable of auto reconnect if the connection is lost and are able to actively monitor the connection.<br/>
-Be sure to have installed **Node.js v12.3.0** or newer (issue a node -v command in a console, to check it out).<br/>
+Be sure to have installed **Node.js v20.18.1** or newer (issue a node -v command in a console, to check it out).<br/>
 
 <br/>
 <br/>
@@ -44,12 +44,62 @@ For NVR/DVR, pleas remember to select "Notify Alarm Center" in the event window,
 <br/>
 <br/>
 
+## DEVICE STATUS NODE
+
+**Device Status** monitors a selection of existing Hikvision Ultimate device configurations. It reads **`GET /ISAPI/System/deviceInfo`** using each device's address, port, protocol and credentials. A check succeeds only after reading the complete response and validating its XML/JSON `DeviceInfo` content. Empty responses, login pages, HTTP errors and incomplete transfers fail the check.
+
+- Select up to **64 devices**: Camera/NVR, AX Pro, Doorbell, ANPR, Speaker or Access Control. Global configurations and configurations scoped to the current flow/subflow are available. The **Devices** list shows each device on one line with its checkbox, name and connection details; hover over shortened text to read the full details.
+- Default settings: a check one second after deploy, then **30 seconds** after each completed cycle; **5 seconds** total timeout per device; offline after **2 consecutive failed checks**. A successful check restores availability immediately.
+- An input message starts a check. Set the interval to **0** for input-only operation. Concurrent triggers are coalesced, with at most four requests in progress. Devices have a minimum five-second gap between checks; HTTP 401/403/429/503 applies a 30-second pause, including manual triggers.
+- **Output 1 — All devices available (AND)** emits one summary for the whole group after each cycle, with a `devices` array and `total`, `available`, `unavailable`, `unknown` counts. Each array entry also has top-level `name` and `ip` fields, for example `name: "Network Speaker", ip: "192.168.1.17"`. `ip` contains the configured address without its port or IPv6 brackets; hostnames are retained when configured. `msg.payload` is **true** if all devices are confirmed available, **false** if any is confirmed unavailable, or **null** while initial checks are still inconclusive and none is confirmed unavailable.
+- **Output 2 — Per-device status** emits separate messages for individual devices on their initial confirmed status and subsequent changes. `msg.payload` describes **only the device identified by `msg.device.id`**, with its name in `msg.device.name`: **true** when available, **false** when unavailable. Other devices whose states remain unchanged emit nothing. Use this output for individual disconnection/recovery notifications, routing by `msg.device.id`. Disable **only initial status and changes for each device** to emit every fresh check once the initial state has been confirmed. Messages for different devices can arrive in any order.
+
+For example, if camera A is confirmed offline and speaker B recovers, **Output 1** emits `payload: false` because A is still offline. **Output 2** emits `payload: true` with B's identity in `msg.device`. Use Output 1 when the flow needs a single boolean representing the whole group.
+
+Each device result includes `device` (configuration ID, name, host and type), `reachable` (the latest check), `available` (the confirmed state), `httpStatus`, `responseTime` in milliseconds, `checkedAt`, `lastSuccess`, `consecutiveFailures`, `changed` and `error` (code and message, or null). During the failure threshold grace period, `available` can remain true while `reachable` is false. Rate-limited cycles retain the actual last `checkedAt` for each device.
+
+```javascript
+// Output 1: one device is offline (individual check details omitted)
+msg = {
+  topic: "devices",
+  payload: false,
+  total: 2,
+  available: 1,
+  unavailable: 1,
+  unknown: 0,
+  devices: [
+    { name: "North camera", ip: "192.168.1.60", available: false, reachable: false /* ... */ },
+    { name: "Network Speaker", ip: "192.168.1.17", available: true, reachable: true /* ... */ }
+  ],
+  checkedAt: "2026-09-15T09:24:02.887Z"
+};
+```
+
+```javascript
+// Output 2: a device has recovered
+msg = {
+  topic: "devices",
+  payload: true,
+  device: { id: "camera-config-id", name: "North camera", host: "192.168.1.60", type: "Hikvision-config" },
+  reachable: true,
+  available: true,
+  httpStatus: 200,
+  responseTime: 42,
+  consecutiveFailures: 0,
+  changed: true,
+  error: null
+  // checkedAt and lastSuccess contain ISO timestamps
+};
+```
+
+The node measures access to the **device information API**. Event-stream health is monitored separately by the alarm nodes. AX Pro salted authentication reuses the config node's active session cookie; a missing or rejected session fails the check. HTTPS follows the existing self-signed certificate policy. The node uses separate HTTP requests, limits responses to 1 MiB and cancels outstanding checks on close/redeploy. Credentials, session cookies and raw device responses are never included in its output.
+
 ## CAMERA EVENT NODE
 
 <img src='https://raw.githubusercontent.com/Supergiovane/node-red-contrib-hikvision-ultimate/master/img/hikcamera.jpg' >
 
 The Camera Event node connects to **_NVR, Camera, Radars, etc.._** and outputs true/false in case of an alarm. <br/>
-The node can be configured as **Camera/NVR** (with standard and smart events) or as **Old Security System** and **Radar** (with specific CID events, designed for these type of security devices)<br/>
+The node can be configured as **Camera/NVR** (including motion, intrusion, line crossing and thermal alarms) or as **Old Security System** and **Radar** (with specific CID events, designed for these type of security devices). Use **Intelligent Event** for recognition of people, vehicles, faces and animals.<br/>
 You can optionally filter the alarms by CHANNEL, EVENT and ZONE. <br/>
 For NVR/DVR, the **_Channel_** property is the CAMERA number, while for Cameras, is the image sensor number (normally 1).<br/>
 The **_Zone_** property is the alarm zone (RADARS), or the alert region number (CAMERAS AND NVR/DVR).<br/>
@@ -64,6 +114,23 @@ You can choose from many different alarms, including: <br/>
 - Line crossing (when someone crosses a line)
 - CID alarms
 - Many more.....
+
+### Discover events from your camera
+
+For **Camera/NVR**, opening the Camera Event editor reads capabilities from the selected, deployed server. The event selector groups **Supported by the device** and **Observed in the event stream**. Event, channel and zone selectors show discovered values, plus the current selection if it was not reported. Channels and zones offer **All**; events offer **CUSTOM EVENT ID**. Select an NVR channel to query its capabilities separately.
+
+- **Refresh from device** updates the discovery. Opening the editor normally reuses a shared five-minute cache; failed discovery is retried after 30 seconds. Authentication or busy-device errors pause discovery for 30 seconds, including manual refreshes.
+- New event names are learned from the existing alarm stream. Reopen the editor or refresh to see them. Select **CUSTOM EVENT ID** to reveal the custom field, enter an ID or comma-separated aliases, then click **Use event**.
+- Recognitions of people, vehicles, faces and animals are omitted from this node's discovered event choices; use **Intelligent Event** for those. Intrusion, line crossing, region entrance/exit, thermal alarms and ordinary camera alarms remain available. A target classified as human, vehicle or animal does not change the underlying alarm type. Existing recognition selections are preserved under **Current / custom event**, and manual custom IDs keep their existing behavior.
+- **Supported is not enabled.** Detection rules and notification linkage still need to be enabled on the camera. Discovery only reads information; it does not change camera settings.
+- Documented ISAPI aliases share one event choice: for example **Video motion** (`VMD` / `motionDetection`), **Video blind** (`shelteralarm` / `tamperDetection`), audio exception and temperature difference. Existing selections keep their exact saved value, and the alarm filter accepts either name, including for duration events. Compatibility with all 13 groups listed in the [ISAPI guide, §16.2.95](https://support.zabbix.com/secure/attachment/284957/isapi-2.pdf#page=598) is retained for existing flows, including saved recognition events. Distinct IDs such as `hide`, `block` and `tmpa` keep separate choices when reported by the device.
+- Five older traffic-event catalog IDs contained an invisible character. Their corrected choices also recognize the old values, preserving existing flows. Case-only variations of discovered custom IDs share one choice too.
+- Channel names are read from the camera/NVR configuration. Select a channel and event to see its configured region/rule names in **React to Zone**, where available. Saved values remain numeric IDs, including IDs outside the original catalog. Changing the event updates its zone names without rescanning capabilities; **Refresh from device** also refreshes names.
+- Named rules from the Intelligent and thermal APIs are currently read from **scene 1**, shown in the label. This is not an active-scene selector: the alarm filter continues to match the numeric region ID across scenes. Legacy Smart APIs may expose only region numbers; discovered rules without names use numeric labels. With **All channels**, choose a specific channel to discover its zones, unless the device has only one channel. Names explicitly included in alarm region metadata are also learned from the existing stream. Existing zone/channel selections are preserved when discovery is unavailable, including for Security/Radar.
+- Partial responses, older firmware, or an offline camera keep the current selection available. Event, channel and zone lists do not populate unsupported choices. Existing flows, event aliases and CID event choices for Security/Radar remain supported. Discovery requires the server configuration to have been deployed; pending changes in its editor are not used until deploy.
+- Observed events and discovery caches are held in memory for each server configuration and are rebuilt after redeploy/restart. An observed event without a valid `active`/`inactive` state can be inspected with **Raw Alarm**; Camera Event does not invent a boolean state for it.
+
+Discovery uses separate requests from the alarm connection. Stream reconnection uses bounded backoff and a heartbeat watchdog; a connection error is cleared after valid event/heartbeat data returns. Events are not discarded because the camera clock differs from the Node-RED clock. Camera retransmissions are forwarded, so consumers requiring deduplication should use the original event data from Raw Alarm. See [testing and connection details](tools/README.md#alarm-discovery-and-connection-tests).
 
 **Flow Messages**
 
