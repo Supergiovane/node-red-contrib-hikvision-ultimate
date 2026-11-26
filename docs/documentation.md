@@ -1551,3 +1551,7 @@ Please see the help into the Node-Red help tab for further infos.
 [npm-version-image]: https://img.shields.io/npm/v/node-red-contrib-hikvision-ultimate.svg
 [npm-downloads-month-image]: https://img.shields.io/npm/dm/node-red-contrib-hikvision-ultimate.svg
 [npm-downloads-total-image]: https://img.shields.io/npm/dt/node-red-contrib-hikvision-ultimate.svg
+
+## Cerebrum Ultimate
+
+When **Cerebrum Ultimate** is installed in the same Node-RED, every Hikvision configuration node (camera/NVR, AX Pro, video intercom, ANPR and access control) is published to it automatically, read-only: the device connection, camera event states per channel, AX Pro zones and arming state per area, intercom call state, the last ANPR plate and the last access-control event of every door. Cerebrum can use them in chat, in its history and as triggers of JavaScript routines, and MCP clients such as Claude can read them through the Cerebrum MCP server. Nothing has to be configured, and nothing can be switched or changed from Cerebrum through this link. Without Cerebrum nothing changes. See the [Cerebrum Ultimate documentation](https://www.maxsupervibe.com/docs/cerebrum-ultimate/).

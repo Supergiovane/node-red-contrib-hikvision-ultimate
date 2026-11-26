@@ -3,6 +3,7 @@
 module.exports = (RED) => {
 
     const { createHttpClient } = require('./utils/httpClient');
+    const { attachHikvisionCerebrum } = require('./utils/hikvisionCerebrum.js');
     // const AbortController = require('abort-controller');
     const https = require('https');
     const fs = require('fs');
@@ -356,7 +357,13 @@ module.exports = (RED) => {
         //#endregion
 
         //#region "FUNCTIONS"
+        // Read-only publication of this device to Cerebrum Ultimate (optional).
+        node.cerebrumIntegration = null;
+        try { node.cerebrumIntegration = attachHikvisionCerebrum({ configNode: node, kind: 'access' }); } catch (error) { node.cerebrumIntegration = null; }
+
         node.on('close', function (removed, done) {
+            try { if (node.cerebrumIntegration) node.cerebrumIntegration.dispose(); } catch (error) { /* ignore */ }
+            node.cerebrumIntegration = null;
             node.isClosing = true;
             if (controller !== null) {
                 try {
