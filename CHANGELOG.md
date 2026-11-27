@@ -3,8 +3,9 @@
 [![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square)](https://www.paypal.me/techtoday)
 
 <p>
-<b>Unreleased</b><br/>
+<b>Version 1.4.4</b> November 2026<br/>
 - NEW: Cerebrum Ultimate integration. Camera/NVR, AX Pro, video intercom, ANPR and access-control configurations publish connection, camera events, alarm zones and arming state, call state, plates and door events to Cerebrum Ultimate, read-only, when Cerebrum is installed in the same Node-RED. MCP clients can read them through the Cerebrum MCP server. See the <a href="https://www.maxsupervibe.com/docs/cerebrum-ultimate/">Cerebrum Ultimate documentation</a>.<br/>
+- DOCS: README and documentation links now point to www.maxsupervibe.com.<br/>
 </p>
 
 <p>
